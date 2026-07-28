@@ -1,0 +1,6 @@
+playwright
+pandas
+openpyxl
+schedule
+pyperclip
+lxml

@@ -1,0 +1,9 @@
+credentials.xlsx
+dashboard.db
+whatsapp_session/
+downloads/
+wa_debug/
+__pycache__/
+*.pyc
+*.png
+.env
