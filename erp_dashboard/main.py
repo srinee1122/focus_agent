@@ -176,32 +176,16 @@ async def run_low_price_agent(force_all: bool = False):
                 send_text = "true"
 
             skip_sent   = get_agent_setting("low_price", "skip_sent_sos", "true")
-            skip_orders = get_agent_setting("low_price", "skip_orders",   "")
+            skip_orders    = get_agent_setting("low_price", "skip_orders",    "")
+            skip_customers = get_agent_setting("low_price", "skip_customers", "")
             send(f"   ✓ skip_sent_sos={skip_sent}")
             if skip_orders:
                 send(f"   ✓ skip_orders={skip_orders}")
+            if skip_customers:
+                send(f"   ✓ skip_customers={skip_customers}")
             effective_skip = "false" if force_all else skip_sent
             if force_all:
                 send("⚡ Force-all mode — sending all SOs regardless of sent history")
-            # Use a clean minimal environment (like a fresh terminal)
-            # Avoids inheriting dashboard process env vars that may affect login
-            _e = os.environ
-            clean_env = {k: _e[k] for k in [
-                'PATH','SystemRoot','SYSTEMROOT','windir','WINDIR',
-                'TEMP','TMP','USERPROFILE','APPDATA','LOCALAPPDATA',
-                'COMPUTERNAME','USERNAME','HOMEDRIVE','HOMEPATH',
-                'ProgramFiles','ProgramData','OS','PROCESSOR_ARCHITECTURE',
-            ] if k in _e}
-            clean_env.update({
-                "PYTHONIOENCODING":   "utf-8",
-                "PYTHONUNBUFFERED":   "1",
-                "AGENT_SEND_TEXT":    send_text,
-                "AGENT_SEND_IMAGE":   send_image,
-                "AGENT_WA_GROUPS":    whatsapp_groups,
-                "AGENT_SKIP_ORDERS":  skip_orders,
-                "AGENT_SKIP_SENT":    effective_skip,
-                "DASHBOARD_DB":       str(DB_PATH.resolve()),
-            })
             log_file = Path(AGENT_DIR) / "last_run.log"
             send(f"🚀 Launching subprocess in: {str(AGENT_DIR)}")
             with open(log_file, "w", encoding="utf-8") as lf:
@@ -211,13 +195,14 @@ async def run_low_price_agent(force_all: bool = False):
                     stdout=lf,
                     stderr=lf,
                     env={**os.environ,
-                         "PYTHONIOENCODING": "utf-8",
-                         "AGENT_SEND_TEXT":   send_text,
-                         "AGENT_SEND_IMAGE":  send_image,
-                         "AGENT_WA_GROUPS":   whatsapp_groups,
-                         "AGENT_SKIP_ORDERS": skip_orders,
-                         "AGENT_SKIP_SENT":   effective_skip,
-                         "DASHBOARD_DB":      str(DB_PATH.resolve()),
+                         "PYTHONIOENCODING":    "utf-8",
+                         "AGENT_SEND_TEXT":     send_text,
+                         "AGENT_SEND_IMAGE":    send_image,
+                         "AGENT_WA_GROUPS":     whatsapp_groups,
+                         "AGENT_SKIP_ORDERS":   skip_orders,
+                         "AGENT_SKIP_CUSTOMERS":skip_customers,
+                         "AGENT_SKIP_SENT":     effective_skip,
+                         "DASHBOARD_DB":        str(DB_PATH.resolve()),
                     }
                 )
                 send(f"   ✓ Subprocess started (PID {proc.pid}) — output → last_run.log")
@@ -309,6 +294,18 @@ def get_agents():
     with get_db() as db:
         rows = db.execute("SELECT * FROM agents").fetchall()
     return [dict(r) for r in rows]
+
+
+@app.patch("/api/agents/{name}")
+def update_agent(name: str, body: dict):
+    with get_db() as db:
+        if "interval_min" in body:
+            db.execute("UPDATE agents SET interval_min=? WHERE name=?",
+                      (int(body["interval_min"]), name))
+        if "enabled" in body:
+            db.execute("UPDATE agents SET enabled=? WHERE name=?",
+                      (1 if body["enabled"] else 0, name))
+    return {"ok": True}
 
 
 @app.post("/api/agents/{name}/run")

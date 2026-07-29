@@ -13,6 +13,8 @@
   --mono:'Cascadia Code','Fira Code',monospace;--radius:8px;
 }
 body{background:var(--bg);color:var(--text);font-family:var(--font);display:flex;height:100vh;overflow:hidden}
+
+/* ── Sidebar ── */
 aside{width:220px;min-width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column}
 .logo{padding:20px 20px 16px;border-bottom:1px solid var(--border)}
 .logo h1{font-size:14px;font-weight:600}
@@ -21,55 +23,78 @@ nav{padding:12px 8px;flex:1}
 nav button{width:100%;text-align:left;padding:9px 12px;background:none;border:none;border-radius:var(--radius);color:var(--muted);font-family:var(--font);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .15s,color .15s}
 nav button:hover{background:var(--surface2);color:var(--text)}
 nav button.active{background:var(--surface2);color:var(--text);font-weight:500}
-nav button .icon{font-size:15px;width:18px;text-align:center}
+
+/* ── Main ── */
 main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 header{padding:16px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface)}
 header h2{font-size:15px;font-weight:600}
 header .sub{font-size:12px;color:var(--muted)}
 .content{flex:1;overflow-y:auto;padding:24px}
+
+/* ── Pages ── */
 .page{display:none;flex-direction:column;gap:20px}
 .page.active{display:flex}
-/* Agent cards */
-.agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:16px}
-.agent-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+
+/* ── Agent cards ── */
+.agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.agent-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  cursor:pointer;transition:border-color .15s,transform .1s;overflow:hidden}
+.agent-card:hover{border-color:var(--accent2);transform:translateY(-1px)}
 .agent-card.running{border-color:var(--accent2)}
 .agent-card.error{border-color:var(--danger)}
-.card-main{padding:20px;display:flex;flex-direction:column;gap:14px}
+.card-main{padding:20px;display:flex;flex-direction:column;gap:12px}
 .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .card-title{font-size:14px;font-weight:600}
-.card-desc{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5}
+.card-desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
 .badge{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500;white-space:nowrap}
 .badge-idle{background:#21262d;color:var(--muted)}
 .badge-running{background:#1a3a6e;color:#79c0ff}
 .badge-error{background:#3d1a1a;color:#ff7b72}
 .badge-success{background:#1a3a1a;color:#56d364}
-.card-meta{display:flex;gap:16px}
+.card-meta{display:flex;gap:20px}
 .meta-item{font-size:11px;color:var(--muted)}
 .meta-item strong{display:block;font-size:12px;color:var(--text);font-weight:500}
-.card-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.interval-wrap{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
-.interval-wrap input{width:52px;padding:4px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;font-family:var(--font);text-align:center}
-.toggle-wrap{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-left:auto}
-.toggle{position:relative;width:34px;height:18px}
-.toggle input{opacity:0;width:0;height:0}
-.toggle-slider{position:absolute;inset:0;background:#3d444d;border-radius:9px;cursor:pointer;transition:background .2s}
-.toggle-slider::after{content:'';position:absolute;width:12px;height:12px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform .2s}
-.toggle input:checked~.toggle-slider{background:var(--accent2)}
-.toggle input:checked~.toggle-slider::after{transform:translateX(16px)}
-/* Agent settings panel */
-.card-settings{border-top:1px solid var(--border)}
-.settings-toggle{width:100%;padding:10px 20px;background:none;border:none;color:var(--muted);font-size:12px;font-family:var(--font);cursor:pointer;text-align:left;display:flex;align-items:center;gap:6px;transition:background .15s}
-.settings-toggle:hover{background:var(--surface2);color:var(--text)}
-.settings-toggle .arrow{margin-left:auto;transition:transform .2s}
-.settings-toggle.open .arrow{transform:rotate(180deg)}
-.settings-body{padding:16px 20px;display:none;flex-direction:column;gap:10px;background:var(--surface2);border-top:1px solid var(--border)}
-.settings-body.open{display:flex}
-.setting-row{display:flex;align-items:center;gap:12px}
-.setting-label{min-width:190px;font-size:12px;color:var(--muted)}
-.setting-input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:6px 9px;font-size:12px;font-family:var(--font)}
+.card-hint{font-size:11px;color:var(--muted);border-top:1px solid var(--border);
+  padding:10px 20px;display:flex;align-items:center;gap:6px}
+
+/* ── Agent detail page ── */
+.detail-header{display:flex;align-items:center;gap:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.back-btn{background:none;border:1px solid var(--border);border-radius:var(--radius);
+  color:var(--muted);padding:6px 12px;cursor:pointer;font-family:var(--font);font-size:12px;
+  display:flex;align-items:center;gap:6px;transition:border-color .15s,color .15s}
+.back-btn:hover{border-color:var(--muted);color:var(--text)}
+.detail-title{flex:1}
+.detail-title h2{font-size:18px;font-weight:600}
+.detail-title p{font-size:12px;color:var(--muted);margin-top:3px}
+.detail-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.detail-body{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:900px){.detail-body{grid-template-columns:1fr}}
+.settings-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.section-label{padding:12px 16px;font-size:11px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border)}
+.setting-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.setting-row:last-child{border-bottom:none}
+.setting-label{font-size:13px;flex:1}
+.setting-label small{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.setting-input{background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  border-radius:5px;padding:6px 10px;font-size:12px;font-family:var(--font);min-width:160px}
 .setting-input:focus{outline:none;border-color:var(--accent2)}
-/* Buttons */
-.btn{padding:6px 14px;border-radius:var(--radius);font-size:12px;font-weight:500;cursor:pointer;border:1px solid transparent;font-family:var(--font)}
+.setting-select{background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  border-radius:5px;padding:6px 8px;font-size:12px;font-family:var(--font);min-width:80px}
+.toggle-switch{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-track{position:absolute;inset:0;background:#3d444d;border-radius:12px;cursor:pointer;transition:background .2s}
+.toggle-track::after{content:'';position:absolute;width:18px;height:18px;background:#fff;
+  border-radius:50%;top:3px;left:3px;transition:transform .2s}
+.toggle-switch input:checked~.toggle-track{background:var(--accent2)}
+.toggle-switch input:checked~.toggle-track::after{transform:translateX(20px)}
+.save-bar{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+.save-bar p{font-size:12px;color:var(--muted)}
+
+/* ── Buttons ── */
+.btn{padding:6px 14px;border-radius:var(--radius);font-size:12px;font-weight:500;
+  cursor:pointer;border:1px solid transparent;font-family:var(--font);transition:opacity .15s}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 .btn-primary{background:var(--accent);color:#fff;border-color:#2ea043}
 .btn-primary:hover:not(:disabled){opacity:.85}
@@ -78,10 +103,12 @@ header .sub{font-size:12px;color:var(--muted)}
 .btn-ghost{background:var(--surface2);color:var(--text);border-color:var(--border)}
 .btn-ghost:hover:not(:disabled){border-color:var(--muted)}
 .btn-sm{padding:4px 10px;font-size:11px}
-/* Logs */
+
+/* ── Logs ── */
 .log-panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column}
 .log-toolbar{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
-.log-toolbar select{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:4px 8px;font-size:12px;font-family:var(--font)}
+.log-toolbar select,.log-toolbar input{background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);border-radius:5px;padding:4px 8px;font-size:12px;font-family:var(--font)}
 .log-toolbar label{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px}
 .log-output{flex:1;overflow-y:auto;padding:12px 16px;font-family:var(--mono);font-size:12px;line-height:1.7}
 .log-line{display:flex;gap:10px}
@@ -91,10 +118,12 @@ header .sub{font-size:12px;color:var(--muted)}
 .log-line.error .log-msg{color:#ff7b72}
 .log-line.warn .log-msg{color:#e3b341}
 .log-empty{color:var(--muted);font-style:italic;padding:20px 0}
-/* Price book */
+
+/* ── Price book (unchanged) ── */
 .table-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px}
 table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;padding:10px 12px;color:var(--muted);font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border)}
+th{text-align:left;padding:10px 12px;color:var(--muted);font-size:11px;font-weight:500;
+  text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border)}
 td{padding:10px 12px;border-bottom:1px solid var(--border)}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:var(--surface2)}
@@ -102,55 +131,90 @@ tr:hover td{background:var(--surface2)}
 .pct-low{background:#1a3a1a;color:#56d364}
 .pct-mid{background:#1a3a6e;color:#79c0ff}
 .pct-high{background:#3d1a1a;color:#ff7b72}
-/* Add form */
-.add-form{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;display:none;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.add-form{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;
+  display:none;gap:12px;flex-wrap:wrap;align-items:flex-end}
 .add-form.visible{display:flex}
 .add-form label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px}
-.add-form input,.add-form select{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:6px 10px;font-size:13px;font-family:var(--font)}
+.add-form input,.add-form select{background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);border-radius:5px;padding:6px 10px;font-size:13px;font-family:var(--font)}
 .section-header{display:flex;align-items:center;justify-content:space-between}
 .section-header h3{font-size:14px;font-weight:600}
 .empty{text-align:center;padding:48px;color:var(--muted)}
 .empty .icon{font-size:32px;margin-bottom:12px}
+
+/* ── Sent Today ── */
+#sent-panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;flex-direction:column;gap:10px}
 </style>
 </head>
 <body>
 <aside>
   <div class="logo"><h1>Sri Ambikas</h1><p>ERP Agent Dashboard</p></div>
   <nav>
-    <button class="active" onclick="showPage('agents',this)"><span class="icon">⚡</span>Agents</button>
-    <button onclick="showPage('logs',this)"><span class="icon">📋</span>Live Logs</button>
-    <button onclick="showPage('pricebook',this)"><span class="icon">💰</span>Price Book</button>
+    <button class="active" onclick="showPage('agents',this)">⚡ Agents</button>
+    <button onclick="showPage('logs',this)">📋 Live Logs</button>
+    <button onclick="showPage('pricebook',this)">💰 Price Book</button>
   </nav>
 </aside>
+
 <main>
   <header>
     <h2 id="page-title">Agents</h2>
-    <span class="sub" id="page-sub">Manage and monitor your ERP automation agents</span>
+    <span class="sub" id="page-sub">Click an agent to configure and run it</span>
   </header>
   <div class="content">
 
-    <!-- Agents -->
+    <!-- ── Agents list ── -->
     <div id="page-agents" class="page active">
+
       <div class="agent-grid" id="agent-grid"><div class="empty"><div class="icon">⏳</div><p>Loading…</p></div></div>
     </div>
 
-    <!-- Sent Today panel -->
-    <div id="sent-panel" style="display:none;background:var(--surface);border:1px solid var(--border);
-         border-radius:10px;padding:16px;flex-direction:column;gap:10px">
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <strong style="font-size:13px">📋 SOs Sent Today</strong>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-ghost btn-sm" onclick="loadSentAlerts()">↻ Refresh</button>
-          <button class="btn btn-danger btn-sm" onclick="clearSentAlerts()">Clear All</button>
-          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('sent-panel').style.display='none'">✕</button>
+    <!-- ── Agent detail ── -->
+    <div id="page-agent-detail" class="page">
+      <div class="detail-header">
+        <button class="back-btn" onclick="showPage('agents',document.querySelectorAll('nav button')[0])">← Back</button>
+        <div class="detail-title">
+          <h2 id="detail-name">Agent</h2>
+          <p id="detail-desc"></p>
+        </div>
+        <span class="badge" id="detail-badge">○ Idle</span>
+      </div>
+
+      <div class="detail-actions" id="detail-actions"></div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+        <div onclick="toggleDetailSettings()" style="padding:14px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;border-bottom:1px solid var(--border)">
+          <strong style="font-size:13px">⚙ Settings</strong>
+          <span id="detail-settings-arrow" style="color:var(--muted);font-size:12px">▾ Collapse</span>
+        </div>
+        <div id="detail-settings-body">
+          <div class="detail-body" id="detail-settings" style="padding:16px;gap:16px"></div>
+          <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+            <p style="font-size:12px;color:var(--muted)">Changes apply on next run.</p>
+            <button class="btn btn-primary" id="detail-save-btn" onclick="saveDetailSettings()">Save Settings</button>
+          </div>
         </div>
       </div>
-      <p style="font-size:11px;color:var(--muted)">Clearing allows these SOs to be re-sent on the next run.</p>
-      <div id="sent-list" style="font-family:var(--mono);font-size:12px;color:var(--muted);
-           max-height:300px;overflow-y:auto">Loading…</div>
+
+      <!-- Sent Today panel (agent detail) -->
+      <div id="sent-panel" style="display:none;background:var(--surface);border:1px solid var(--border);
+           border-radius:10px;padding:16px;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <strong style="font-size:13px">📋 SOs Sent Today</strong>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="loadSentAlerts()">↻ Refresh</button>
+            <button class="btn btn-danger btn-sm" onclick="clearSentAlerts()">Clear All</button>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('sent-panel').style.display='none'">✕</button>
+          </div>
+        </div>
+        <p style="font-size:11px;color:var(--muted)">Clearing allows these SOs to be re-sent on the next run.</p>
+        <div id="sent-list" style="font-family:var(--mono);font-size:12px;color:var(--muted);max-height:260px;overflow-y:auto">Loading…</div>
+      </div>
+
+
     </div>
 
-    <!-- Logs -->
+    <!-- ── Live Logs ── -->
     <div id="page-logs" class="page">
       <div class="log-panel" style="height:calc(100vh - 140px)">
         <div class="log-toolbar">
@@ -160,9 +224,7 @@ tr:hover td{background:var(--surface2)}
             <option value="data_sync">Data Sync Agent</option>
           </select>
           <input id="log-search" placeholder="🔍 Search logs…" oninput="renderLogs()"
-            style="flex:1;background:var(--surface2);border:1px solid var(--border);
-                   color:var(--text);border-radius:5px;padding:4px 10px;
-                   font-size:12px;font-family:var(--font)">
+            style="flex:1">
           <label><input type="checkbox" id="log-auto" checked>Auto-scroll</label>
           <button class="btn btn-ghost btn-sm" onclick="clearLogs()">Clear</button>
         </div>
@@ -170,73 +232,66 @@ tr:hover td{background:var(--surface2)}
       </div>
     </div>
 
-    <!-- Price Book -->
+    <!-- ── Price Book ── -->
     <div id="page-pricebook" class="page">
-
-      <!-- ── Purchase Types ── -->
       <div class="section-header" style="cursor:pointer" onclick="togglePtSection()">
         <div>
           <h3>Purchase Types <span id="pt-arrow" style="font-size:11px;color:var(--muted)">▾</span></h3>
           <p style="font-size:12px;color:var(--muted);margin-top:2px">
             The <strong style="color:var(--accent2)">★ Default</strong> purchase type applies to all items not listed below.
-            Edit it to change the global landing cost.
           </p>
         </div>
         <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();showAddPt()">+ Add Purchase Type</button>
       </div>
 
       <div id="pt-section">
-      <div class="add-form" id="pt-form">
-        <div><label>Purchase Type Name</label><input id="pt-name" placeholder="e.g. High Value Import 8%" style="width:220px"></div>
-        <div><label>Cost Formula</label>
-          <select id="pt-type" onchange="onPtTypeChange()">
-            <option value="standard_import">% markup on buying price</option>
-            <option value="local_purchase">No markup (local purchase)</option>
-            <option value="local_repacking">Local + fixed repacking cost</option>
-            <option value="import_repacking">% import + fixed repacking cost</option>
-            <option value="stockpile_rice">Buying price + fixed stockpile charge</option>
-          </select>
+        <div class="add-form" id="pt-form">
+          <div><label>Purchase Type Name</label><input id="pt-name" placeholder="e.g. High Value Import 8%" style="width:220px"></div>
+          <div><label>Cost Formula</label>
+            <select id="pt-type" onchange="onPtTypeChange()">
+              <option value="standard_import">% markup on buying price</option>
+              <option value="local_purchase">No markup (local purchase)</option>
+              <option value="local_repacking">Local + fixed repacking cost</option>
+              <option value="import_repacking">% import + fixed repacking cost</option>
+              <option value="stockpile_rice">Buying price + fixed stockpile charge</option>
+            </select>
+          </div>
+          <div id="pt-pct-wrap"><label>Landing %</label><input id="pt-pct" type="number" step="0.1" min="0" value="5.0" style="width:70px;text-align:center"></div>
+          <div id="pt-repack-wrap" style="display:none"><label>Repacking $ / unit</label><input id="pt-repack" type="number" step="0.01" min="0" value="0.00" style="width:90px;text-align:center"></div>
+          <div id="pt-stock-wrap" style="display:none"><label>Stockpile $ / unit</label><input id="pt-stock" type="number" step="0.01" min="0" value="0.00" style="width:90px;text-align:center"></div>
+          <div><label>Notes</label><input id="pt-notes" placeholder="Optional" style="width:150px"></div>
+          <label style="font-size:12px;display:flex;align-items:center;gap:6px;color:var(--muted)">
+            <input type="checkbox" id="pt-default"> Set as default
+          </label>
+          <button class="btn btn-primary btn-sm" onclick="savePt()">Save</button>
+          <button class="btn btn-ghost btn-sm" onclick="cancelPt()">Cancel</button>
         </div>
-        <div id="pt-pct-wrap"><label>Landing %</label><input id="pt-pct" type="number" step="0.1" min="0" value="5.0" style="width:70px;text-align:center"></div>
-        <div id="pt-repack-wrap" style="display:none"><label>Repacking $ / unit</label><input id="pt-repack" type="number" step="0.01" min="0" value="0.00" style="width:90px;text-align:center"></div>
-        <div id="pt-stock-wrap" style="display:none"><label>Stockpile $ / unit</label><input id="pt-stock" type="number" step="0.01" min="0" value="0.00" style="width:90px;text-align:center"></div>
-        <div><label>Notes</label><input id="pt-notes" placeholder="Optional" style="width:150px"></div>
-        <label style="font-size:12px;display:flex;align-items:center;gap:6px;color:var(--muted)">
-          <input type="checkbox" id="pt-default"> Set as default (applies to all unlisted items)
-        </label>
-        <button class="btn btn-primary btn-sm" onclick="savePt()">Save</button>
-        <button class="btn btn-ghost btn-sm" onclick="cancelPt()">Cancel</button>
+        <div class="table-wrap" style="margin-bottom:8px">
+          <table>
+            <thead><tr>
+              <th>Purchase Type Name</th><th style="width:160px">Formula</th>
+              <th style="width:90px">%</th><th style="width:100px">Repacking $</th>
+              <th style="width:100px">Stockpile $</th><th>Notes</th><th style="width:90px"></th>
+            </tr></thead>
+            <tbody id="pt-body"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">Loading…</td></tr></tbody>
+          </table>
+        </div>
       </div>
 
-      <div class="table-wrap" style="margin-bottom:8px">
-        <table>
-          <thead><tr>
-            <th>Purchase Type Name</th><th style="width:160px">Type</th>
-            <th style="width:90px">%</th><th style="width:100px">Repacking $</th>
-            <th style="width:100px">Stockpile $</th><th>Notes</th>
-            <th style="width:90px"></th>
-          </tr></thead>
-          <tbody id="pt-body"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">Loading…</td></tr></tbody>
-        </table>
-      </div>
-      </div><!-- end cat-section -->
-
-      <!-- ── Product Assignments ── -->
       <div class="section-header" style="margin-top:8px">
-        <h3>Product Assignments</h3>
-        <div style="display:flex;gap:8px;align-items:center">
-          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('pb-import-input').click()">
-            ⬆ Import Price Book
-          </button>
+        <div>
+          <h3>Product Assignments</h3>
+          <p style="font-size:12px;color:var(--muted);margin-top:4px">
+            Assign Focus ERP product names to a purchase type. Import the price book Excel to bulk-load.
+          </p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('pb-import-input').click()">⬆ Import Price Book</button>
           <input type="file" id="pb-import-input" accept=".xlsx,.xls" style="display:none" onchange="importPricebook(this)">
           <button class="btn btn-primary btn-sm" onclick="showAddForm()">+ Assign Product</button>
         </div>
       </div>
-      <p style="font-size:12px;color:var(--muted);margin-top:-12px">
-        Assign Focus ERP product names to a purchase type. Import the Focus ERP price book Excel to bulk-load items.
-      </p>
 
-      <!-- Import results panel -->
       <div id="import-results" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;gap:12px;flex-direction:column">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <strong style="font-size:13px">Import Results</strong>
@@ -246,40 +301,13 @@ tr:hover td{background:var(--surface2)}
         <div id="import-unmatched"></div>
       </div>
 
-      <div class="add-form" id="add-form">
-        <div><label>Item Name (exact as in Focus ERP)</label>
-          <input id="pb-name" placeholder="e.g. CUMIN 1KG" style="width:250px"></div>
-        <div><label>Item Code</label>
-          <input id="pb-code" placeholder="e.g. 5294" style="width:90px"></div>
-        <div><label>Unit</label>
-          <input id="pb-unit" placeholder=".PCS" style="width:70px"></div>
-        <div><label>Currency</label>
-          <input id="pb-currency" value="SGD" style="width:55px"></div>
-        <div><label>Rate ($)</label>
-          <input id="pb-rate" type="number" step="0.01" placeholder="0.00" style="width:80px;text-align:right"></div>
-        <div><label>Min Sale ($)</label>
-          <input id="pb-minsale" type="number" step="0.01" placeholder="0.00" style="width:80px;text-align:right"></div>
-        <div><label>Buying Price ($)</label>
-          <input id="pb-buying" type="number" step="0.01" placeholder="0.00" style="width:90px;text-align:right"></div>
-        <div><label>Purchase Type</label>
-          <select id="pb-cat" style="min-width:190px">
-            <option value="">Loading…</option>
-          </select>
-        </div>
-        <div><label>Notes</label><input id="pb-notes" placeholder="Optional" style="width:120px"></div>
-        <button class="btn btn-primary btn-sm" onclick="savePb()">Save</button>
-        <button class="btn btn-ghost btn-sm" onclick="cancelPb()">Cancel</button>
-      </div>
-
-      <!-- Search + Sort toolbar -->
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <input id="pb-search" placeholder="🔍  Search items…" oninput="renderPbTable()"
+        <input id="pb-search" placeholder="🔍 Search items…" oninput="renderPbTable()"
           style="flex:1;min-width:200px;background:var(--surface);border:1px solid var(--border);
                  color:var(--text);border-radius:6px;padding:7px 12px;font-size:13px;font-family:var(--font)">
         <button class="btn btn-ghost btn-sm" id="pb-sort-btn" onclick="togglePbSort()">Name A→Z</button>
       </div>
 
-      <!-- Bulk action bar -->
       <div id="pb-bulk-bar" style="display:none;background:var(--surface2);border:1px solid var(--accent2);
            border-radius:8px;padding:10px 16px;align-items:center;gap:12px;flex-wrap:wrap">
         <span id="pb-sel-count" style="font-size:13px;font-weight:600;color:var(--accent2)">0 selected</span>
@@ -291,375 +319,405 @@ tr:hover td{background:var(--surface2)}
         <button class="btn btn-ghost btn-sm" onclick="clearSelection()">✕ Clear</button>
       </div>
 
+      <div class="add-form" id="add-form">
+        <div><label>Item Name (exact as in Focus ERP)</label><input id="pb-name" placeholder="e.g. CUMIN 1KG" style="width:250px"></div>
+        <div><label>Item Code</label><input id="pb-code" placeholder="e.g. 5294" style="width:90px"></div>
+        <div><label>Unit</label><input id="pb-unit" placeholder=".PCS" style="width:70px"></div>
+        <div><label>Currency</label><input id="pb-currency" value="SGD" style="width:55px"></div>
+        <div><label>Rate ($)</label><input id="pb-rate" type="number" step="0.01" placeholder="0.00" style="width:80px;text-align:right"></div>
+        <div><label>Min Sale ($)</label><input id="pb-minsale" type="number" step="0.01" placeholder="0.00" style="width:80px;text-align:right"></div>
+        <div><label>Buying Price ($)</label><input id="pb-buying" type="number" step="0.01" placeholder="0.00" style="width:90px;text-align:right"></div>
+        <div><label>Purchase Type</label><select id="pb-cat" style="min-width:190px"><option value="">Loading…</option></select></div>
+        <div><label>Notes</label><input id="pb-notes" placeholder="Optional" style="width:120px"></div>
+        <button class="btn btn-primary btn-sm" onclick="savePb()">Save</button>
+        <button class="btn btn-ghost btn-sm" onclick="cancelPb()">Cancel</button>
+      </div>
+
       <div class="table-wrap">
         <table>
           <thead><tr>
             <th style="width:32px"><input type="checkbox" id="pb-select-all" onchange="toggleSelectAll(this)"></th>
             <th style="cursor:pointer" onclick="togglePbSort()">Item Name</th>
-            <th style="width:90px">Item Code</th>
-            <th style="width:60px">Unit</th>
-            <th style="width:80px">Rate $</th>
-            <th style="width:90px">Min Sale $</th>
-            <th style="width:90px">Buying $</th>
-            <th style="width:110px">Final Cost $</th>
-            <th style="width:180px">Purchase Type</th>
-            <th style="width:80px">Updated</th>
+            <th style="width:90px">Item Code</th><th style="width:60px">Unit</th>
+            <th style="width:80px">Rate $</th><th style="width:90px">Min Sale $</th>
+            <th style="width:90px">Buying $</th><th style="width:110px">Final Cost $</th>
+            <th style="width:180px">Purchase Type</th><th style="width:80px">Updated</th>
             <th style="width:70px"></th>
           </tr></thead>
-          <tbody id="pb-body"><tr><td colspan="10" style="text-align:center;color:var(--muted);padding:24px">Loading…</td></tr></tbody>
+          <tbody id="pb-body"><tr><td colspan="11" style="text-align:center;color:var(--muted);padding:24px">Loading…</td></tr></tbody>
         </table>
       </div>
     </div>
 
   </div>
 </main>
+
 <script>
 // ── Globals ──────────────────────────────────────────────────────────────────
-var allLogs = [];
-var pbItems = [];
-var pbEditId = null;
+var allLogs=[], pbItems=[], pbEditId=null, pts=[], ptEditId=null;
+var pbSortAsc=true, ptSectionOpen=true, ptEditId=null;
+var currentAgent=null;  // agent being viewed in detail page
 
 // ── Nav ──────────────────────────────────────────────────────────────────────
-function showPage(name, btn) {
-  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
-  document.querySelectorAll('nav button').forEach(function(b){ b.classList.remove('active'); });
+function showPage(name,btn){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('nav button').forEach(function(b){b.classList.remove('active');});
   document.getElementById('page-'+name).classList.add('active');
-  if (btn) btn.classList.add('active');
-  var titles = {agents:['Agents','Manage agents'],logs:['Live Logs','Real-time output'],pricebook:['Price Book','Landing cost overrides']};
-  document.getElementById('page-title').textContent = titles[name][0];
-  document.getElementById('page-sub').textContent   = titles[name][1];
-  if (name === 'pricebook') { loadPurchaseTypes(); loadPb(); }
-  if (name === 'logs') renderLogs();
+  if(btn) btn.classList.add('active');
+  var titles={
+    agents:['Agents','Click an agent to configure and run it'],
+    'agent-detail':['Agent',''],
+    logs:['Live Logs','Real-time output from all running agents'],
+    pricebook:['Price Book','Purchase types and product assignments'],
+  };
+  document.getElementById('page-title').textContent=titles[name]?titles[name][0]:name;
+  document.getElementById('page-sub').textContent=titles[name]?titles[name][1]:'';
+  if(name==='pricebook'){loadPurchaseTypes();loadPb();}
+  if(name==='logs') renderLogs();
 }
 
 // ── WebSocket ────────────────────────────────────────────────────────────────
-function connectWS() {
-  var proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(proto+'://'+location.host+'/ws');
-  ws.onmessage = function(e) {
-    var msg = JSON.parse(e.data);
-    if (msg.type === 'log') { allLogs.push(msg); if (allLogs.length>1000) allLogs.shift(); appendLog(msg); }
-    if (msg.type === 'status') refreshCards();
+function connectWS(){
+  var proto=location.protocol==='https:'?'wss':'ws';
+  var ws=new WebSocket(proto+'://'+location.host+'/ws');
+  ws.onmessage=function(e){
+    var msg=JSON.parse(e.data);
+    if(msg.type==='log'){allLogs.push(msg);if(allLogs.length>1000)allLogs.shift();appendLog(msg);}
+    if(msg.type==='status') refreshAgentBadge(msg.agent,msg.status);
   };
-  ws.onclose = function(){ setTimeout(connectWS, 3000); };
+  ws.onclose=function(){setTimeout(connectWS,3000);};
 }
 
-// ── Agents ───────────────────────────────────────────────────────────────────
-async function loadAgents() {
-  var agents = await fetch('/api/agents').then(function(r){ return r.json(); });
-  var grid = document.getElementById('agent-grid');
-  if (!agents.length) { grid.innerHTML='<div class="empty"><div class="icon">🤖</div><p>No agents.</p></div>'; return; }
-  grid.innerHTML = '';
-  for (var i=0; i<agents.length; i++) {
-    var a = agents[i];
-    var settings = await fetch('/api/agents/'+a.name+'/settings').then(function(r){ return r.json(); });
-    grid.appendChild(buildCard(a, settings));
-  }
+// ── Agents list ───────────────────────────────────────────────────────────────
+async function loadAgents(){
+  var agents=await fetch('/api/agents').then(function(r){return r.json();});
+  var grid=document.getElementById('agent-grid');
+  if(!agents.length){grid.innerHTML='<div class="empty"><div class="icon">🤖</div><p>No agents found.</p></div>';return;}
+  grid.innerHTML='';
+  agents.forEach(function(a){grid.appendChild(buildCard(a));});
 }
 
-function badgeCls(a) { if(a.status==='running') return 'running'; if(a.last_status==='error') return 'error'; if(a.last_status==='success') return 'success'; return 'idle'; }
-function badgeTxt(a) { if(a.status==='running') return '● Running'; if(a.last_status==='error') return '✕ Error'; if(a.last_status==='success') return '✓ Done'; return '○ Idle'; }
-
-function buildCard(a, settings) {
-  var div = document.createElement('div');
-  div.id = 'card-'+a.name;
-  div.className = 'agent-card '+(a.status==='running'?'running':a.last_status==='error'?'error':'');
-  var lastRun = a.last_run ? new Date(a.last_run).toLocaleString('en-SG',{hour12:true,hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'}) : 'Never';
-  var settingsHtml = buildSettingsHtml(a.name, settings);
-  div.innerHTML =
-    '<div class="card-main">'+
+function buildCard(a){
+  var div=document.createElement('div');
+  div.id='card-'+a.name;
+  div.className='agent-card '+(a.status==='running'?'running':a.last_status==='error'?'error':'');
+  var lastRun=a.last_run?new Date(a.last_run).toLocaleString('en-SG',{hour12:true,hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'}):'Never';
+  div.innerHTML=
+    '<div class="card-main" onclick="openAgentDetail(\''+a.name+'\')" style="cursor:pointer">'+
     '  <div class="card-head">'+
-    '    <div><div class="card-title">'+esc(a.display_name)+'</div><div class="card-desc">'+esc(a.description)+'</div></div>'+
+    '    <div><div class="card-title">'+esc(a.display_name)+'</div>'+
+    '         <div class="card-desc">'+esc(a.description)+'</div></div>'+
     '    <span class="badge badge-'+badgeCls(a)+'" id="badge-'+a.name+'">'+badgeTxt(a)+'</span>'+
     '  </div>'+
     '  <div class="card-meta">'+
     '    <div class="meta-item"><strong>'+lastRun+'</strong>Last run</div>'+
     '    <div class="meta-item"><strong>Every '+a.interval_min+' min</strong>Interval</div>'+
-    '  </div>'+
-    '  <div class="card-controls">'+
-    '    <button class="btn btn-primary btn-sm" id="btn-run-'+a.name+'" onclick="runAgent(\''+a.name+'\')"+" '+(a.status==='running'?'disabled':'')+'>'+
-    '      '+(a.status==='running'?'⏳ Running…':'▶ New Only')+'</button>'+
-    (a.status!=='running'?'    <button class="btn btn-ghost btn-sm" onclick="runAgent(\''+a.name+'\',true)" title="Send all SOs ignoring sent history">▶ Send All</button>':'')+
-    (a.name==='low_price'?'    <button class="btn btn-ghost btn-sm" onclick="showSentAlerts()">📋 Sent Today</button>':'')+
-
-    '    '+(a.status==='running'?'<button class="btn btn-danger btn-sm" onclick="stopAgent(\''+a.name+'\')">⏹ Stop</button>':'')+
-    '    <div class="interval-wrap"><input type="number" value="'+a.interval_min+'" min="1" id="interval-'+a.name+'" onchange="updateInterval(\''+a.name+'\',this.value)" style="width:50px"><span>min</span></div>'+
-    '    <label class="toggle-wrap"><span class="toggle"><input type="checkbox" '+(a.enabled?'checked':'')+' onchange="toggleAgent(\''+a.name+'\',this.checked)"><span class="toggle-slider"></span></span>Schedule</label>'+
+    '    <div class="meta-item"><strong>'+(a.enabled?'On':'Off')+'</strong>Schedule</div>'+
     '  </div>'+
     '</div>'+
-    settingsHtml;
+    '<div class="card-hint">Click to open settings &amp; controls →</div>';
   return div;
 }
 
-function buildSettingsHtml(agentName, settings) {
-  if (!settings.length) return '';
-  var cats = {};
-  settings.forEach(function(s){ if(!cats[s.category]) cats[s.category]=[]; cats[s.category].push(s); });
-  var catLabels = {whatsapp:'WhatsApp',focus:'Focus ERP',pricing:'Pricing',schedule:'Schedule',reports:'Reports'};
-  var rows = Object.entries(cats).map(function(e){
-    var cat=e[0], items=e[1];
-    return '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">'+(catLabels[cat]||cat)+'</div>'+
-      items.map(function(s){
-        var isBool = s.key==='send_text'||s.key==='send_image';
-        var field = isBool
-          ? '<select class="setting-input" id="setting-'+agentName+'-'+s.key+'">'+
-            '<option value="true"'+(s.value==='true'?' selected':'')+'>On</option>'+
-            '<option value="false"'+(s.value!=='true'?' selected':'')+'>Off</option>'+
-            '</select>'
-          : '<input class="setting-input" id="setting-'+agentName+'-'+s.key+'" value="'+esc(s.value)+'">';
-        return '<div class="setting-row"><div class="setting-label">'+esc(s.label)+'</div>'+field+'</div>';
-      }).join('')+'<div style="height:6px"></div>';
-  }).join('');
-  return '<div class="card-settings">'+
-    '<button class="settings-toggle" onclick="toggleSettings(this)">⚙ Agent Settings<span class="arrow">▾</span></button>'+
-    '<div class="settings-body">'+rows+
-    '<button class="btn btn-ghost btn-sm" style="align-self:flex-end" onclick="saveSettings(\''+agentName+'\')">Save settings</button>'+
+function badgeCls(a){if(a.status==='running')return 'running';if(a.last_status==='error')return 'error';if(a.last_status==='success')return 'success';return 'idle';}
+function badgeTxt(a){if(a.status==='running')return '● Running';if(a.last_status==='error')return '✕ Error';if(a.last_status==='success')return '✓ Done';return '○ Idle';}
+
+function refreshAgentBadge(name,status){
+  var b=document.getElementById('badge-'+name);
+  if(b){
+    fetch('/api/agents').then(function(r){return r.json();}).then(function(agents){
+      var a=agents.find(function(x){return x.name===name;});
+      if(a&&b){b.className='badge badge-'+badgeCls(a);b.textContent=badgeTxt(a);}
+      if(currentAgent===name) updateDetailBadge(a);
+    });
+  }
+}
+
+// ── Agent detail page ─────────────────────────────────────────────────────────
+async function openAgentDetail(name){
+  currentAgent=name;
+  var agents=await fetch('/api/agents').then(function(r){return r.json();});
+  var a=agents.find(function(x){return x.name===name;});
+  if(!a) return;
+
+  document.getElementById('detail-name').textContent=a.display_name;
+  document.getElementById('detail-desc').textContent=a.description;
+  updateDetailBadge(a);
+
+  // Action buttons
+  var isRunning=a.status==='running';
+  var actionsHtml=
+    '<button class="btn btn-primary" id="detail-run-btn" onclick="runAgent(\''+name+'\')" '+(isRunning?'disabled':'')+'>'+
+    (isRunning?'⏳ Running…':'▶ Run Now')+'</button>'+
+    (!isRunning?'<button class="btn btn-ghost" onclick="runAgent(\''+name+'\',true)" title="Send all SOs ignoring sent history">▶ Send All</button>':'')+
+    (isRunning?'<button class="btn btn-danger" onclick="stopAgent(\''+name+'\')">⏹ Stop</button>':'')+
+    (name==='low_price'?'<button class="btn btn-ghost" onclick="showSentAlerts()">📋 Sent Today</button>':'');
+  document.getElementById('detail-actions').innerHTML=actionsHtml;
+
+  // Settings
+  var settings=await fetch('/api/agents/'+name+'/settings').then(function(r){return r.json();});
+  renderDetailSettings(name,a,settings);
+
+  // Show detail page
+  showPage('agent-detail',null);
+  document.getElementById('page-title').textContent=a.display_name;
+  document.getElementById('page-sub').textContent='Settings & Controls';
+}
+
+function updateDetailBadge(a){
+  if(!a) return;
+  var b=document.getElementById('detail-badge');
+  if(b){b.className='badge badge-'+badgeCls(a);b.textContent=badgeTxt(a);}
+}
+
+var CAT_LABELS={whatsapp:'WhatsApp',focus:'Focus ERP',pricing:'Pricing & Costs',
+                alerts:'Alerts',schedule:'Schedule',reports:'Reports'};
+var BOOL_KEYS=['send_text','send_image','skip_sent_sos'];
+
+function renderDetailSettings(agentName,agent,settings){
+  var cats={};
+  settings.forEach(function(s){if(!cats[s.category])cats[s.category]=[];cats[s.category].push(s);});
+
+  // Also add interval + enabled as a "schedule" virtual setting
+  var html='';
+
+  // Schedule card always first
+  html+='<div class="settings-section">'+
+    '<div class="section-label">Schedule</div>'+
+    '<div class="setting-row">'+
+    '  <div class="setting-label">Run interval<small>How often the agent checks Focus ERP</small></div>'+
+    '  <div style="display:flex;align-items:center;gap:6px">'+
+    '    <input type="number" id="detail-interval" value="'+agent.interval_min+'" min="1" style="width:60px;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:5px 8px;font-size:12px">'+
+    '    <span style="font-size:12px;color:var(--muted)">minutes</span></div>'+
+    '</div>'+
+    '<div class="setting-row">'+
+    '  <div class="setting-label">Auto-schedule<small>Run automatically on the interval</small></div>'+
+    '  <label class="toggle-switch"><input type="checkbox" id="detail-enabled" '+(agent.enabled?'checked':'')+'>'+
+    '    <span class="toggle-track"></span></label>'+
     '</div></div>';
-}
 
-function toggleSettings(btn) { btn.classList.toggle('open'); btn.nextElementSibling.classList.toggle('open'); }
-
-async function saveSettings(name) {
-  // Enforce at least one of send_text / send_image is on
-  if (name === 'low_price') {
-    var txtEl = document.getElementById('setting-low_price-send_text');
-    var imgEl = document.getElementById('setting-low_price-send_image');
-    if (txtEl && imgEl) {
-      var txtOn = txtEl.value.toLowerCase() === 'true';
-      var imgOn = imgEl.value.toLowerCase() === 'true';
-      if (!txtOn && !imgOn) {
-        alert('At least one of Send Text or Send Image must be enabled.');
-        txtEl.value = 'true'; // re-enable text
-        return;
+  Object.keys(cats).forEach(function(cat){
+    if(cat==='schedule') return;
+    html+='<div class="settings-section"><div class="section-label">'+(CAT_LABELS[cat]||cat)+'</div>';
+    cats[cat].forEach(function(s){
+      var isBool=BOOL_KEYS.indexOf(s.key)!==-1;
+      var field='';
+      if(isBool){
+        var checked=s.value==='true';
+        field='<label class="toggle-switch">'+
+          '<input type="checkbox" id="dsetting-'+agentName+'-'+s.key+'" '+
+          (checked?'checked':'')+' onchange="enforceBoolToggle(\''+agentName+'\',\''+s.key+'\',this)">'+
+          '<span class="toggle-track"></span></label>';
+      } else {
+        field='<input class="setting-input" id="dsetting-'+agentName+'-'+s.key+
+          '" value="'+esc(s.value)+'" placeholder="'+esc(s.label)+'">';
       }
-    }
-  }
-  var inputs = document.querySelectorAll('[id^="setting-'+name+'-"]');
-  for (var i=0; i<inputs.length; i++) {
-    var el = inputs[i]; var key = el.id.replace('setting-'+name+'-','');
-    await fetch('/api/agents/'+name+'/settings/'+key,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({value:el.value})});
-  }
-  alert('✅ Settings saved.');
+      html+='<div class="setting-row">'+
+        '<div class="setting-label">'+esc(s.label)+'</div>'+field+'</div>';
+    });
+    html+='</div>';
+  });
+
+  document.getElementById('detail-settings').innerHTML=html;
 }
 
-async function runAgent(name, forceAll) {
-  var body = forceAll ? JSON.stringify({force_all: true}) : '{}';
-  await fetch('/api/agents/'+name+'/run', {
-    method:'POST',
+function enforceBoolToggle(agentName,key,el){
+  if(key!=='send_text'&&key!=='send_image') return;
+  var other=key==='send_text'?'send_image':'send_text';
+  var otherEl=document.getElementById('dsetting-'+agentName+'-'+other);
+  if(!el.checked&&otherEl&&!otherEl.checked){
+    alert('At least one of Send Text or Send Image must be enabled.');
+    el.checked=true;
+  }
+}
+
+async function saveDetailSettings(){
+  if(!currentAgent) return;
+  var btn=document.getElementById('detail-save-btn');
+  btn.disabled=true; btn.textContent='Saving…';
+
+  // Save interval + enabled
+  var interval=document.getElementById('detail-interval');
+  var enabled=document.getElementById('detail-enabled');
+  if(interval) await fetch('/api/agents/'+currentAgent,{method:'PATCH',
     headers:{'Content-Type':'application/json'},
-    body: body
-  });
-  showPage('logs', document.querySelectorAll('nav button')[1]);
-}
-async function stopAgent(name) { await fetch('/api/agents/'+name+'/stop',{method:'POST'}); setTimeout(loadAgents,500); }
-async function toggleAgent(name,enabled) { await fetch('/api/agents/'+name,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:enabled})}); }
-async function updateInterval(name,val) { await fetch('/api/agents/'+name,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({interval_min:parseInt(val)})}); }
+    body:JSON.stringify({interval_min:parseInt(interval.value)})});
+  if(enabled) await fetch('/api/agents/'+currentAgent,{method:'PATCH',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({enabled:enabled.checked})});
 
-async function refreshCards() {
-  var agents = await fetch('/api/agents').then(function(r){ return r.json(); });
-  agents.forEach(function(a){
-    var badge=document.getElementById('badge-'+a.name); if(badge){badge.className='badge badge-'+badgeCls(a);badge.textContent=badgeTxt(a);}
-    var btn=document.getElementById('btn-run-'+a.name); if(btn){btn.disabled=a.status==='running';btn.textContent=a.status==='running'?'⏳ Running…':'▶ Run Now';}
-  });
+  // Save all settings inputs
+  var inputs=document.querySelectorAll('[id^="dsetting-'+currentAgent+'-"]');
+  for(var i=0;i<inputs.length;i++){
+    var el=inputs[i];
+    var key=el.id.replace('dsetting-'+currentAgent+'-','');
+    var value=el.type==='checkbox'?(el.checked?'true':'false'):el.value;
+    await fetch('/api/agents/'+currentAgent+'/settings/'+key,{
+      method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({value:value})});
+  }
+
+  btn.disabled=false; btn.textContent='✓ Saved';
+  setTimeout(function(){btn.textContent='Save Settings';},2000);
+}
+
+async function runAgent(name,forceAll){
+  var body=forceAll?JSON.stringify({force_all:true}):'{}';
+  await fetch('/api/agents/'+name+'/run',{method:'POST',headers:{'Content-Type':'application/json'},body:body});
+  // Refresh actions area
+  setTimeout(function(){openAgentDetail(name);},300);
+  // Switch to logs
+  showPage('logs',document.querySelectorAll('nav button')[1]);
+}
+
+async function stopAgent(name){
+  await fetch('/api/agents/'+name+'/stop',{method:'POST'});
+  setTimeout(function(){if(currentAgent===name)openAgentDetail(name);else loadAgents();},500);
 }
 
 // ── Logs ─────────────────────────────────────────────────────────────────────
-async function loadLogs() { allLogs = await fetch('/api/logs?limit=200').then(function(r){return r.json();}); }
-function renderLogs() {
-  var filter = (document.getElementById('log-filter')||{value:''}).value;
-  var search = ((document.getElementById('log-search')||{value:''}).value||'').toLowerCase();
-  var out    = document.getElementById('log-output');
-  var logs   = filter ? allLogs.filter(function(l){return l.agent===filter;}) : allLogs;
-  if (search) logs = logs.filter(function(l){return (l.message||'').toLowerCase().indexOf(search)!==-1;});
-  if (!logs.length) { out.innerHTML='<div class="log-empty">'+(allLogs.length?'No logs match search.':'No logs yet.')+'</div>'; return; }
-
-  function hlSearch(text) {
-    if (!search) return esc(text);
-    var parts = esc(text).split(new RegExp('('+esc(search).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'));
-    return parts.map(function(p,i){ return i%2===1?'<mark style="background:#e3b341;color:#1a1a1a;border-radius:2px;padding:0 2px">'+p+'</mark>':p; }).join('');
+async function loadLogs(){allLogs=await fetch('/api/logs?limit=200').then(function(r){return r.json();});}
+function renderLogs(){
+  var filter=(document.getElementById('log-filter')||{value:''}).value;
+  var search=((document.getElementById('log-search')||{value:''}).value||'').toLowerCase();
+  var out=document.getElementById('log-output');
+  var logs=filter?allLogs.filter(function(l){return l.agent===filter;}):allLogs;
+  if(search) logs=logs.filter(function(l){return(l.message||'').toLowerCase().indexOf(search)!==-1;});
+  if(!logs.length){out.innerHTML='<div class="log-empty">'+(allLogs.length?'No logs match search.':'No logs yet.')+'</div>';return;}
+  function hl(text){
+    if(!search) return esc(text);
+    var parts=esc(text).split(new RegExp('('+esc(search).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'));
+    return parts.map(function(p,i){return i%2===1?'<mark style="background:#e3b341;color:#1a1a1a;border-radius:2px;padding:0 2px">'+p+'</mark>':p;}).join('');
   }
-
-  out.innerHTML = logs.map(function(l){
-    var isMarker = l.message && l.message.indexOf('\u2501') !== -1;
-    var extra = isMarker ? 'color:var(--accent2);font-weight:600;letter-spacing:.02em' : '';
+  out.innerHTML=logs.map(function(l){
+    var isMarker=l.message&&l.message.indexOf('\u2501')!==-1;
+    var extra=isMarker?'color:var(--accent2);font-weight:600':'';
     return '<div class="log-line '+(l.level||'')+'" style="'+extra+'">'+
       '<span class="log-ts">'+(l.ts||'')+'</span>'+
       '<span class="log-agent">'+agentShort(l.agent)+'</span>'+
-      '<span class="log-msg">'+hlSearch(l.message||'')+'</span></div>';
+      '<span class="log-msg">'+hl(l.message||'')+'</span></div>';
   }).join('');
   scrollLogs();
 }
-function appendLog(l) {
-  var out=document.getElementById('log-output'); if(!out) return;
-  var filter=document.getElementById('log-filter').value;
-  if(filter && l.agent!==filter) return;
-  var empty=out.querySelector('.log-empty'); if(empty) empty.remove();
+function appendLog(l){
+  var out=document.getElementById('log-output');if(!out)return;
+  var filter=(document.getElementById('log-filter')||{value:''}).value;
+  if(filter&&l.agent!==filter)return;
+  out.querySelector('.log-empty')&&out.querySelector('.log-empty').remove();
   var d=document.createElement('div');
+  var isMarker=l.message&&l.message.indexOf('\u2501')!==-1;
   d.className='log-line '+(l.level||'');
-  d.innerHTML='<span class="log-ts">'+(l.ts||'')+'</span><span class="log-agent">'+agentShort(l.agent)+'</span><span class="log-msg">'+esc(l.message)+'</span>';
-  out.appendChild(d); scrollLogs();
+  if(isMarker)d.style.cssText='color:var(--accent2);font-weight:600';
+  d.innerHTML='<span class="log-ts">'+(l.ts||'')+'</span>'+
+    '<span class="log-agent">'+agentShort(l.agent)+'</span>'+
+    '<span class="log-msg">'+esc(l.message||'')+'</span>';
+  out.appendChild(d);scrollLogs();
 }
 function scrollLogs(){var out=document.getElementById('log-output');var a=document.getElementById('log-auto');if(out&&a&&a.checked)out.scrollTop=out.scrollHeight;}
-async function clearLogs(){var f=document.getElementById('log-filter').value;await fetch(f?'/api/logs?agent='+f:'/api/logs',{method:'DELETE'});allLogs=f?allLogs.filter(function(l){return l.agent!==f;}):[];renderLogs();}
+async function clearLogs(){var f=(document.getElementById('log-filter')||{value:''}).value;await fetch(f?'/api/logs?agent='+f:'/api/logs',{method:'DELETE'});allLogs=f?allLogs.filter(function(l){return l.agent!==f;}):[];renderLogs();}
 function agentShort(a){return{low_price:'LowPrice',data_sync:'DataSync'}[a]||(a||'');}
 
-// ── Landing Categories ───────────────────────────────────────────────────────
-var pts = [];
-var ptEditId = null;
+// ── Sent Alerts ───────────────────────────────────────────────────────────────
+async function showSentAlerts(){
+  var panel=document.getElementById('sent-panel');
+  panel.style.display='flex';await loadSentAlerts();
+}
+async function loadSentAlerts(){
+  var list=document.getElementById('sent-list');list.textContent='Loading…';
+  var data=await fetch('/api/sent-alerts?agent=low_price&days=1').then(function(r){return r.json();});
+  if(!data.length){list.textContent='No SOs sent today.';return;}
+  var pt_map={};pts.forEach(function(p){pt_map[p.id]=p.name;});
+  list.innerHTML=data.map(function(r){
+    var t=r.sent_at?new Date(r.sent_at).toLocaleTimeString('en-SG'):'';
+    var itemsHtml=r.items&&r.items.length?'<div style="color:var(--muted);font-size:10px;padding:2px 0 4px 8px">'+r.items.map(function(i){return '• '+esc(i);}).join('<br>')+'</div>':'';
+    return '<div style="padding:5px 0;border-bottom:1px solid var(--border)">'+
+      '<strong style="color:var(--text)">'+esc(r.voucher)+'</strong>'+
+      '<span style="float:right;color:var(--muted)">'+t+'</span>'+itemsHtml+'</div>';
+  }).join('');
+}
+async function clearSentAlerts(){
+  if(!confirm('Clear all sent alerts for today?'))return;
+  await fetch('/api/sent-alerts?agent=low_price',{method:'DELETE'});
+  await loadSentAlerts();
+}
 
-var PT_LABELS = {
-  standard_import:'Standard Import', local_purchase:'Local Purchase',
-  local_repacking:'Local Repacking', import_repacking:'Import Repacking',
-  stockpile_rice:'Stockpile Rice'
-};
-
-async function loadPurchaseTypes() {
-  pts = await fetch('/api/purchase-types').then(function(r){return r.json();});
-  var tbody = document.getElementById('pt-body');
-  if (!pts.length) {
-    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">No purchase types yet.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = pts.map(function(c){
-    var ptl = PT_LABELS[c.purchase_type]||c.purchase_type;
-    var defBadge = c.is_default ? '<span class="pct-badge pct-low" style="font-size:10px">★ Default</span> ' : '';
-    var pctVal = c.purchase_type==='standard_import'||c.purchase_type==='import_repacking' ? c.landing_pct+'%' : '—';
-    var repVal = c.repacking_cost ? '$'+parseFloat(c.repacking_cost).toFixed(2) : '—';
-    var stkVal = c.stockpile_charge ? '$'+parseFloat(c.stockpile_charge).toFixed(2) : '—';
+// ── Purchase Types ────────────────────────────────────────────────────────────
+var PT_LABELS={standard_import:'Standard Import',local_purchase:'Local Purchase',
+  local_repacking:'Local Repacking',import_repacking:'Import Repacking',stockpile_rice:'Stockpile Rice'};
+async function loadPurchaseTypes(){
+  pts=await fetch('/api/purchase-types').then(function(r){return r.json();});
+  var tbody=document.getElementById('pt-body');
+  if(!pts.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">No purchase types yet.</td></tr>';return;}
+  tbody.innerHTML=pts.map(function(c){
+    var ptl=PT_LABELS[c.purchase_type]||c.purchase_type;
+    var defBadge=c.is_default?'<span class="pct-badge pct-low" style="font-size:10px">★ Default</span> ':'';
     return '<tr>'+
       '<td>'+defBadge+'<strong>'+esc(c.name)+'</strong></td>'+
       '<td style="color:var(--muted);font-size:12px">'+ptl+'</td>'+
-      '<td style="color:var(--muted);text-align:center">'+pctVal+'</td>'+
-      '<td style="color:var(--muted);text-align:center">'+repVal+'</td>'+
-      '<td style="color:var(--muted);text-align:center">'+stkVal+'</td>'+
+      '<td style="color:var(--muted);text-align:center">'+(c.landing_pct!=null?c.landing_pct+'%':'—')+'</td>'+
+      '<td style="color:var(--muted);text-align:center">'+(c.repacking_cost?'$'+parseFloat(c.repacking_cost).toFixed(2):'—')+'</td>'+
+      '<td style="color:var(--muted);text-align:center">'+(c.stockpile_charge?'$'+parseFloat(c.stockpile_charge).toFixed(2):'—')+'</td>'+
       '<td style="color:var(--muted);font-size:11px">'+esc(c.notes||'')+'</td>'+
       '<td style="display:flex;gap:4px">'+
       '<button class="btn btn-ghost btn-sm" onclick="editPt('+c.id+')">Edit</button>'+
-      (c.is_default ? '' : '<button class="btn btn-danger btn-sm" onclick="deletePt('+c.id+')">Del</button>')+
+      (c.is_default?'':'<button class="btn btn-danger btn-sm" onclick="deletePt('+c.id+')">Del</button>')+
       '</td></tr>';
   }).join('');
-
-  // Update purchase type dropdown in product form
-  var sel = document.getElementById('pb-cat');
-  if (sel) {
-    sel.innerHTML = pts.map(function(c){
-      var lbl = c.name + (c.is_default ? ' (default)' : '');
-      return '<option value="'+c.id+'">'+esc(lbl)+'</option>';
-    }).join('');
-  }
+  var sel=document.getElementById('pb-cat');
+  var bulkSel=document.getElementById('pb-bulk-pt');
+  var opts=pts.map(function(p){return '<option value="'+p.id+'">'+esc(p.name)+(p.is_default?' (default)':'')+'</option>';}).join('');
+  if(sel) sel.innerHTML=opts;
+  if(bulkSel) bulkSel.innerHTML='<option value="">— Assign Purchase Type —</option>'+opts;
 }
-
-function onPtTypeChange() {
-  var t = document.getElementById('pt-type').value;
-  document.getElementById('pt-pct-wrap').style.display    = (t==='standard_import'||t==='import_repacking') ? '' : 'none';
-  document.getElementById('pt-repack-wrap').style.display = (t==='local_repacking'||t==='import_repacking') ? '' : 'none';
-  document.getElementById('pt-stock-wrap').style.display  = t==='stockpile_rice' ? '' : 'none';
+function onPtTypeChange(){
+  var t=document.getElementById('pt-type').value;
+  document.getElementById('pt-pct-wrap').style.display=(t==='standard_import'||t==='import_repacking')?'':'none';
+  document.getElementById('pt-repack-wrap').style.display=(t==='local_repacking'||t==='import_repacking')?'':'none';
+  document.getElementById('pt-stock-wrap').style.display=t==='stockpile_rice'?'':'none';
 }
-
-function showAddPt() {
-  ptEditId=null;
-  document.getElementById('pt-name').value='';
-  document.getElementById('pt-type').value='standard_import';
-  document.getElementById('pt-pct').value='5.0';
-  document.getElementById('pt-repack').value='0.00';
-  document.getElementById('pt-stock').value='0.00';
-  document.getElementById('pt-notes').value='';
-  document.getElementById('pt-default').checked=false;
-  onPtTypeChange();
-  document.getElementById('pt-form').classList.add('visible');
+function showAddPt(){ptEditId=null;document.getElementById('pt-name').value='';document.getElementById('pt-type').value='standard_import';document.getElementById('pt-pct').value='5.0';document.getElementById('pt-repack').value='0.00';document.getElementById('pt-stock').value='0.00';document.getElementById('pt-notes').value='';document.getElementById('pt-default').checked=false;onPtTypeChange();document.getElementById('pt-form').classList.add('visible');}
+function cancelPt(){document.getElementById('pt-form').classList.remove('visible');ptEditId=null;}
+function editPt(id){var c=pts.find(function(x){return x.id===id;});if(!c)return;ptEditId=id;document.getElementById('pt-name').value=c.name;document.getElementById('pt-type').value=c.purchase_type||'standard_import';document.getElementById('pt-pct').value=c.landing_pct||5;document.getElementById('pt-repack').value=c.repacking_cost||0;document.getElementById('pt-stock').value=c.stockpile_charge||0;document.getElementById('pt-notes').value=c.notes||'';document.getElementById('pt-default').checked=!!c.is_default;onPtTypeChange();document.getElementById('pt-form').classList.add('visible');}
+async function savePt(){
+  var name=document.getElementById('pt-name').value.trim();if(!name){alert('Name required.');return;}
+  var entry={name:name,purchase_type:document.getElementById('pt-type').value,landing_pct:parseFloat(document.getElementById('pt-pct').value)||0,repacking_cost:parseFloat(document.getElementById('pt-repack').value)||0,stockpile_charge:parseFloat(document.getElementById('pt-stock').value)||0,notes:document.getElementById('pt-notes').value.trim(),is_default:document.getElementById('pt-default').checked};
+  var res=await fetch(ptEditId?'/api/purchase-types/'+ptEditId:'/api/purchase-types',{method:ptEditId?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)});
+  if(res.ok){cancelPt();loadPurchaseTypes();}else{alert('Save failed: '+(await res.text()));}
 }
-function cancelPt() { document.getElementById('pt-form').classList.remove('visible'); ptEditId=null; }
-
-function editPt(id) {
-  var c = pts.find(function(x){return x.id===id;});
-  if (!c) return;
-  ptEditId=id;
-  document.getElementById('pt-name').value=c.name;
-  document.getElementById('pt-type').value=c.purchase_type||'standard_import';
-  document.getElementById('pt-pct').value=c.landing_pct||5;
-  document.getElementById('pt-repack').value=c.repacking_cost||0;
-  document.getElementById('pt-stock').value=c.stockpile_charge||0;
-  document.getElementById('pt-notes').value=c.notes||'';
-  document.getElementById('pt-default').checked=!!c.is_default;
-  onPtTypeChange();
-  document.getElementById('pt-form').classList.add('visible');
-}
-
-async function savePt() {
-  var name = document.getElementById('pt-name').value.trim();
-  if (!name) { alert('Category name required.'); return; }
-  var entry = {
-    name: name,
-    purchase_type:    document.getElementById('pt-type').value,
-    landing_pct:      parseFloat(document.getElementById('pt-pct').value)||0,
-    repacking_cost:   parseFloat(document.getElementById('pt-repack').value)||0,
-    stockpile_charge: parseFloat(document.getElementById('pt-stock').value)||0,
-    notes:            document.getElementById('pt-notes').value.trim(),
-    is_default:       document.getElementById('pt-default').checked,
-  };
-  var res = await fetch(ptEditId?'/api/purchase-types/'+ptEditId:'/api/purchase-types', {
-    method:ptEditId?'PUT':'POST',
-    headers:{'Content-Type':'application/json'}, body:JSON.stringify(entry)
-  });
-  if (res.ok) { cancelPt(); loadPurchaseTypes(); }
-  else { alert('Save failed: '+(await res.text())); }
-}
-
-async function deletePt(id) {
-  if (!confirm('Delete this purchase type?')) return;
-  var res = await fetch('/api/purchase-types/'+id, {method:'DELETE'});
-  if (res.ok) loadPurchaseTypes();
-  else alert(await res.text());
-}
+async function deletePt(id){if(!confirm('Delete this purchase type?'))return;var res=await fetch('/api/purchase-types/'+id,{method:'DELETE'});if(res.ok)loadPurchaseTypes();else alert(await res.text());}
+var ptSectionOpen=true;
+function togglePtSection(){ptSectionOpen=!ptSectionOpen;document.getElementById('pt-section').style.display=ptSectionOpen?'':'none';document.getElementById('pt-arrow').textContent=ptSectionOpen?'▾':'▸';}
 
 // ── Price Book ────────────────────────────────────────────────────────────────
-
-function _catOptions(selectedId) {
-  return pts.map(function(c){
-    var sel = (c.id===selectedId) ? ' selected' : '';
-    return '<option value="'+c.id+'"'+sel+'>'+esc(c.name)+(c.is_default?' (default)':'')+'</option>';
-  }).join('');
+function calcFinalCost(item){
+  var b=item.buying_price;if(b==null||b==='')return null;b=parseFloat(b);
+  var defaultPt=pts.find(function(p){return p.is_default;})||pts[0];
+  var pt=item.purchase_type_id?pts.find(function(p){return p.id===item.purchase_type_id;}):defaultPt;
+  if(!pt)return b;
+  var ptype=pt.purchase_type||'standard_import',pct=parseFloat(pt.landing_pct||0),repack=parseFloat(pt.repacking_cost||0),stock=parseFloat(pt.stockpile_charge||0);
+  if(ptype==='local_purchase')return b;
+  if(ptype==='local_repacking')return b+repack;
+  if(ptype==='import_repacking')return b*(1+pct/100)+repack;
+  if(ptype==='stockpile_rice')return b+stock;
+  return b*(1+pct/100);
 }
-
-var pbSortAsc = true;
-
-async function loadPb() {
-  var items = await fetch('/api/pricebook').then(function(r){return r.json();});
-  pbItems = items;
-  // Populate bulk purchase type dropdown
-  var bulkSel = document.getElementById('pb-bulk-pt');
-  if (bulkSel) {
-    bulkSel.innerHTML = '<option value="">— Assign Purchase Type —</option>' +
-      pts.map(function(p){return '<option value="'+p.id+'">'+esc(p.name)+'</option>';}).join('');
-  }
-  renderPbTable();
+async function loadPb(){
+  var items=await fetch('/api/pricebook').then(function(r){return r.json();});
+  pbItems=items;renderPbTable();
 }
-
-function renderPbTable() {
-  var search = (document.getElementById('pb-search')||{value:''}).value.toLowerCase();
-  var filtered = pbItems.filter(function(item){
-    return !search || item.item_name.toLowerCase().indexOf(search) !== -1 ||
-           (item.item_code||'').toLowerCase().indexOf(search) !== -1;
-  });
-  // Sort by name
-  filtered.sort(function(a,b){
-    var cmp = a.item_name.localeCompare(b.item_name);
-    return pbSortAsc ? cmp : -cmp;
-  });
-
-  var tbody = document.getElementById('pb-body');
-  if (!filtered.length) {
-    tbody.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:32px">'+(pbItems.length?'No items match your search.':'No product assignments yet.')+'</td></tr>';
-    return;
-  }
-  var fmt = function(v){ return v!=null&&v!==''&&v!==undefined ? parseFloat(v).toFixed(2) : '—'; };
-  tbody.innerHTML = filtered.map(function(item){
-    var upd = item.updated_at ? new Date(item.updated_at).toLocaleDateString('en-SG') : '';
-    var defaultPt = pts.find(function(p){return p.is_default;}) || pts[0];
-    var pt = item.purchase_type_id
-      ? pts.find(function(c){return c.id===item.purchase_type_id;})
-      : defaultPt;
-    var ptName = pt ? esc(pt.name) : '—';
+function renderPbTable(){
+  var search=(document.getElementById('pb-search')||{value:''}).value.toLowerCase();
+  var filtered=pbItems.filter(function(item){return !search||item.item_name.toLowerCase().indexOf(search)!==-1||(item.item_code||'').toLowerCase().indexOf(search)!==-1;});
+  filtered.sort(function(a,b){var c=a.item_name.localeCompare(b.item_name);return pbSortAsc?c:-c;});
+  var tbody=document.getElementById('pb-body');
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:32px">'+(pbItems.length?'No items match.':'No assignments yet.')+'</td></tr>';return;}
+  var fmt=function(v){return v!=null&&v!==''&&v!==undefined?parseFloat(v).toFixed(2):'—';};
+  tbody.innerHTML=filtered.map(function(item){
+    var upd=item.updated_at?new Date(item.updated_at).toLocaleDateString('en-SG'):'';
+    var defaultPt=pts.find(function(p){return p.is_default;})||pts[0];
+    var pt=item.purchase_type_id?pts.find(function(c){return c.id===item.purchase_type_id;}):defaultPt;
+    var ptName=pt?esc(pt.name):'—';
+    var fc=calcFinalCost(item);
     return '<tr id="pb-row-'+item.id+'">'+
       '<td><input type="checkbox" class="pb-chk" value="'+item.id+'" onchange="onRowCheck()"></td>'+
       '<td><strong style="font-size:12px">'+esc(item.item_name)+'</strong></td>'+
@@ -668,7 +726,7 @@ function renderPbTable() {
       '<td style="text-align:right;font-size:12px">'+fmt(item.rate)+'</td>'+
       '<td style="text-align:right;font-size:12px;color:var(--warn)">'+fmt(item.min_sale_price)+'</td>'+
       '<td style="text-align:right;font-size:12px;color:var(--accent)">'+fmt(item.buying_price)+'</td>'+
-      (function(){var fc=calcFinalCost(item);return '<td style="text-align:right;font-size:12px;font-weight:600;color:#e3b341">'+(fc!=null?'$'+fc.toFixed(2):'—')+'</td>';})()+ 
+      '<td style="text-align:right;font-size:12px;font-weight:600;color:#e3b341">'+(fc!=null?'$'+fc.toFixed(2):'—')+'</td>'+
       '<td><span class="pct-badge pct-mid" style="font-size:10px">'+ptName+'</span></td>'+
       '<td style="color:var(--muted);font-size:11px">'+upd+'</td>'+
       '<td style="display:flex;gap:4px">'+
@@ -677,298 +735,103 @@ function renderPbTable() {
       '</td></tr>';
   }).join('');
 }
-
-function togglePbSort() {
-  pbSortAsc = !pbSortAsc;
-  var btn = document.getElementById('pb-sort-btn');
-  if (btn) btn.textContent = pbSortAsc ? 'Name A→Z' : 'Name Z→A';
-  renderPbTable();
-}
-
-// ── Multi-select ──────────────────────────────────────────────────────────
-function getSelectedIds() {
-  return Array.from(document.querySelectorAll('.pb-chk:checked'))
-    .map(function(c){return parseInt(c.value);});
-}
-
-function onRowCheck() {
-  var ids = getSelectedIds();
-  var bar = document.getElementById('pb-bulk-bar');
-  var cnt = document.getElementById('pb-sel-count');
-  if (bar) bar.style.display = ids.length ? 'flex' : 'none';
-  if (cnt) cnt.textContent   = ids.length + ' selected';
-  // Update select-all checkbox state
-  var all  = document.getElementById('pb-select-all');
-  var chks = document.querySelectorAll('.pb-chk');
-  if (all) all.indeterminate = ids.length > 0 && ids.length < chks.length;
-  if (all) all.checked = ids.length === chks.length && chks.length > 0;
-}
-
-function toggleSelectAll(master) {
-  document.querySelectorAll('.pb-chk').forEach(function(c){c.checked=master.checked;});
-  onRowCheck();
-}
-
-function clearSelection() {
-  document.querySelectorAll('.pb-chk').forEach(function(c){c.checked=false;});
-  var all = document.getElementById('pb-select-all');
-  if (all) { all.checked=false; all.indeterminate=false; }
-  onRowCheck();
-}
-
-async function applyBulk() {
-  var ids   = getSelectedIds();
-  var ptId  = document.getElementById('pb-bulk-pt').value;
-  if (!ids.length) { alert('No items selected.'); return; }
-  if (!ptId && !confirm('This will clear the purchase type for '+ids.length+' item(s). Continue?')) return;
-  var res = await fetch('/api/pricebook/bulk', {
-    method:'PATCH', headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ids:ids, purchase_type_id:ptId?parseInt(ptId):null})
-  });
-  if (res.ok) { clearSelection(); await loadPb(); }
-  else alert('Bulk update failed.');
-}
-
-function inlineEditPb(id) {
-  var item = pbItems.find(function(i){return i.id===id;}); if(!item) return;
-  // Restore any previously editing row first
-  if (pbEditId && pbEditId !== id) loadPb();
-  pbEditId = id;
-  var row = document.getElementById('pb-row-'+id); if(!row) return;
-
-  var ptOpts = _catOptions(item.purchase_type_id);
-  var iStyle = 'background:var(--surface2);border:1px solid var(--accent2);color:var(--text);border-radius:4px;padding:4px 7px;font-size:12px;font-family:var(--font);width:100%';
-  var sStyle = 'background:var(--surface2);border:1px solid var(--accent2);color:var(--text);border-radius:4px;padding:4px 6px;font-size:11px;font-family:var(--font);width:100%';
-
-  row.innerHTML =
-    '<td><input type="checkbox" class="pb-chk" value="'+id+'" onchange="onRowCheck()"></td>'+
+function togglePbSort(){pbSortAsc=!pbSortAsc;var btn=document.getElementById('pb-sort-btn');if(btn)btn.textContent=pbSortAsc?'Name A→Z':'Name Z→A';renderPbTable();}
+function _catOptions(selectedId){return pts.map(function(c){var sel=(c.id===selectedId)?' selected':'';return '<option value="'+c.id+'"'+sel+'>'+esc(c.name)+(c.is_default?' (default)':'')+'</option>';}).join('');}
+function inlineEditPb(id){
+  var item=pbItems.find(function(i){return i.id===id;});if(!item)return;
+  if(pbEditId&&pbEditId!==id)loadPb();
+  pbEditId=id;
+  var row=document.getElementById('pb-row-'+id);if(!row)return;
+  var iStyle='background:var(--surface2);border:1px solid var(--accent2);color:var(--text);border-radius:4px;padding:4px 7px;font-size:12px;font-family:var(--font);width:100%';
+  var sStyle='background:var(--surface2);border:1px solid var(--accent2);color:var(--text);border-radius:4px;padding:4px 6px;font-size:11px;font-family:var(--font);width:100%';
+  row.innerHTML='<td><input type="checkbox" class="pb-chk" value="'+id+'" onchange="onRowCheck()"></td>'+
     '<td colspan="2"><input id="ie-name-'+id+'" style="'+iStyle+'" value="'+esc(item.item_name||'')+'"><br>'+
     '<input id="ie-code-'+id+'" style="'+iStyle+';margin-top:3px;font-size:10px" placeholder="Item Code" value="'+esc(item.item_code||'')+'"></td>'+
-    '<td><input id="ie-unit-'+id+'" style="'+iStyle+'" placeholder="Unit" value="'+esc(item.unit_name||'')+'"></td>'+
+    '<td><input id="ie-unit-'+id+'" style="'+iStyle+'" value="'+esc(item.unit_name||'')+'"></td>'+
     '<td><input id="ie-rate-'+id+'" type="number" step="0.01" style="'+iStyle+';text-align:right" value="'+(item.rate!=null?item.rate:'')+'"></td>'+
     '<td><input id="ie-minsale-'+id+'" type="number" step="0.01" style="'+iStyle+';text-align:right" value="'+(item.min_sale_price!=null?item.min_sale_price:'')+'"></td>'+
     '<td><input id="ie-buying-'+id+'" type="number" step="0.01" style="'+iStyle+';text-align:right" value="'+(item.buying_price!=null?item.buying_price:'')+'"></td>'+
     '<td><span style="color:var(--muted);font-size:10px">computed</span></td>'+
-    '<td><select id="ie-pt-'+id+'" style="'+sStyle+'">'+ptOpts+'</select></td>'+
+    '<td><select id="ie-pt-'+id+'" style="'+sStyle+'">'+_catOptions(item.purchase_type_id)+'</select></td>'+
     '<td style="color:var(--muted);font-size:10px">'+(item.updated_at?new Date(item.updated_at).toLocaleDateString('en-SG'):'')+'</td>'+
     '<td style="display:flex;gap:4px">'+
     '<button class="btn btn-primary btn-sm" onclick="saveInlinePb('+id+')">Save</button>'+
-    '<button class="btn btn-ghost btn-sm" onclick="loadPb()">✕</button>'+
-    '</td>';
+    '<button class="btn btn-ghost btn-sm" onclick="loadPb()">✕</button></td>';
   document.getElementById('ie-name-'+id).focus();
 }
-
-async function saveInlinePb(id) {
-  var name = document.getElementById('ie-name-'+id).value.trim();
-  if(!name){alert('Item name required.');return;}
-  var toFloat = function(eid){var v=document.getElementById(eid).value; return v!==''?parseFloat(v):null;};
-  var ptId = document.getElementById('ie-pt-'+id).value;
-  var entry = {
-    item_name:        name,
-    item_code:        document.getElementById('ie-code-'+id).value.trim(),
-    unit_name:        document.getElementById('ie-unit-'+id).value.trim(),
-    currency:         'SGD',
-    rate:             toFloat('ie-rate-'+id),
-    min_sale_price:   toFloat('ie-minsale-'+id),
-    buying_price:     toFloat('ie-buying-'+id),
-    purchase_type_id: ptId ? parseInt(ptId) : null,
-    notes:            ''
-  };
-  var res = await fetch('/api/pricebook/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)});
-  if(res.ok){ pbEditId=null; loadPb(); } else alert('Save failed.');
+async function saveInlinePb(id){
+  var name=document.getElementById('ie-name-'+id).value.trim();if(!name){alert('Item name required.');return;}
+  var toFloat=function(eid){var v=document.getElementById(eid).value;return v!==''?parseFloat(v):null;};
+  var ptId=document.getElementById('ie-pt-'+id).value;
+  var entry={item_name:name,item_code:document.getElementById('ie-code-'+id).value.trim(),unit_name:document.getElementById('ie-unit-'+id).value.trim(),currency:'SGD',rate:toFloat('ie-rate-'+id),min_sale_price:toFloat('ie-minsale-'+id),buying_price:toFloat('ie-buying-'+id),purchase_type_id:ptId?parseInt(ptId):null,notes:''};
+  var res=await fetch('/api/pricebook/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)});
+  if(res.ok){pbEditId=null;loadPb();}else alert('Save failed.');
 }
-
-function showAddForm(){
-  pbEditId=null;
-  ['pb-name','pb-code','pb-unit','pb-notes'].forEach(function(id){document.getElementById(id).value='';});
-  document.getElementById('pb-currency').value='SGD';
-  ['pb-rate','pb-minsale','pb-buying'].forEach(function(id){document.getElementById(id).value='';});
-  document.getElementById('add-form').classList.add('visible');
-}
-function cancelPb(){ document.getElementById('add-form').classList.remove('visible'); pbEditId=null; }
-
+function showAddForm(){pbEditId=null;['pb-name','pb-code','pb-unit','pb-notes'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('pb-currency').value='SGD';['pb-rate','pb-minsale','pb-buying'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('add-form').classList.add('visible');}
+function cancelPb(){document.getElementById('add-form').classList.remove('visible');pbEditId=null;}
 async function savePb(){
-  var name=document.getElementById('pb-name').value.trim();
-  if(!name){alert('Item name required.');return;}
+  var name=document.getElementById('pb-name').value.trim();if(!name){alert('Item name required.');return;}
   var catId=document.getElementById('pb-cat').value;
-  var toFloat=function(id){var v=document.getElementById(id).value; return v!==''?parseFloat(v):null;};
-  var entry={
-    item_name:name,
-    item_code:document.getElementById('pb-code').value.trim(),
-    unit_name:document.getElementById('pb-unit').value.trim(),
-    currency:document.getElementById('pb-currency').value.trim()||'SGD',
-    rate:toFloat('pb-rate'),
-    min_sale_price:toFloat('pb-minsale'),
-    buying_price:toFloat('pb-buying'),
-    purchase_type_id:catId?parseInt(catId):null,
-    notes:document.getElementById('pb-notes').value.trim()
-  };
-  var url=pbEditId?'/api/pricebook/'+pbEditId:'/api/pricebook';
-  var method=pbEditId?'PUT':'POST';
-  var res=await fetch(url,{method:method,headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)});
+  var toFloat=function(id){var v=document.getElementById(id).value;return v!==''?parseFloat(v):null;};
+  var entry={item_name:name,item_code:document.getElementById('pb-code').value.trim(),unit_name:document.getElementById('pb-unit').value.trim(),currency:document.getElementById('pb-currency').value.trim()||'SGD',rate:toFloat('pb-rate'),min_sale_price:toFloat('pb-minsale'),buying_price:toFloat('pb-buying'),purchase_type_id:catId?parseInt(catId):null,notes:document.getElementById('pb-notes').value.trim()};
+  var res=await fetch('/api/pricebook',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)});
   if(res.ok){cancelPb();loadPb();}else{alert('Save failed.');console.error(await res.text());}
 }
-async function deletePb(id){
-  if(!confirm('Remove this assignment?'))return;
-  var res=await fetch('/api/pricebook/'+id,{method:'DELETE'});
-  if(res.ok) loadPb();
-}
+async function deletePb(id){if(!confirm('Remove this assignment?'))return;var res=await fetch('/api/pricebook/'+id,{method:'DELETE'});if(res.ok)loadPb();}
 
-// ── Category toggle ────────────────────────────────────────────────────────
-var ptSectionOpen = true;
-function togglePtSection(){
-  ptSectionOpen = !ptSectionOpen;
-  document.getElementById('pt-section').style.display = ptSectionOpen ? '' : 'none';
-  document.getElementById('pt-arrow').textContent = ptSectionOpen ? '▾' : '▸';
-}
+// ── Multi-select bulk ────────────────────────────────────────────────────────
+function getSelectedIds(){return Array.from(document.querySelectorAll('.pb-chk:checked')).map(function(c){return parseInt(c.value);});}
+function onRowCheck(){var ids=getSelectedIds();var bar=document.getElementById('pb-bulk-bar');var cnt=document.getElementById('pb-sel-count');if(bar)bar.style.display=ids.length?'flex':'none';if(cnt)cnt.textContent=ids.length+' selected';var all=document.getElementById('pb-select-all');var chks=document.querySelectorAll('.pb-chk');if(all){all.indeterminate=ids.length>0&&ids.length<chks.length;all.checked=ids.length===chks.length&&chks.length>0;}}
+function toggleSelectAll(master){document.querySelectorAll('.pb-chk').forEach(function(c){c.checked=master.checked;});onRowCheck();}
+function clearSelection(){document.querySelectorAll('.pb-chk').forEach(function(c){c.checked=false;});var all=document.getElementById('pb-select-all');if(all){all.checked=false;all.indeterminate=false;}onRowCheck();}
+async function applyBulk(){var ids=getSelectedIds();var ptId=document.getElementById('pb-bulk-pt').value;if(!ids.length){alert('No items selected.');return;}if(!ptId&&!confirm('Clear purchase type for '+ids.length+' item(s)?'))return;var res=await fetch('/api/pricebook/bulk',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:ids,purchase_type_id:ptId?parseInt(ptId):null})});if(res.ok){clearSelection();await loadPb();}else alert('Bulk update failed.');}
 
-// ── Utils ─────────────────────────────────────────────────────────────────────
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-
-// ── Pricebook Import ─────────────────────────────────────────────────────────
-async function importPricebook(input) {
-  var file = input.files[0];
-  if (!file) return;
-  input.value = '';  // reset so same file can be re-imported
-
-  var panel   = document.getElementById('import-results');
-  var summary = document.getElementById('import-summary');
-  var unmatched = document.getElementById('import-unmatched');
-
-  panel.style.display   = 'flex';
-  summary.innerHTML     = '<span style="color:var(--muted)">⏳ Importing…</span>';
-  unmatched.innerHTML   = '';
-
-  var formData = new FormData();
-  formData.append('file', file);
-
-  try {
-    var res = await fetch('/api/pricebook/import', {method:'POST', body:formData});
-    var data = await res.json();
-
-    if (!res.ok) {
-      summary.innerHTML = '<span style="color:var(--danger)">❌ ' + esc(data.detail||'Import failed') + '</span>';
-      return;
-    }
-
-    // Summary chips
-    summary.innerHTML =
-      '<span style="background:#1a3a1a;color:#56d364;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600">✅ ' + data.updated + ' updated</span>' +
-      '<span style="background:#1a3a6e;color:#79c0ff;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600">➕ ' + data.added + ' new</span>' +
-      (data.unmatched_count > 0
-        ? '<span style="background:#3d2a00;color:#e3b341;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600">⚠️ ' + data.unmatched_count + ' in database but not in file</span>'
-        : '<span style="background:#1a3a1a;color:#56d364;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600">✓ All database items matched</span>');
-
-    // Unmatched items (in DB but not in uploaded file)
-    if (data.unmatched && data.unmatched.length > 0) {
-      var pt_map = {};
-      pts.forEach(function(p){ pt_map[p.id] = p.name; });
-
-      unmatched.innerHTML =
-        '<p style="font-size:12px;color:var(--warn);margin-bottom:8px">⚠️ These items are in your database but were <strong>not found in the uploaded price book</strong>. Their prices were not updated:</p>'+
-        '<div style="background:var(--surface2);border-radius:8px;overflow:hidden">'+
-        '<table style="width:100%;font-size:12px;border-collapse:collapse">'+
-        '<thead><tr>'+
-        '<th style="padding:8px 12px;text-align:left;color:var(--muted);border-bottom:1px solid var(--border)">Item Name</th>'+
-        '<th style="padding:8px 12px;text-align:left;color:var(--muted);border-bottom:1px solid var(--border)">Purchase Type</th>'+
-        '<th style="padding:8px 12px;color:var(--muted);border-bottom:1px solid var(--border)">Action</th>'+
-        '</tr></thead><tbody>'+
-        data.unmatched.map(function(u){
-          var ptName = u.purchase_type_id ? (pt_map[u.purchase_type_id]||'Unknown') : '<span style="font-style:italic;color:var(--muted)">not set</span>';
-          return '<tr style="border-bottom:1px solid var(--border)">'+
-            '<td style="padding:8px 12px"><strong>'+esc(u.item_name)+'</strong> <span style="color:var(--muted);font-size:11px">'+(u.unit_name||'')+'</span></td>'+
-            '<td style="padding:8px 12px;color:var(--muted)">'+ptName+'</td>'+
-            '<td style="padding:8px 12px">'+
-            '<button class="btn btn-danger btn-sm" onclick="removeUnmatched('+u.id+',this)">Remove</button>'+
-            '</td></tr>';
-        }).join('')+
+// ── Import ───────────────────────────────────────────────────────────────────
+async function importPricebook(input){
+  var file=input.files[0];if(!file)return;input.value='';
+  var panel=document.getElementById('import-results');var summary=document.getElementById('import-summary');var unmatched=document.getElementById('import-unmatched');
+  panel.style.display='flex';summary.innerHTML='<span style="color:var(--muted)">⏳ Importing…</span>';unmatched.innerHTML='';
+  var formData=new FormData();formData.append('file',file);
+  try{
+    var res=await fetch('/api/pricebook/import',{method:'POST',body:formData});
+    var data=await res.json();
+    if(!res.ok){summary.innerHTML='<span style="color:var(--danger)">❌ '+(data.detail||'Import failed')+'</span>';return;}
+    summary.innerHTML='<span style="background:#1a3a1a;color:#56d364;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600">✅ '+data.updated+' updated</span>'+
+      '<span style="background:#1a3a6e;color:#79c0ff;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600">➕ '+data.added+' new</span>'+
+      (data.unmatched_count>0?'<span style="background:#3d2a00;color:#e3b341;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600">⚠️ '+data.unmatched_count+' not in file</span>':'');
+    if(data.unmatched&&data.unmatched.length>0){
+      var pt_map={};pts.forEach(function(p){pt_map[p.id]=p.name;});
+      unmatched.innerHTML='<p style="font-size:12px;color:var(--warn);margin-bottom:8px">⚠️ These items are in your database but not in the uploaded price book:</p>'+
+        '<div style="background:var(--surface2);border-radius:8px;overflow:hidden"><table style="width:100%;font-size:12px;border-collapse:collapse">'+
+        '<thead><tr><th style="padding:8px 12px;text-align:left;color:var(--muted);border-bottom:1px solid var(--border)">Item Name</th><th style="padding:8px 12px;color:var(--muted);border-bottom:1px solid var(--border)">Unit</th><th style="padding:8px 12px;color:var(--muted);border-bottom:1px solid var(--border)">Action</th></tr></thead><tbody>'+
+        data.unmatched.map(function(u){return '<tr style="border-bottom:1px solid var(--border)">'+
+          '<td style="padding:8px 12px"><strong>'+esc(u.item_name)+'</strong></td>'+
+          '<td style="padding:8px 12px;color:var(--muted)">'+esc(u.unit_name||'')+'</td>'+
+          '<td style="padding:8px 12px"><button class="btn btn-danger btn-sm" onclick="removeUnmatched('+u.id+',this)">Remove</button></td></tr>';}).join('')+
         '</tbody></table></div>';
     }
-
-    // Reload pricebook table
     await loadPb();
-
-  } catch(err) {
-    summary.innerHTML = '<span style="color:var(--danger)">❌ Error: ' + esc(err.message) + '</span>';
-  }
+  }catch(err){summary.innerHTML='<span style="color:var(--danger)">❌ '+esc(err.message)+'</span>';}
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-function calcFinalCost(item) {
-  var b = item.buying_price;
-  if (b == null || b === '') return null;
-  b = parseFloat(b);
-  var defaultPt = pts.find(function(p){return p.is_default;}) || pts[0];
-  var pt = item.purchase_type_id
-    ? pts.find(function(p){return p.id === item.purchase_type_id;})
-    : defaultPt;
-  if (!pt) return b;
-  var ptype  = pt.purchase_type || 'standard_import';
-  var pct    = parseFloat(pt.landing_pct    || 0);
-  var repack = parseFloat(pt.repacking_cost  || 0);
-  var stock  = parseFloat(pt.stockpile_charge|| 0);
-  if (ptype === 'local_purchase')   return b;
-  if (ptype === 'local_repacking')  return b + repack;
-  if (ptype === 'import_repacking') return b * (1 + pct/100) + repack;
-  if (ptype === 'stockpile_rice')   return b + stock;
-  return b * (1 + pct/100); // standard_import default
+function toggleDetailSettings(){
+  var body=document.getElementById('detail-settings-body');
+  var arrow=document.getElementById('detail-settings-arrow');
+  if(!body||!arrow)return;
+  var open=body.style.display!=='none';
+  body.style.display=open?'none':'';
+  arrow.textContent=open?'▸ Expand':'▾ Collapse';
 }
 
-function removeUnmatched(id, btn) {
-  deletePb(id);
-  var row = btn.closest('tr');
-  if (row) row.remove();
-}
-function showAgentDefault() {
-  // Jump to Agents page and expand Low Price Agent settings
-  showPage('agents', document.querySelectorAll('nav button')[0]);
-  setTimeout(function() {
-    var toggleBtn = document.querySelector('.settings-toggle');
-    if (toggleBtn && !toggleBtn.classList.contains('open')) toggleBtn.click();
-    var el = document.getElementById('setting-low_price-default_landing');
-    if (el) { el.scrollIntoView({behavior:'smooth',block:'center'}); el.focus(); }
-  }, 500);
-}
-
-// ── Sent Alerts ──────────────────────────────────────────────────────────────
-async function showSentAlerts() {
-  var panel = document.getElementById('sent-panel');
-  panel.style.display = 'flex';
-  await loadSentAlerts();
-}
-
-async function loadSentAlerts() {
-  var list = document.getElementById('sent-list');
-  list.textContent = 'Loading…';
-  var data = await fetch('/api/sent-alerts?agent=low_price&days=1').then(function(r){return r.json();});
-  if (!data.length) {
-    list.textContent = 'No SOs sent today.';
-    return;
-  }
-  list.innerHTML = data.map(function(r){
-    var t = r.sent_at ? new Date(r.sent_at).toLocaleTimeString('en-SG') : '';
-    var itemsHtml = r.items && r.items.length
-      ? '<div style="color:var(--muted);font-size:10px;padding:2px 0 4px 8px">'+
-        r.items.map(function(i){return '• '+esc(i);}).join('<br>')+'</div>'
-      : '';
-    return '<div style="padding:5px 0;border-bottom:1px solid var(--border)">'+
-      '<strong style="color:var(--text)">'+esc(r.voucher)+'</strong>'+
-      '<span style="float:right;color:var(--muted)">'+t+'</span>'+
-      itemsHtml+'</div>';
-  }).join('');
-}
-
-async function clearSentAlerts() {
-  if (!confirm('Clear all sent alerts for today? This allows re-sending to those SOs.')) return;
-  await fetch('/api/sent-alerts?agent=low_price', {method:'DELETE'});
-  await loadSentAlerts();
-}
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function removeUnmatched(id,btn){deletePb(id);var row=btn.closest('tr');if(row)row.remove();}
 
 // ── Init ─────────────────────────────────────────────────────────────────────
 connectWS();
 loadAgents();
 loadLogs();
-setInterval(loadAgents, 20000);
+setInterval(loadAgents,20000);
 </script>
 </body>
 </html>

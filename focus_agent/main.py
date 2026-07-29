@@ -97,6 +97,17 @@ async def run_agent():
             if skipped_count:
                 print(f"   🚫 Skipped {skipped_count} manually excluded SO(s): {skip_orders_raw}")
 
+        # ── Filter by customer name ───────────────────────────────────────
+        skip_customers_raw = _os.environ.get("AGENT_SKIP_CUSTOMERS", "")
+        if skip_customers_raw:
+            skip_cust_list = {s.strip().lower() for s in skip_customers_raw.split(",") if s.strip()}
+            before = len(alerts)
+            alerts = [a for a in alerts
+                      if a.get("party", "").strip().lower() not in skip_cust_list]
+            skipped_count = before - len(alerts)
+            if skipped_count:
+                print(f"   🚫 Skipped {skipped_count} SO(s) for excluded customer(s): {skip_customers_raw}")
+
         # ── Filter already-sent SOs ──────────────────────────────────────
         skip_sent   = _os.environ.get("AGENT_SKIP_SENT", "true").lower() == "true"
         dashboard_db= _os.environ.get("DASHBOARD_DB", "")

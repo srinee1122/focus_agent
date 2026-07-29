@@ -1,6 +1,6 @@
 
 ==================================================
-🤖 Focus ERP Agent — 29 Jul 2026 06:21 PM
+🤖 Focus ERP Agent — 29 Jul 2026 07:30 PM
 ==================================================
 ✅ Credentials loaded for: mahendran@sriambikas.com
 
@@ -15,9 +15,9 @@
 ✅ Phase 1 complete.
 
 📊 Phase 2: Reading Sales Order table...
-   Total rows          : 28
-   Pending orders      : 27
-   Price issue vouchers: 20
+   Total rows          : 33
+   Pending orders      : 32
+   Price issue vouchers: 25
    → 41884
    → 41960
    → 42078
@@ -38,6 +38,11 @@
    → 42370
    → 42371
    → 42372
+   → 42373
+   → 42374
+   → 42375
+   → 42376
+   → 42377
 ✅ Phase 2 complete.
 
 🔍 Phase 3: Opening each price-issue voucher to read line items.
@@ -63,10 +68,10 @@
       ✅ 1 low-price item(s) found.
    📋 Opening voucher 42324...
       Columns : ['Warehouse', 'Item', 'Description', 'Unit', 'Quantity', 'Last Selling Price', 'Rate', 'Gross', 'Discount%', 'Discount Amt', 'Rate in Base Qty', 'Cost Price', 'Cost Restriction', 'Customer Name', 'Snumber', 'Pricebook Buying Price', 'Qty per CTN', 'Stock Balance (Pcs)', 'Stock Balance (CTN)']
-      ℹ️  No low-price items in this voucher.
+      ✅ 1 low-price item(s) found.
    📋 Opening voucher 42330...
       Columns : ['Warehouse', 'Item', 'Description', 'Unit', 'Quantity', 'Last Selling Price', 'Rate', 'Gross', 'Discount%', 'Discount Amt', 'Rate in Base Qty', 'Cost Price', 'Cost Restriction', 'Customer Name', 'Snumber', 'Pricebook Buying Price', 'Qty per CTN', 'Stock Balance (Pcs)', 'Stock Balance (CTN)']
-      ✅ 4 low-price item(s) found.
+      ℹ️  No low-price items in this voucher.
    📋 Opening voucher 42334...
       Columns : ['Warehouse', 'Item', 'Description', 'Unit', 'Quantity', 'Last Selling Price', 'Rate', 'Gross', 'Discount%', 'Discount Amt', 'Rate in Base Qty', 'Cost Price', 'Cost Restriction', 'Customer Name', 'Snumber', 'Pricebook Buying Price', 'Qty per CTN', 'Stock Balance (Pcs)', 'Stock Balance (CTN)']
       ✅ 6 low-price item(s) found.
@@ -103,14 +108,29 @@
    📋 Opening voucher 42372...
       Columns : ['Warehouse', 'Item', 'Description', 'Unit', 'Quantity', 'Last Selling Price', 'Rate', 'Gross', 'Discount%', 'Discount Amt', 'Rate in Base Qty', 'Cost Price', 'Cost Restriction', 'Customer Name', 'Snumber', 'Pricebook Buying Price', 'Qty per CTN', 'Stock Balance (Pcs)', 'Stock Balance (CTN)']
       ✅ 2 low-price item(s) found.
+   📋 Opening voucher 42373...
+      Columns : ['Warehouse', 'Item', 'Description', 'Unit', 'Quantity', 'Last Selling Price', 'Rate', 'Gross', 'Discount%', 'Discount Amt', 'Rate in Base Qty', 'Cost Price', 'Cost Restriction', 'Customer Name', 'Snumber', 'Pricebook Buying Price', 'Qty per CTN', 'Stock Balance (Pcs)', 'Stock Balance (CTN)']
+      ✅ 2 low-price item(s) found.
+   📋 Opening voucher 42374...
+      Columns : ['Warehouse', 'Item', 'Description', 'Unit', 'Quantity', 'Last Selling Price', 'Rate', 'Gross', 'Discount%', 'Discount Amt', 'Rate in Base Qty', 'Cost Price', 'Cost Restriction', 'Customer Name', 'Snumber', 'Pricebook Buying Price', 'Qty per CTN', 'Stock Balance (Pcs)', 'Stock Balance (CTN)']
+      ✅ 2 low-price item(s) found.
+   📋 Opening voucher 42375...
+      Columns : ['Warehouse', 'Item', 'Description', 'Unit', 'Quantity', 'Last Selling Price', 'Rate', 'Gross', 'Discount%', 'Discount Amt', 'Rate in Base Qty', 'Cost Price', 'Cost Restriction', 'Customer Name', 'Snumber', 'Pricebook Buying Price', 'Qty per CTN', 'Stock Balance (Pcs)', 'Stock Balance (CTN)']
+      ✅ 2 low-price item(s) found.
+   📋 Opening voucher 42376...
+      Columns : ['Warehouse', 'Item', 'Description', 'Unit', 'Quantity', 'Last Selling Price', 'Rate', 'Gross', 'Discount%', 'Discount Amt', 'Rate in Base Qty', 'Cost Price', 'Cost Restriction', 'Customer Name', 'Snumber', 'Pricebook Buying Price', 'Qty per CTN', 'Stock Balance (Pcs)', 'Stock Balance (CTN)']
+      ✅ 2 low-price item(s) found.
+   📋 Opening voucher 42377...
+      Columns : ['Warehouse', 'Item', 'Description', 'Unit', 'Quantity', 'Last Selling Price', 'Rate', 'Gross', 'Discount%', 'Discount Amt', 'Rate in Base Qty', 'Cost Price', 'Cost Restriction', 'Customer Name', 'Snumber', 'Pricebook Buying Price', 'Qty per CTN', 'Stock Balance (Pcs)', 'Stock Balance (CTN)']
+      ✅ 2 low-price item(s) found.
 
-✅ Phase 3 complete. 16 voucher(s) flagged.
+✅ Phase 3 complete. 21 voucher(s) flagged.
 
 
-📋 16 order(s) flagged. Preview:
+📋 21 order(s) flagged. Preview:
 
 ── MESSAGE ──────────────────────────────────────
-🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 06:27 PM
+🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 07:35 PM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 *SO : 42210*
 🏢 TU/AJMAL SUPER MART PTE LTD-TUAS
@@ -231,7 +251,7 @@ _Reply to take action — ShopAide Agent 🤖_
 ─────────────────────────────────────────────────
 
 ── MESSAGE ──────────────────────────────────────
-🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 06:27 PM
+🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 07:35 PM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 *SO : 42259*
 🏢 SR/EGLOO
@@ -252,7 +272,7 @@ _Reply to take action — ShopAide Agent 🤖_
 ─────────────────────────────────────────────────
 
 ── MESSAGE ──────────────────────────────────────
-🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 06:27 PM
+🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 07:35 PM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 *SO : 42260*
 🏢 RES/EVERGREENSTAR PTE. LTD. (13.11.25)
@@ -273,58 +293,28 @@ _Reply to take action — ShopAide Agent 🤖_
 ─────────────────────────────────────────────────
 
 ── MESSAGE ──────────────────────────────────────
-🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 06:27 PM
+🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 07:35 PM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 *SO : 42330*
-🏢 SE/SRI MURUGAN TRADING PTE LTD-RM
-👤 Salesman: RANJITHA
+📋 *SO : 42324*
+🏢 RES/EVERGREENSTAR PTE. LTD. (13.11.25)
+👤 Salesman: RAJASEKAR
 
-  *GOLDWINNER SUNFLOWER OIL- 2 L X 6*
-  📦 Unit             : CTN (6 pcs/CTN)
+  *MF.COCONUT SHREDED 400GMX16*
+  📦 Unit             : CTN (16 pcs/CTN)
   🔢 Qty Ordered      : 2 CTN
-  💰 Cost/pc          : $4.19
-  🚚 Landing Cost/pc  : $4.40  _(+5.0%)_
-  📅 Prev. Price/pc   : $5.30
-  💸 Rate/pc          : $5.30
-  📊 Diff (Rate−Land) : +$0.90
-  📈 Margin           : +17.0%  ✅ HEALTHY
-
-  *GOLDWINNER SUNFLOWER OIL - 5L X 4*
-  📦 Unit             : CTN (4 pcs/CTN)
-  🔢 Qty Ordered      : 1 CTN
-  💰 Cost/pc          : $9.84
-  🚚 Landing Cost/pc  : $10.33  _(+5.0%)_
-  📅 Prev. Price/pc   : $11.50
-  💸 Rate/pc          : $11.50
-  📊 Diff (Rate−Land) : +$1.17
-  📈 Margin           : +10.2%  🟢 OK
-
-  *RRO MUSTARD OIL 2 LT X 6*
-  📦 Unit             : PCS
-  🔢 Qty Ordered      : 3 PCS
-  💰 Cost/pc          : $5.94
-  🚚 Landing Cost/pc  : $6.24  _(+5.0%)_
-  📅 Prev. Price/pc   : $51.00
-  💸 Rate/pc          : $7.60
-  📊 Diff (Rate−Land) : +$1.36
-  📈 Margin           : +17.9%  ✅ HEALTHY
-
-  *IG ROZANA BASMATI RICE - 5KG X 4*
-  📦 Unit             : CTN (4 pcs/CTN)
-  🔢 Qty Ordered      : 1 CTN
-  💰 Cost/pc          : $5.52
-  🚚 Landing Cost/pc  : $5.80  _(+5.0%)_
-  📅 Prev. Price/pc   : $8.00
-  💸 Rate/pc          : $8.00
-  📊 Diff (Rate−Land) : +$2.20
-  📈 Margin           : +27.5%  ✅ HEALTHY
+  💰 Cost/pc          : $3.00
+  🚚 Landing Cost/pc  : $3.15  _(+5.0%)_
+  📅 Prev. Price/pc   : $2.00
+  💸 Rate/pc          : $2.00
+  📊 Diff (Rate−Land) : $1.15
+  📈 Margin           : -57.5%  🔴 BELOW COST
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 _Reply to take action — ShopAide Agent 🤖_
 ─────────────────────────────────────────────────
 
 ── MESSAGE ──────────────────────────────────────
-🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 06:27 PM
+🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 07:35 PM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 *SO : 42334*
 🏢 BE/SRI MURUGAN TRADING PTE LTD
@@ -395,7 +385,7 @@ _Reply to take action — ShopAide Agent 🤖_
 ─────────────────────────────────────────────────
 
 ── MESSAGE ──────────────────────────────────────
-🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 06:27 PM
+🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 07:35 PM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 *SO : 42354*
 🏢 RES/AAMA BROTHER'S PTE.LTD.(15.3.24)
@@ -416,7 +406,7 @@ _Reply to take action — ShopAide Agent 🤖_
 ─────────────────────────────────────────────────
 
 ── MESSAGE ──────────────────────────────────────
-🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 06:27 PM
+🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 07:35 PM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 *SO : 42360*
 🏢 TK/ANNAI SUPERMART PTE LTD
@@ -447,7 +437,7 @@ _Reply to take action — ShopAide Agent 🤖_
 ─────────────────────────────────────────────────
 
 ── MESSAGE ──────────────────────────────────────
-🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 06:27 PM
+🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 07:35 PM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 *SO : 42361*
 🏢 SHP/ETA SHIPPING SERVICES PTE LTD
@@ -478,7 +468,7 @@ _Reply to take action — ShopAide Agent 🤖_
 ─────────────────────────────────────────────────
 
 ── MESSAGE ──────────────────────────────────────
-🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 06:27 PM
+🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 07:35 PM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 *SO : 42363*
 🏢 RES/ANANDA BHAVAN RESTAURANT
@@ -509,7 +499,7 @@ _Reply to take action — ShopAide Agent 🤖_
 ─────────────────────────────────────────────────
 
 ── MESSAGE ──────────────────────────────────────
-🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 06:27 PM
+🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 07:35 PM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 *SO : 42364*
 🏢 DIS/MNA BAKIYA TRADING PTE LTD(NAZMUL)
@@ -530,7 +520,7 @@ _Reply to take action — ShopAide Agent 🤖_
 ─────────────────────────────────────────────────
 
 ── MESSAGE ──────────────────────────────────────
-🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 06:27 PM
+🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 07:35 PM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 *SO : 42366*
 🏢 TU/AYESHA SUPERMART PTE. LTD.(26.4.25)
@@ -551,7 +541,7 @@ _Reply to take action — ShopAide Agent 🤖_
 ─────────────────────────────────────────────────
 
 ── MESSAGE ──────────────────────────────────────
-🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 06:27 PM
+🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 07:35 PM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 *SO : 42367*
 🏢 TU/AYESHA SUPERMART PTE. LTD.(26.4.25)
@@ -572,7 +562,7 @@ _Reply to take action — ShopAide Agent 🤖_
 ─────────────────────────────────────────────────
 
 ── MESSAGE ──────────────────────────────────────
-🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 06:27 PM
+🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 07:35 PM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 *SO : 42369*
 🏢 TJ/ARCHANA PROVISION STORES ( PAPAN)
@@ -603,7 +593,7 @@ _Reply to take action — ShopAide Agent 🤖_
 ─────────────────────────────────────────────────
 
 ── MESSAGE ──────────────────────────────────────
-🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 06:27 PM
+🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 07:35 PM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 *SO : 42370*
 🏢 TJ/ARCHANA PROVISION STORES (PENJURU)
@@ -634,7 +624,7 @@ _Reply to take action — ShopAide Agent 🤖_
 ─────────────────────────────────────────────────
 
 ── MESSAGE ──────────────────────────────────────
-🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 06:27 PM
+🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 07:35 PM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 *SO : 42371*
 🏢 TJ/ARCHANA PROVISION STORES (TEBAN)
@@ -665,7 +655,7 @@ _Reply to take action — ShopAide Agent 🤖_
 ─────────────────────────────────────────────────
 
 ── MESSAGE ──────────────────────────────────────
-🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 06:27 PM
+🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 07:35 PM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 *SO : 42372*
 🏢 JE/POPULAR AGRO TRADING
@@ -695,89 +685,326 @@ _Reply to take action — ShopAide Agent 🤖_
 _Reply to take action — ShopAide Agent 🤖_
 ─────────────────────────────────────────────────
 
+── MESSAGE ──────────────────────────────────────
+🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 07:35 PM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 *SO : 42373*
+🏢 WL/POPULAR AGRO TRADING (WOODLANDS)
+👤 Salesman: RANJITHA
+
+  *MANTRA GROUNDNUT OIL - 2L X 6*
+  📦 Unit             : CTN (6 pcs/CTN)
+  🔢 Qty Ordered      : 3 CTN
+  💰 Cost/pc          : $5.69
+  🚚 Landing Cost/pc  : $5.97  _(+5.0%)_
+  📅 Prev. Price/pc   : $7.60
+  💸 Rate/pc          : $7.60
+  📊 Diff (Rate−Land) : +$1.63
+  📈 Margin           : +21.4%  ✅ HEALTHY
+
+  *MANTRA GROUNDNUT OIL-5LX4*
+  📦 Unit             : CTN (4 pcs/CTN)
+  🔢 Qty Ordered      : 33 CTN
+  💰 Cost/pc          : $14.23
+  🚚 Landing Cost/pc  : $14.94  _(+5.0%)_
+  📅 Prev. Price/pc   : $18.00
+  💸 Rate/pc          : $18.00
+  📊 Diff (Rate−Land) : +$3.06
+  📈 Margin           : +17.0%  ✅ HEALTHY
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+_Reply to take action — ShopAide Agent 🤖_
+─────────────────────────────────────────────────
+
+── MESSAGE ──────────────────────────────────────
+🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 07:35 PM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 *SO : 42374*
+🏢 TU/POPULAR SUPERMARKET (TUAS SOUTH ST13)
+👤 Salesman: RANJITHA
+
+  *MANTRA GROUNDNUT OIL - 2L X 6*
+  📦 Unit             : CTN (6 pcs/CTN)
+  🔢 Qty Ordered      : 3 CTN
+  💰 Cost/pc          : $5.69
+  🚚 Landing Cost/pc  : $5.97  _(+5.0%)_
+  📅 Prev. Price/pc   : $8.00
+  💸 Rate/pc          : $7.60
+  📊 Diff (Rate−Land) : +$1.63
+  📈 Margin           : +21.4%  ✅ HEALTHY
+
+  *MANTRA GROUNDNUT OIL-5LX4*
+  📦 Unit             : CTN (4 pcs/CTN)
+  🔢 Qty Ordered      : 33 CTN
+  💰 Cost/pc          : $14.23
+  🚚 Landing Cost/pc  : $14.94  _(+5.0%)_
+  📅 Prev. Price/pc   : $22.00
+  💸 Rate/pc          : $18.00
+  📊 Diff (Rate−Land) : +$3.06
+  📈 Margin           : +17.0%  ✅ HEALTHY
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+_Reply to take action — ShopAide Agent 🤖_
+─────────────────────────────────────────────────
+
+── MESSAGE ──────────────────────────────────────
+🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 07:35 PM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 *SO : 42375*
+🏢 CCK/RAJ AGRO TRADING (KRANJI)
+👤 Salesman: RANJITHA
+
+  *MANTRA GROUNDNUT OIL - 2L X 6*
+  📦 Unit             : CTN (6 pcs/CTN)
+  🔢 Qty Ordered      : 4 CTN
+  💰 Cost/pc          : $5.69
+  🚚 Landing Cost/pc  : $5.97  _(+5.0%)_
+  📅 Prev. Price/pc   : $7.60
+  💸 Rate/pc          : $7.60
+  📊 Diff (Rate−Land) : +$1.63
+  📈 Margin           : +21.4%  ✅ HEALTHY
+
+  *MANTRA GROUNDNUT OIL-5LX4*
+  📦 Unit             : CTN (4 pcs/CTN)
+  🔢 Qty Ordered      : 34 CTN
+  💰 Cost/pc          : $14.23
+  🚚 Landing Cost/pc  : $14.94  _(+5.0%)_
+  📅 Prev. Price/pc   : $18.00
+  💸 Rate/pc          : $18.00
+  📊 Diff (Rate−Land) : +$3.06
+  📈 Margin           : +17.0%  ✅ HEALTHY
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+_Reply to take action — ShopAide Agent 🤖_
+─────────────────────────────────────────────────
+
+── MESSAGE ──────────────────────────────────────
+🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 07:35 PM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 *SO : 42376*
+🏢 SE/RAJ AGRO TRADING (KAKI BUKIT)
+👤 Salesman: RANJITHA
+
+  *MANTRA GROUNDNUT OIL - 2L X 6*
+  📦 Unit             : CTN (6 pcs/CTN)
+  🔢 Qty Ordered      : 4 CTN
+  💰 Cost/pc          : $5.69
+  🚚 Landing Cost/pc  : $5.97  _(+5.0%)_
+  📅 Prev. Price/pc   : $7.60
+  💸 Rate/pc          : $7.60
+  📊 Diff (Rate−Land) : +$1.63
+  📈 Margin           : +21.4%  ✅ HEALTHY
+
+  *MANTRA GROUNDNUT OIL-5LX4*
+  📦 Unit             : CTN (4 pcs/CTN)
+  🔢 Qty Ordered      : 34 CTN
+  💰 Cost/pc          : $14.23
+  🚚 Landing Cost/pc  : $14.94  _(+5.0%)_
+  📅 Prev. Price/pc   : $18.00
+  💸 Rate/pc          : $18.00
+  📊 Diff (Rate−Land) : +$3.06
+  📈 Margin           : +17.0%  ✅ HEALTHY
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+_Reply to take action — ShopAide Agent 🤖_
+─────────────────────────────────────────────────
+
+── MESSAGE ──────────────────────────────────────
+🚨 *LOW PRICE ALERT*  |  29 Jul 2026, 07:35 PM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 *SO : 42377*
+🏢 TU/POPULAR SUPERMARKET PTE.LTD.(05.06.25)
+👤 Salesman: RANJITHA
+
+  *MANTRA GROUNDNUT OIL - 2L X 6*
+  📦 Unit             : CTN (6 pcs/CTN)
+  🔢 Qty Ordered      : 4 CTN
+  💰 Cost/pc          : $5.69
+  🚚 Landing Cost/pc  : $5.97  _(+5.0%)_
+  📅 Prev. Price/pc   : $8.00
+  💸 Rate/pc          : $7.60
+  📊 Diff (Rate−Land) : +$1.63
+  📈 Margin           : +21.4%  ✅ HEALTHY
+
+  *MANTRA GROUNDNUT OIL-5LX4*
+  📦 Unit             : CTN (4 pcs/CTN)
+  🔢 Qty Ordered      : 34 CTN
+  💰 Cost/pc          : $14.23
+  🚚 Landing Cost/pc  : $14.94  _(+5.0%)_
+  📅 Prev. Price/pc   : $21.25
+  💸 Rate/pc          : $18.00
+  📊 Diff (Rate−Land) : +$3.06
+  📈 Margin           : +17.0%  ✅ HEALTHY
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+_Reply to take action — ShopAide Agent 🤖_
+─────────────────────────────────────────────────
+
 
 📊 Saving Excel backup...
    📊 Excel saved: downloads\LowPrice_Alert_2026-07-29.xlsx
 
-📲 Sending 16 message(s) to group: 'Test Low Price'...
+📲 Sending 21 message(s) to group: 'Test Low Price'...
    🔧 AGENT_SEND_TEXT=false
    🔧 AGENT_SEND_IMAGE=true
-   🔧 AGENT_WA_GROUPS=[Test Low Price]
-   ⚠️  Fixed malformed JSON: [Test Low Price] → ['Test Low Price']
-   ✅ Groups from dashboard: ['Test Low Price']
-   🔧 skip_sent_sos=True
-   ⏭️  SO : 42210 — all items already sent today, skipping.
-   ⏭️  SO : 42259 — all items already sent today, skipping.
-   ⏭️  SO : 42260 — all items already sent today, skipping.
-   ⏭️  SO : 42330 — all items already sent today, skipping.
-   ⏭️  SO : 42334 — all items already sent today, skipping.
-   ⏭️  SO : 42354 — all items already sent today, skipping.
-   ⏭️  SO : 42361 — all items already sent today, skipping.
-   ⏭️  SO : 42363 — all items already sent today, skipping.
-   ⏭️  SO : 42364 — all items already sent today, skipping.
-   📋 WhatsApp groups from config: ['Test Low Price']
+   🔧 AGENT_WA_GROUPS=[Testing]
+   ⚠️  Fixed malformed JSON: [Testing] → ['Testing']
+   ✅ Groups from dashboard: ['Testing']
+   🚫 Skipped 1 manually excluded SO(s): 42360
+   🔧 skip_sent_sos=False
+   📋 WhatsApp groups from config: ['Testing']
    🔀 Send text: False | Send image: True
    📸 Generating alert images...
-   📸 Image saved: downloads\alert_SO__42360_182742.jpg
-   📸 Image saved: downloads\alert_SO__42366_182743.jpg
-   📸 Image saved: downloads\alert_SO__42367_182744.jpg
-   📸 Image saved: downloads\alert_SO__42369_182745.jpg
-   📸 Image saved: downloads\alert_SO__42370_182746.jpg
-   📸 Image saved: downloads\alert_SO__42371_182747.jpg
-   📸 Image saved: downloads\alert_SO__42372_182748.jpg
+   📸 Image saved: downloads\alert_SO__42210_193549.jpg
+   📸 Image saved: downloads\alert_SO__42259_193550.jpg
+   📸 Image saved: downloads\alert_SO__42260_193551.jpg
+   📸 Image saved: downloads\alert_SO__42324_193552.jpg
+   📸 Image saved: downloads\alert_SO__42334_193553.jpg
+   📸 Image saved: downloads\alert_SO__42354_193554.jpg
+   📸 Image saved: downloads\alert_SO__42361_193555.jpg
+   📸 Image saved: downloads\alert_SO__42363_193556.jpg
+   📸 Image saved: downloads\alert_SO__42364_193558.jpg
+   📸 Image saved: downloads\alert_SO__42366_193559.jpg
+   📸 Image saved: downloads\alert_SO__42367_193600.jpg
+   📸 Image saved: downloads\alert_SO__42369_193601.jpg
+   📸 Image saved: downloads\alert_SO__42370_193602.jpg
+   📸 Image saved: downloads\alert_SO__42371_193603.jpg
+   📸 Image saved: downloads\alert_SO__42372_193604.jpg
+   📸 Image saved: downloads\alert_SO__42373_193605.jpg
+   📸 Image saved: downloads\alert_SO__42374_193606.jpg
+   📸 Image saved: downloads\alert_SO__42375_193608.jpg
+   📸 Image saved: downloads\alert_SO__42376_193609.jpg
+   📸 Image saved: downloads\alert_SO__42377_193610.jpg
    Opening WhatsApp Web...
    Waiting for WhatsApp to load (scan QR if first run)...
 
-   📢 Sending to: 'Test Low Price'
-   🔍 Searching: 'Test Low Price'...
+   📢 Sending to: 'Testing'
+   🔍 Searching: 'Testing'...
    ✅ Group opened.
-      📤 Sending image for SO : 42360...
-      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42360_182742_photo.jpg
+      📤 Sending image for SO : 42210...
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42210_193549_photo.jpg
+      🔍 Waiting for file chooser...
+      ✅ File set via chooser
+      ⏳ Waiting for image delivery...
+      ⚠️  Could not confirm image delivery — check WhatsApp manually
+      📤 Sending image for SO : 42259...
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42259_193550_photo.jpg
+      🔍 Waiting for file chooser...
+      ✅ File set via chooser
+      ⏳ Waiting for image delivery...
+      ⚠️  Could not confirm image delivery — check WhatsApp manually
+      📤 Sending image for SO : 42260...
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42260_193551_photo.jpg
+      🔍 Waiting for file chooser...
+      ✅ File set via chooser
+      ⏳ Waiting for image delivery...
+      ⚠️  Could not confirm image delivery — check WhatsApp manually
+      📤 Sending image for SO : 42324...
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42324_193552_photo.jpg
+      🔍 Waiting for file chooser...
+      ✅ File set via chooser
+      ⏳ Waiting for image delivery...
+      ⚠️  Could not confirm image delivery — check WhatsApp manually
+      📤 Sending image for SO : 42334...
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42334_193553_photo.jpg
+      🔍 Waiting for file chooser...
+      ✅ File set via chooser
+      ⏳ Waiting for image delivery...
+      ⚠️  Could not confirm image delivery — check WhatsApp manually
+      📤 Sending image for SO : 42354...
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42354_193554_photo.jpg
+      🔍 Waiting for file chooser...
+      ✅ File set via chooser
+      ⏳ Waiting for image delivery...
+      ⚠️  Could not confirm image delivery — check WhatsApp manually
+      📤 Sending image for SO : 42361...
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42361_193555_photo.jpg
+      🔍 Waiting for file chooser...
+      ✅ File set via chooser
+      ⏳ Waiting for image delivery...
+      ⚠️  Could not confirm image delivery — check WhatsApp manually
+      📤 Sending image for SO : 42363...
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42363_193556_photo.jpg
+      🔍 Waiting for file chooser...
+      ✅ File set via chooser
+      ⏳ Waiting for image delivery...
+      ⚠️  Could not confirm image delivery — check WhatsApp manually
+      📤 Sending image for SO : 42364...
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42364_193558_photo.jpg
       🔍 Waiting for file chooser...
       ✅ File set via chooser
       ⏳ Waiting for image delivery...
       ⚠️  Could not confirm image delivery — check WhatsApp manually
       📤 Sending image for SO : 42366...
-      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42366_182743_photo.jpg
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42366_193559_photo.jpg
       🔍 Waiting for file chooser...
       ✅ File set via chooser
       ⏳ Waiting for image delivery...
       ⚠️  Could not confirm image delivery — check WhatsApp manually
       📤 Sending image for SO : 42367...
-      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42367_182744_photo.jpg
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42367_193600_photo.jpg
       🔍 Waiting for file chooser...
       ✅ File set via chooser
       ⏳ Waiting for image delivery...
       ⚠️  Could not confirm image delivery — check WhatsApp manually
       📤 Sending image for SO : 42369...
-      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42369_182745_photo.jpg
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42369_193601_photo.jpg
       🔍 Waiting for file chooser...
       ✅ File set via chooser
       ⏳ Waiting for image delivery...
       ⚠️  Could not confirm image delivery — check WhatsApp manually
       📤 Sending image for SO : 42370...
-      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42370_182746_photo.jpg
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42370_193602_photo.jpg
       🔍 Waiting for file chooser...
       ✅ File set via chooser
       ⏳ Waiting for image delivery...
       ⚠️  Could not confirm image delivery — check WhatsApp manually
       📤 Sending image for SO : 42371...
-      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42371_182747_photo.jpg
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42371_193603_photo.jpg
       🔍 Waiting for file chooser...
       ✅ File set via chooser
       ⏳ Waiting for image delivery...
       ⚠️  Could not confirm image delivery — check WhatsApp manually
       📤 Sending image for SO : 42372...
-      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42372_182748_photo.jpg
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42372_193604_photo.jpg
       🔍 Waiting for file chooser...
-      ❌ Image send error (SO : 42372): Timeout 8000ms exceeded while waiting for event "filechooser"
-=========================== logs ===========================
-waiting for event "filechooser"
-============================================================
-   ✅ Done sending to 'Test Low Price'.
+      ✅ File set via chooser
+      ⏳ Waiting for image delivery...
+      ⚠️  Could not confirm image delivery — check WhatsApp manually
+      📤 Sending image for SO : 42373...
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42373_193605_photo.jpg
+      🔍 Waiting for file chooser...
+      ✅ File set via chooser
+      ⏳ Waiting for image delivery...
+      ⚠️  Could not confirm image delivery — check WhatsApp manually
+      📤 Sending image for SO : 42374...
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42374_193606_photo.jpg
+      🔍 Waiting for file chooser...
+      ✅ File set via chooser
+      ⏳ Waiting for image delivery...
+      ⚠️  Could not confirm image delivery — check WhatsApp manually
+      📤 Sending image for SO : 42375...
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42375_193608_photo.jpg
+      🔍 Waiting for file chooser...
+      ✅ File set via chooser
+      ⏳ Waiting for image delivery...
+      ⚠️  Could not confirm image delivery — check WhatsApp manually
+      📤 Sending image for SO : 42376...
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42376_193609_photo.jpg
+      🔍 Waiting for file chooser...
+      ✅ File set via chooser
+      ⏳ Waiting for image delivery...
+      ⚠️  Could not confirm image delivery — check WhatsApp manually
+      📤 Sending image for SO : 42377...
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42377_193610_photo.jpg
+      🔍 Waiting for file chooser...
+      ✅ File set via chooser
+      ⏳ Waiting for image delivery...
+      ⚠️  Could not confirm image delivery — check WhatsApp manually
+   ✅ Done sending to 'Testing'.
 
 ✅ All WhatsApp messages sent and confirmed.
    WhatsApp browser closed.
-   📝 Recorded 12 sent item(s) across 7 SO(s).
+   📝 Recorded 46 sent item(s) across 20 SO(s).
 
-🎉 Done at 06:30 PM
+🎉 Done at 07:43 PM
