@@ -21,7 +21,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 import sys, io, threading, concurrent.futures
-from database import get_db, init_db
+from database import get_db, init_db, DB_PATH
 
 # Thread pool — each agent runs in its own thread with its own event loop
 # This is needed on Windows where uvicorn uses SelectorEventLoop which
@@ -108,6 +108,7 @@ class ConnMgr:
 
 mgr = ConnMgr()
 running_tasks: dict[str, asyncio.Task] = {}
+running_procs: dict[str, object] = {}  # tracks live subprocesses for Stop button
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────
@@ -148,7 +149,7 @@ def get_agent_setting(agent: str, key: str, default: str = "") -> str:
 
 
 # ── Agent runners ──────────────────────────────────────────────────────────
-async def run_low_price_agent():
+async def run_low_price_agent(force_all: bool = False):
     """Run the Low Price Agent as a subprocess using threading (Windows-safe)."""
     set_status("low_price", "running")
     run_start = datetime.now().strftime("%d %b %Y  %I:%M:%S %p")
@@ -162,36 +163,77 @@ async def run_low_price_agent():
         asyncio.run_coroutine_threadsafe(log("low_price", msg, level), main_loop)
 
     def agent_thread():
-        import subprocess, os
-        # Read toggle settings and pass to agent via env vars
-        send_text      = get_agent_setting("low_price", "send_text",      "true")
-        send_image     = get_agent_setting("low_price", "send_image",     "true")
-        whatsapp_groups= get_agent_setting("low_price", "whatsapp_groups", "")
-        # Enforce at least one on
-        if send_text.lower() != "true" and send_image.lower() != "true":
-            send_text = "true"
-
-        env = {
-            **os.environ,
-            "PYTHONIOENCODING":         "utf-8",
-            "PYTHONLEGACYWINDOWSSTDIO": "0",
-            "AGENT_SEND_TEXT":          send_text,
-            "AGENT_SEND_IMAGE":         send_image,
-            "AGENT_WA_GROUPS":          whatsapp_groups,
-        }
+        import subprocess, os, traceback as _tb
         try:
-            proc = subprocess.Popen(
-                [sys.executable, "-X", "utf8", "main.py", "--now"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                cwd=str(AGENT_DIR),
-                env=env
-            )
-            for raw in iter(proc.stdout.readline, b""):
-                text = raw.decode("utf-8", errors="replace").rstrip()
-                if text:
-                    send(text)
-            proc.wait()
+            send("🔄 Agent thread started — reading settings...")
+            send_text      = get_agent_setting("low_price", "send_text",      "true")
+            send(f"   ✓ send_text={send_text}")
+            send_image     = get_agent_setting("low_price", "send_image",     "true")
+            send(f"   ✓ send_image={send_image}")
+            whatsapp_groups= get_agent_setting("low_price", "whatsapp_groups", "")
+            send(f"   ✓ whatsapp_groups={whatsapp_groups or '(empty)'}")
+            if send_text.lower() != "true" and send_image.lower() != "true":
+                send_text = "true"
+
+            skip_sent   = get_agent_setting("low_price", "skip_sent_sos", "true")
+            skip_orders = get_agent_setting("low_price", "skip_orders",   "")
+            send(f"   ✓ skip_sent_sos={skip_sent}")
+            if skip_orders:
+                send(f"   ✓ skip_orders={skip_orders}")
+            effective_skip = "false" if force_all else skip_sent
+            if force_all:
+                send("⚡ Force-all mode — sending all SOs regardless of sent history")
+            # Use a clean minimal environment (like a fresh terminal)
+            # Avoids inheriting dashboard process env vars that may affect login
+            _e = os.environ
+            clean_env = {k: _e[k] for k in [
+                'PATH','SystemRoot','SYSTEMROOT','windir','WINDIR',
+                'TEMP','TMP','USERPROFILE','APPDATA','LOCALAPPDATA',
+                'COMPUTERNAME','USERNAME','HOMEDRIVE','HOMEPATH',
+                'ProgramFiles','ProgramData','OS','PROCESSOR_ARCHITECTURE',
+            ] if k in _e}
+            clean_env.update({
+                "PYTHONIOENCODING":   "utf-8",
+                "PYTHONUNBUFFERED":   "1",
+                "AGENT_SEND_TEXT":    send_text,
+                "AGENT_SEND_IMAGE":   send_image,
+                "AGENT_WA_GROUPS":    whatsapp_groups,
+                "AGENT_SKIP_ORDERS":  skip_orders,
+                "AGENT_SKIP_SENT":    effective_skip,
+                "DASHBOARD_DB":       str(DB_PATH.resolve()),
+            })
+            log_file = Path(AGENT_DIR) / "last_run.log"
+            send(f"🚀 Launching subprocess in: {str(AGENT_DIR)}")
+            with open(log_file, "w", encoding="utf-8") as lf:
+                proc = subprocess.Popen(
+                    [sys.executable, "main.py", "--now"],
+                    cwd=str(AGENT_DIR),
+                    stdout=lf,
+                    stderr=lf,
+                    env={**os.environ,
+                         "PYTHONIOENCODING": "utf-8",
+                         "AGENT_SEND_TEXT":   send_text,
+                         "AGENT_SEND_IMAGE":  send_image,
+                         "AGENT_WA_GROUPS":   whatsapp_groups,
+                         "AGENT_SKIP_ORDERS": skip_orders,
+                         "AGENT_SKIP_SENT":   effective_skip,
+                         "DASHBOARD_DB":      str(DB_PATH.resolve()),
+                    }
+                )
+                send(f"   ✓ Subprocess started (PID {proc.pid}) — output → last_run.log")
+                running_procs["low_price"] = proc
+                proc.wait()
+                running_procs.pop("low_price", None)
+
+            # Stream log file to dashboard after completion
+            try:
+                with open(log_file, encoding="utf-8", errors="replace") as lf:
+                    for line in lf:
+                        line = line.rstrip()
+                        if line:
+                            send(line)
+            except Exception:
+                pass
             if proc.returncode == 0:
                 send("✅ Run complete.")
                 set_status("low_price", "idle", "success", loop=main_loop)
@@ -199,9 +241,9 @@ async def run_low_price_agent():
                 send(f"❌ Agent exited with code {proc.returncode}", "error")
                 set_status("low_price", "error", "error", loop=main_loop)
         except Exception as e:
-            import traceback
-            send(f"❌ {e}", "error")
-            send(traceback.format_exc(), "error")
+            send(f"❌ Thread error: {e}", "error")
+            send(_tb.format_exc(), "error")
+            set_status("low_price", "error", "error", loop=main_loop)
             set_status("low_price", "error", "error", loop=main_loop)
 
     await main_loop.run_in_executor(_executor, agent_thread)
@@ -221,13 +263,22 @@ RUNNERS = {
 }
 
 
-async def trigger(name: str) -> bool:
+async def trigger(name: str, force_all: bool = False) -> bool:
     if name in running_tasks and not running_tasks[name].done():
         return False
     runner = RUNNERS.get(name)
     if not runner:
         return False
-    running_tasks[name] = asyncio.create_task(runner())
+    # Only pass force_all to agents that support it
+    try:
+        import inspect
+        sig = inspect.signature(runner)
+        if "force_all" in sig.parameters:
+            running_tasks[name] = asyncio.create_task(runner(force_all=force_all))
+        else:
+            running_tasks[name] = asyncio.create_task(runner())
+    except Exception:
+        running_tasks[name] = asyncio.create_task(runner())
     return True
 
 
@@ -261,19 +312,31 @@ def get_agents():
 
 
 @app.post("/api/agents/{name}/run")
-async def run_agent(name: str):
-    if not await trigger(name):
+async def run_agent(name: str, body: dict = {}):
+    force_all = body.get("force_all", False) if body else False
+    if not await trigger(name, force_all=force_all):
         raise HTTPException(400, "Agent already running or not found")
     return {"ok": True}
 
 
 @app.post("/api/agents/{name}/stop")
 async def stop_agent(name: str):
-    task = running_tasks.get(name)
+    # Kill the subprocess first
+    proc = running_procs.pop(name, None)
+    if proc:
+        try:
+            proc.terminate()
+        except Exception:
+            pass
+
+    # Cancel and clear the asyncio task
+    task = running_tasks.pop(name, None)
     if task and not task.done():
         task.cancel()
-        set_status(name, "idle")
-        await log(name, "⏹ Stopped by user.", "warn")
+
+    # Set to idle (not error) when manually stopped
+    set_status(name, "idle", "idle")
+    await log(name, "⏹ Stopped by user.", "warn")
     return {"ok": True}
 
 
@@ -599,6 +662,46 @@ async def import_pricebook(file: UploadFile = File(...)):
         "unmatched":       unmatched,
         "unmatched_count": len(unmatched),
     }
+
+
+# ── REST: Sent alerts ─────────────────────────────────────────────────────────
+@app.get("/api/sent-alerts")
+def get_sent_alerts(agent: str = "low_price", days: int = 7):
+    with get_db() as db:
+        rows = db.execute("""
+            SELECT voucher, item_name, sent_at FROM sent_alerts
+            WHERE agent=? AND date(sent_at) >= date('now', 'localtime', ? || ' days')
+            ORDER BY voucher, sent_at DESC
+        """, (agent, f"-{days}")).fetchall()
+    # Group by voucher
+    grouped = {}
+    for r in rows:
+        v = r["voucher"]
+        if v not in grouped:
+            grouped[v] = {"voucher": v, "items": [], "sent_at": r["sent_at"]}
+        if r["item_name"]:
+            grouped[v]["items"].append(r["item_name"])
+    return list(grouped.values())
+
+
+@app.post("/api/sent-alerts")
+def record_sent_alert(body: dict):
+    agent   = body.get("agent", "low_price")
+    voucher = body.get("voucher", "")
+    if not voucher:
+        raise HTTPException(400, "voucher required")
+    with get_db() as db:
+        db.execute(
+            "INSERT INTO sent_alerts (agent, voucher, sent_at) VALUES (?, ?, ?)",
+            (agent, voucher, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+    return {"ok": True}
+
+
+@app.delete("/api/sent-alerts")
+def clear_sent_alerts(agent: str = "low_price"):
+    with get_db() as db:
+        db.execute("DELETE FROM sent_alerts WHERE agent=?", (agent,))
+    return {"ok": True}
 
 
 # ── REST: Global config ────────────────────────────────────────────────────

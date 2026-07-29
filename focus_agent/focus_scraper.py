@@ -114,7 +114,7 @@ class FocusScraper:
 
         print("🌐 Opening Focus ERP...")
         await page.goto(FOCUS_BASE_URL, wait_until="networkidle", timeout=90_000)
-        await asyncio.sleep(3)  # Wait for all JS to fully initialise
+        await asyncio.sleep(3)
         print("   Page loaded.")
 
         print("🔐 Logging in...")
@@ -122,29 +122,27 @@ class FocusScraper:
         await asyncio.sleep(2)
         await page.bring_to_front()
 
-        # Step 1: Initialise bRemFlag so getCompanySuccess callback doesn't crash
+        # Initialise bRemFlag so getCompanySuccess callback doesn't crash
         await page.evaluate("window.bRemFlag = false;")
+        await asyncio.sleep(0.5)
 
-        # Step 2: Type username
+        # Type username then Tab to trigger company list AJAX
         await page.click("#txtUsername")
         await asyncio.sleep(0.3)
         await page.keyboard.type(username, delay=50)
         await asyncio.sleep(0.3)
-
-        # Step 3: Press Tab to trigger onblur → loads company list → strChkList populated
         await page.keyboard.press("Tab")
-        await asyncio.sleep(2)  # Wait for company list AJAX to complete
+        await asyncio.sleep(2)
 
-        # Step 4: Click password field explicitly (don't rely on Tab focus)
+        # Type password
         await page.click("#txtPassword")
         await asyncio.sleep(0.3)
         await page.keyboard.type(password, delay=50)
         await asyncio.sleep(0.5)
 
-        # Step 5: Click Sign In
+        # Click Sign In
         await page.wait_for_selector("#btnSignin", state="visible", timeout=10_000)
         await page.click("#btnSignin")
-
         await page.wait_for_load_state("networkidle", timeout=30_000)
         await asyncio.sleep(2)
         print("   Logged in successfully.")

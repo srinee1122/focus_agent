@@ -51,31 +51,129 @@ def init_db():
             )
         """)
 
+        # ── Purchase types ───────────────────────────────────────
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS purchase_types (
+                id               INTEGER PRIMARY KEY AUTOINCREMENT,
+                name             TEXT NOT NULL,
+                purchase_type    TEXT DEFAULT 'standard_import',
+                landing_pct      REAL DEFAULT 5.0,
+                repacking_cost   REAL DEFAULT 0.0,
+                stockpile_charge REAL DEFAULT 0.0,
+                is_default       INTEGER DEFAULT 0,
+                notes            TEXT
+            )
+        """)
+
+        # Seed default purchase types
+        categories = [
+            ("Default (5%)",             "standard_import",  5.0,  0.0,  0.0, 1, "Default landing cost — 5% for all unassigned items"),
+            ("Local Purchase",          "local_purchase",   0.0,  0.0,  0.0, 0, "Locally bought — no landing cost"),
+            ("Local Repacking + $0.30", "local_repacking",  0.0,  0.30, 0.0, 0, "Local buy, repacked as 1kg units"),
+            ("Local Repacking + $0.20", "local_repacking",  0.0,  0.20, 0.0, 0, "Local buy, repacked as 500gm units"),
+            ("Import Stockpile Rice",   "stockpile_rice",   5.0,  0.0,  0.50, 0, "Imported rice with stockpile charge"),
+        ]
+        for name, ptype, pct, repack, stock, is_def, notes in categories:
+            conn.execute("""
+                INSERT OR IGNORE INTO purchase_types
+                    (name, purchase_type, landing_pct, repacking_cost, stockpile_charge, is_default, notes)
+                SELECT ?,?,?,?,?,?,? WHERE NOT EXISTS
+                    (SELECT 1 FROM purchase_types WHERE name=?)
+            """, (name, ptype, pct, repack, stock, is_def, notes, name))
+
         # ── Price book ────────────────────────────────────────────────────
         conn.execute("""
             CREATE TABLE IF NOT EXISTS pricebook (
                 id               INTEGER PRIMARY KEY AUTOINCREMENT,
                 item_name        TEXT NOT NULL,
-                purchase_type    TEXT DEFAULT 'standard_import',
-                landing_pct      REAL DEFAULT 5.0,
-                repacking_cost   REAL DEFAULT 0.0,
-                stockpile_charge REAL DEFAULT 0.0,
-                source_item      TEXT,
+                item_code        TEXT,
+                currency         TEXT DEFAULT 'SGD',
+                unit_name        TEXT,
+                rate             REAL,
+                min_sale_price   REAL,
+                buying_price     REAL,
+                purchase_type_id INTEGER,
                 notes            TEXT,
-                updated_at       TEXT DEFAULT CURRENT_TIMESTAMP
+                updated_at       TEXT DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (purchase_type_id) REFERENCES purchase_types(id)
             )
         """)
-        # Migrate existing price book tables (add new columns if missing)
-        for col, defval in [
-            ("purchase_type",    "'standard_import'"),
-            ("repacking_cost",   "0.0"),
-            ("stockpile_charge", "0.0"),
-            ("source_item",      "NULL"),
+        # Reset hardcoded "Low price invoice" group to empty so user sets correct group
+        conn.execute("""
+            UPDATE agent_settings
+            SET value = '[]'
+            WHERE agent = 'low_price'
+              AND key   = 'whatsapp_groups'
+              AND value LIKE '%Low price invoice%'
+        """)
+
+        # Rename "Standard Import (5%)" → "Default (5%)" if old name exists
+        conn.execute("""
+            UPDATE purchase_types SET
+                name  = 'Default (5%)',
+                notes = 'Default landing cost — 5% for all unassigned items'
+            WHERE name = 'Standard Import (5%)'
+        """)
+
+        # Remove duplicate defaults — keep the one with the lowest id, set it as default
+        conn.execute("""
+            DELETE FROM purchase_types
+            WHERE (name LIKE 'Default%' OR is_default = 1)
+            AND id != (
+                SELECT MIN(id) FROM purchase_types
+                WHERE name LIKE 'Default%' OR is_default = 1
+            )
+        """)
+        # Ensure the remaining default is correctly named and flagged
+        conn.execute("""
+            UPDATE purchase_types SET
+                name     = 'Default (5%)',
+                is_default = 1
+            WHERE id = (
+                SELECT MIN(id) FROM purchase_types
+                WHERE name LIKE 'Default%'
+            )
+        """)
+        # Clear is_default on all others
+        conn.execute("""
+            UPDATE purchase_types SET is_default = 0
+            WHERE is_default = 1 AND name != 'Default (5%)'
+        """)
+
+        # Migrate: add new columns to existing databases
+        for col, coltype in [
+            ("item_code",        "TEXT"),
+            ("currency",         "TEXT DEFAULT 'SGD'"),
+            ("unit_name",        "TEXT"),
+            ("rate",             "REAL"),
+            ("min_sale_price",   "REAL"),
+            ("buying_price",     "REAL"),
+            ("purchase_type_id", "INTEGER"),
         ]:
             try:
-                conn.execute(f"ALTER TABLE pricebook ADD COLUMN {col} REAL DEFAULT {defval}")
+                conn.execute(f"ALTER TABLE pricebook ADD COLUMN {col} {coltype}")
             except Exception:
-                pass  # column already exists
+                pass
+
+        # ── Sent alerts log ──────────────────────────────────────────────
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS sent_alerts (
+                id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                agent     TEXT NOT NULL,
+                voucher   TEXT NOT NULL,
+                item_name TEXT NOT NULL DEFAULT '',
+                sent_at   TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_sent_alerts_lookup
+            ON sent_alerts (agent, voucher, item_name, sent_at)
+        """)
+        # Migrate: add item_name column if missing (for existing databases)
+        try:
+            conn.execute("ALTER TABLE sent_alerts ADD COLUMN item_name TEXT NOT NULL DEFAULT ''")
+        except Exception:
+            pass
 
         # ── Global config ─────────────────────────────────────────────────
         conn.execute("""
@@ -117,8 +215,14 @@ def init_db():
         # ── Seed: per-agent settings ──────────────────────────────────────
         agent_cfg = [
             # Low Price Agent
-            ("low_price", "whatsapp_groups",  '["Low price invoice"]',
+            ("low_price", "whatsapp_groups",  '[]',
              "WhatsApp groups (JSON list)", "whatsapp"),
+            ("low_price", "skip_sent_sos",   "true",
+             "Skip SOs already sent today", "alerts"),
+            ("low_price", "send_text",        "true",
+             "Send text message", "alerts"),
+            ("low_price", "send_image",       "true",
+             "Send table as image", "alerts"),
             ("low_price", "focus_url",        "https://ymt-9.focus9erp.com/focusx",
              "Focus ERP URL", "focus"),
             ("low_price", "credentials_file", "credentials.xlsx",

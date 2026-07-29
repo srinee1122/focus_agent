@@ -134,6 +134,22 @@ tr:hover td{background:var(--surface2)}
       <div class="agent-grid" id="agent-grid"><div class="empty"><div class="icon">⏳</div><p>Loading…</p></div></div>
     </div>
 
+    <!-- Sent Today panel -->
+    <div id="sent-panel" style="display:none;background:var(--surface);border:1px solid var(--border);
+         border-radius:10px;padding:16px;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <strong style="font-size:13px">📋 SOs Sent Today</strong>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="loadSentAlerts()">↻ Refresh</button>
+          <button class="btn btn-danger btn-sm" onclick="clearSentAlerts()">Clear All</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('sent-panel').style.display='none'">✕</button>
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--muted)">Clearing allows these SOs to be re-sent on the next run.</p>
+      <div id="sent-list" style="font-family:var(--mono);font-size:12px;color:var(--muted);
+           max-height:300px;overflow-y:auto">Loading…</div>
+    </div>
+
     <!-- Logs -->
     <div id="page-logs" class="page">
       <div class="log-panel" style="height:calc(100vh - 140px)">
@@ -361,8 +377,11 @@ function buildCard(a, settings) {
     '    <div class="meta-item"><strong>Every '+a.interval_min+' min</strong>Interval</div>'+
     '  </div>'+
     '  <div class="card-controls">'+
-    '    <button class="btn btn-primary btn-sm" id="btn-run-'+a.name+'" onclick="runAgent(\''+a.name+'\')" '+(a.status==='running'?'disabled':'')+'>'+
-    '      '+(a.status==='running'?'⏳ Running…':'▶ Run Now')+'</button>'+
+    '    <button class="btn btn-primary btn-sm" id="btn-run-'+a.name+'" onclick="runAgent(\''+a.name+'\')"+" '+(a.status==='running'?'disabled':'')+'>'+
+    '      '+(a.status==='running'?'⏳ Running…':'▶ New Only')+'</button>'+
+    (a.status!=='running'?'    <button class="btn btn-ghost btn-sm" onclick="runAgent(\''+a.name+'\',true)" title="Send all SOs ignoring sent history">▶ Send All</button>':'')+
+    (a.name==='low_price'?'    <button class="btn btn-ghost btn-sm" onclick="showSentAlerts()">📋 Sent Today</button>':'')+
+
     '    '+(a.status==='running'?'<button class="btn btn-danger btn-sm" onclick="stopAgent(\''+a.name+'\')">⏹ Stop</button>':'')+
     '    <div class="interval-wrap"><input type="number" value="'+a.interval_min+'" min="1" id="interval-'+a.name+'" onchange="updateInterval(\''+a.name+'\',this.value)" style="width:50px"><span>min</span></div>'+
     '    <label class="toggle-wrap"><span class="toggle"><input type="checkbox" '+(a.enabled?'checked':'')+' onchange="toggleAgent(\''+a.name+'\',this.checked)"><span class="toggle-slider"></span></span>Schedule</label>'+
@@ -423,8 +442,13 @@ async function saveSettings(name) {
   alert('✅ Settings saved.');
 }
 
-async function runAgent(name) {
-  await fetch('/api/agents/'+name+'/run',{method:'POST'});
+async function runAgent(name, forceAll) {
+  var body = forceAll ? JSON.stringify({force_all: true}) : '{}';
+  await fetch('/api/agents/'+name+'/run', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: body
+  });
   showPage('logs', document.querySelectorAll('nav button')[1]);
 }
 async function stopAgent(name) { await fetch('/api/agents/'+name+'/stop',{method:'POST'}); setTimeout(loadAgents,500); }
@@ -904,6 +928,40 @@ function showAgentDefault() {
     var el = document.getElementById('setting-low_price-default_landing');
     if (el) { el.scrollIntoView({behavior:'smooth',block:'center'}); el.focus(); }
   }, 500);
+}
+
+// ── Sent Alerts ──────────────────────────────────────────────────────────────
+async function showSentAlerts() {
+  var panel = document.getElementById('sent-panel');
+  panel.style.display = 'flex';
+  await loadSentAlerts();
+}
+
+async function loadSentAlerts() {
+  var list = document.getElementById('sent-list');
+  list.textContent = 'Loading…';
+  var data = await fetch('/api/sent-alerts?agent=low_price&days=1').then(function(r){return r.json();});
+  if (!data.length) {
+    list.textContent = 'No SOs sent today.';
+    return;
+  }
+  list.innerHTML = data.map(function(r){
+    var t = r.sent_at ? new Date(r.sent_at).toLocaleTimeString('en-SG') : '';
+    var itemsHtml = r.items && r.items.length
+      ? '<div style="color:var(--muted);font-size:10px;padding:2px 0 4px 8px">'+
+        r.items.map(function(i){return '• '+esc(i);}).join('<br>')+'</div>'
+      : '';
+    return '<div style="padding:5px 0;border-bottom:1px solid var(--border)">'+
+      '<strong style="color:var(--text)">'+esc(r.voucher)+'</strong>'+
+      '<span style="float:right;color:var(--muted)">'+t+'</span>'+
+      itemsHtml+'</div>';
+  }).join('');
+}
+
+async function clearSentAlerts() {
+  if (!confirm('Clear all sent alerts for today? This allows re-sending to those SOs.')) return;
+  await fetch('/api/sent-alerts?agent=low_price', {method:'DELETE'});
+  await loadSentAlerts();
 }
 
 // ── Init ─────────────────────────────────────────────────────────────────────

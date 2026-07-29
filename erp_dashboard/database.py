@@ -155,6 +155,26 @@ def init_db():
             except Exception:
                 pass
 
+        # ── Sent alerts log ──────────────────────────────────────────────
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS sent_alerts (
+                id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                agent     TEXT NOT NULL,
+                voucher   TEXT NOT NULL,
+                item_name TEXT NOT NULL DEFAULT '',
+                sent_at   TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_sent_alerts_lookup
+            ON sent_alerts (agent, voucher, item_name, sent_at)
+        """)
+        # Migrate: add item_name column if missing (for existing databases)
+        try:
+            conn.execute("ALTER TABLE sent_alerts ADD COLUMN item_name TEXT NOT NULL DEFAULT ''")
+        except Exception:
+            pass
+
         # ── Global config ─────────────────────────────────────────────────
         conn.execute("""
             CREATE TABLE IF NOT EXISTS config (
@@ -197,6 +217,10 @@ def init_db():
             # Low Price Agent
             ("low_price", "whatsapp_groups",  '[]',
              "WhatsApp groups (JSON list)", "whatsapp"),
+            ("low_price", "skip_orders",      "",
+             "Skip these SO numbers (comma-separated, e.g. 42123,42232)", "alerts"),
+            ("low_price", "skip_sent_sos",   "true",
+             "Skip SOs already sent today", "alerts"),
             ("low_price", "send_text",        "true",
              "Send text message", "alerts"),
             ("low_price", "send_image",       "true",
