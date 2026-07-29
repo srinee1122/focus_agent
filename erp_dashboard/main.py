@@ -55,7 +55,16 @@ async def drain_log_queue(agent: str):
     for msg in msgs:
         await log(agent, msg)
 
-AGENT_DIR = Path(__file__).parent.parent / "focus_agent"
+# Try standard subfolder first, fall back to sibling or same level
+_base = Path(__file__).parent.parent
+_candidates = [
+    _base / "focus_agent",          # focus_agent_complete/focus_agent/
+    Path(__file__).parent.parent,   # if erp_dashboard & focus_agent are siblings at same level
+    Path(__file__).parent.parent / "focus_agent_complete" / "focus_agent",
+]
+AGENT_DIR = next((p for p in _candidates if (p / "main.py").exists()), _candidates[0])
+print(f"[Dashboard] AGENT_DIR resolved to: {AGENT_DIR}")
+
 if str(AGENT_DIR) not in sys.path:
     sys.path.insert(0, str(AGENT_DIR))
 
@@ -142,7 +151,10 @@ def get_agent_setting(agent: str, key: str, default: str = "") -> str:
 async def run_low_price_agent():
     """Run the Low Price Agent as a subprocess using threading (Windows-safe)."""
     set_status("low_price", "running")
-    await log("low_price", "▶ Starting Low Price Agent run...")
+    run_start = datetime.now().strftime("%d %b %Y  %I:%M:%S %p")
+    await log("low_price", f"{'━'*50}")
+    await log("low_price", f"▶  RUN STARTED  —  {run_start}")
+    await log("low_price", f"{'━'*50}")
 
     main_loop = asyncio.get_running_loop()
 
@@ -151,7 +163,22 @@ async def run_low_price_agent():
 
     def agent_thread():
         import subprocess, os
-        env = {**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONLEGACYWINDOWSSTDIO": "0"}
+        # Read toggle settings and pass to agent via env vars
+        send_text      = get_agent_setting("low_price", "send_text",      "true")
+        send_image     = get_agent_setting("low_price", "send_image",     "true")
+        whatsapp_groups= get_agent_setting("low_price", "whatsapp_groups", "")
+        # Enforce at least one on
+        if send_text.lower() != "true" and send_image.lower() != "true":
+            send_text = "true"
+
+        env = {
+            **os.environ,
+            "PYTHONIOENCODING":         "utf-8",
+            "PYTHONLEGACYWINDOWSSTDIO": "0",
+            "AGENT_SEND_TEXT":          send_text,
+            "AGENT_SEND_IMAGE":         send_image,
+            "AGENT_WA_GROUPS":          whatsapp_groups,
+        }
         try:
             proc = subprocess.Popen(
                 [sys.executable, "-X", "utf8", "main.py", "--now"],

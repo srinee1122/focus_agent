@@ -35,3 +35,7 @@ WHATSAPP_SESSION_DIR = "whatsapp_session"
 # --- Browser visibility ---
 # False = visible (for testing), True = runs invisibly in background
 HEADLESS = False
+
+# --- Alert delivery (at least one must be True) ---
+SEND_TEXT  = True   # Send detailed/summary text message
+SEND_IMAGE = True   # Capture table as image and send

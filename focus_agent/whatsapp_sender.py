@@ -1,7 +1,6 @@
 """
 whatsapp_sender.py
-Sends one WhatsApp message per SO alert to a WhatsApp GROUP.
-Searches for the group by name — adapted from working reference.
+Sends WhatsApp alerts — text, image, or both — to configured groups.
 """
 from __future__ import annotations
 
@@ -51,17 +50,38 @@ class WhatsAppSender:
         self.session_dir = os.path.abspath(config.WHATSAPP_SESSION_DIR)
         os.makedirs(self.session_dir, exist_ok=True)
 
-    async def send(self, alerts: list, group_name: str = None):
+    async def send(self, alerts: list, group_name: str = None,
+                   send_text: bool = None, send_image: bool = None):
         if not alerts:
             print("   No alerts to send.")
             return
 
-        groups = config.WHATSAPP_GROUPS if hasattr(config, 'WHATSAPP_GROUPS') else [config.WHATSAPP_GROUP]
+        # Resolve toggles (from config unless overridden)
+        use_text  = send_text  if send_text  is not None else getattr(config, "SEND_TEXT",  True)
+        use_image = send_image if send_image is not None else getattr(config, "SEND_IMAGE", True)
+
+        # Enforce: at least one must be on
+        if not use_text and not use_image:
+            print("   ⚠️  Both text and image are off — defaulting to text.")
+            use_text = True
+
+        groups    = config.WHATSAPP_GROUPS if hasattr(config, "WHATSAPP_GROUPS") else [config.WHATSAPP_GROUP]
+        print(f"   📋 WhatsApp groups from config: {groups}")
+        print(f"   🔀 Send text: {use_text} | Send image: {use_image}")
         pyperclip = _ensure_pyperclip()
         debug_dir = Path("wa_debug") / datetime.now().strftime("%Y%m%d-%H%M%S")
         debug_dir.mkdir(parents=True, exist_ok=True)
 
-        # Remove Chrome lock files and kill any stuck process using this session
+        # Pre-generate images if needed (headless, before opening WhatsApp)
+        images = {}
+        if use_image:
+            from image_generator import generate_alert_image
+            print("   📸 Generating alert images...")
+            for alert in alerts:
+                path = await generate_alert_image(alert)
+                images[alert["voucher"]] = path
+
+        # Remove Chrome lock files before opening WhatsApp
         import subprocess as _sp
         for lock in ["SingletonLock", "SingletonCookie", "SingletonSocket", "lockfile"]:
             lock_path = Path(self.session_dir) / lock
@@ -71,14 +91,11 @@ class WhatsAppSender:
                     print(f"   🔓 Removed stale lock: {lock}")
                 except Exception:
                     pass
-        # Kill any Chromium using the whatsapp_session directory (clears lock)
         try:
-            _sp.run(
-                ["wmic", "process", "where",
-                 "CommandLine like '%whatsapp_session%'",
-                 "call", "terminate"],
-                capture_output=True, timeout=5
-            )
+            _sp.run(["wmic", "process", "where",
+                     "CommandLine like '%whatsapp_session%'",
+                     "call", "terminate"],
+                    capture_output=True, timeout=5)
         except Exception:
             pass
 
@@ -93,54 +110,71 @@ class WhatsAppSender:
 
             print("   Opening WhatsApp Web...")
             await page.goto("https://web.whatsapp.com", wait_until="domcontentloaded")
-            print("   Waiting for WhatsApp (scan QR if first run)...")
+            print("   Waiting for WhatsApp to load (scan QR if first run)...")
             await page.wait_for_selector(
                 '[aria-label="Chat list"], #pane-side, [data-testid="chat-list"]',
                 timeout=180_000,
             )
             await asyncio.sleep(3)
-            print(f"   ✅ WhatsApp ready. Sending to {len(groups)} group(s).\n")
 
             for group in groups:
-                print(f"\n   📢 Group: '{group}'")
+                print(f"\n   📢 Sending to: '{group}'")
                 opened = await self._open_group(page, group, debug_dir)
                 if not opened:
-                    print(f"   ❌ Could not open '{group}' — skipping.")
+                    print(f"   ❌ Could not open group '{group}' — skipping.")
                     continue
+
                 for alert in alerts:
-                    from formatter import format_single_alert
-                    msg = format_single_alert(alert)
-                    await self._send_message(page, msg, alert["voucher"], pyperclip, debug_dir)
-                print(f"   ✅ All messages sent to '{group}'.")
+                    voucher = alert["voucher"]
+
+                    # Send image first if enabled
+                    if use_image and voucher in images:
+                        await self._send_image(page, images[voucher], voucher, debug_dir)
+
+                    # Send text (summary if image also sent, full detail if image only off)
+                    if use_text:
+                        if use_image:
+                            from formatter import format_text_summary
+                            msg = format_text_summary(alert)
+                        else:
+                            from formatter import format_single_alert
+                            msg = format_single_alert(alert)
+                        await self._send_message(page, msg, voucher, pyperclip, debug_dir)
+
+                print(f"   ✅ Done sending to '{group}'.")
 
             await asyncio.sleep(3)
-            print("\n✅ All WhatsApp messages sent and confirmed delivered.")
+            print("\n✅ All WhatsApp messages sent and confirmed.")
             await ctx.close()
             print("   WhatsApp browser closed.")
 
+        # Clean up temp images
+        if use_image:
+            for path in images.values():
+                try:
+                    os.remove(path)
+                except Exception:
+                    pass
+
+    # ── Open group ─────────────────────────────────────────────────────────
     async def _open_group(self, page, group_name: str, debug_dir: Path) -> bool:
-        """Search for the group and open it. Returns True if successful."""
         try:
-            print(f"   🔍 Searching for group: '{group_name}'...")
+            print(f"   🔍 Searching: '{group_name}'...")
             search = await self._first_visible(page, SEARCH_SELECTORS)
             if search is None:
                 raise RuntimeError("Search box not found")
-
             await search.click()
             await asyncio.sleep(0.4)
             await page.keyboard.press(SELECT_ALL)
             await page.keyboard.press("Delete")
             await page.keyboard.type(group_name, delay=40)
             await asyncio.sleep(2)
-            await page.screenshot(path=str(debug_dir / "01_search.png"))
 
-            # Click the group by exact title match
             group_el = page.locator(f'span[title="{group_name}"]').first
             try:
                 await group_el.wait_for(timeout=8_000)
                 await group_el.click()
             except PWTimeout:
-                # Fallback: click first search result
                 first = page.locator(
                     '[aria-label="Search results."] div[role="listitem"],'
                     'div[data-testid="cell-frame-container"]'
@@ -149,30 +183,97 @@ class WhatsAppSender:
                 await first.click()
 
             await asyncio.sleep(2)
-            await page.screenshot(path=str(debug_dir / "02_group_open.png"))
             print(f"   ✅ Group opened.")
             return True
-
         except Exception as e:
             await page.screenshot(path=str(debug_dir / "ERROR_open_group.png"))
             print(f"   ❌ Could not open group: {e}")
             return False
 
+    # ── Send image ──────────────────────────────────────────────────────────
+    async def _send_image(self, page, image_path: str, voucher: str, debug_dir: Path):
+        print(f"      📤 Sending image for {voucher}...")
+        try:
+            from PIL import Image as PILImage
+            from pathlib import Path as _Path
+            import subprocess as _sp
+
+            # Ensure genuinely JPEG (not just renamed) using PIL
+            src = _Path(image_path)
+            jpg_path = src.with_name(f"{src.stem}_photo.jpg")
+            with PILImage.open(src) as img:
+                img.convert("RGB").save(str(jpg_path), format="JPEG", quality=95)
+            image_path = str(jpg_path.resolve())
+            print(f"      🖼️  Converted to JPEG: {image_path}")
+
+            # Click the attachment (+) button
+            attach_btn = await self._first_visible(page, [
+                'span[data-icon="plus-rounded"]',
+                'span[data-icon="attach-menu-plus"]',
+                'span[data-icon="clip"]',
+                'div[title="Attach"]',
+            ])
+            if attach_btn is None:
+                raise RuntimeError("Attachment button not found")
+            await attach_btn.click()
+            await asyncio.sleep(0.8)
+
+            # Use file chooser — WhatsApp picks the correct input after "Photos & videos"
+            print(f"      🔍 Waiting for file chooser...")
+            async with page.expect_file_chooser(timeout=8_000) as fc_info:
+                # Click "Photos & videos" menu item
+                photo_btn = await self._first_visible(page, [
+                    'li[data-testid="mi-attach-photo-video"]',
+                    'li[data-testid="mi-attach-image"]',
+                ])
+                if photo_btn:
+                    await photo_btn.click()
+                else:
+                    # Fallback: click by visible text
+                    await page.get_by_text("Photos", exact=False).first.click()
+
+            file_chooser = await fc_info.value
+            await file_chooser.set_files(image_path)
+            print(f"      ✅ File set via chooser")
+            await asyncio.sleep(2.5)
+
+            # Send
+            await page.keyboard.press("Enter")
+            await asyncio.sleep(2)
+
+            # Clean up converted file
+            try:
+                jpg_path.unlink()
+            except Exception:
+                pass
+
+            # Wait for delivery confirmation
+            print(f"      ⏳ Waiting for image delivery...")
+            try:
+                await page.wait_for_selector(
+                    'span[data-icon="msg-time"]', state="hidden", timeout=30_000)
+                await page.wait_for_selector(
+                    'span[data-icon="msg-check"], span[data-icon="msg-dblcheck"]',
+                    timeout=15_000)
+                print(f"      ✅ Image delivered ✓")
+            except Exception:
+                print(f"      ⚠️  Could not confirm image delivery — check WhatsApp manually")
+
+        except Exception as e:
+            await page.screenshot(path=str(debug_dir / f"ERROR_img_{voucher}.png"))
+            print(f"      ❌ Image send error ({voucher}): {e}")
+
+    # ── Send text ───────────────────────────────────────────────────────────
     async def _send_message(self, page, message: str, voucher: str,
                             pyperclip, debug_dir: Path):
-        """Send a single message to the already-open group chat."""
-        print(f"   📤 Sending {voucher}...")
+        print(f"      📤 Sending text for {voucher}...")
         try:
-            # Copy to clipboard
             pyperclip.copy(message.strip())
             await asyncio.sleep(0.5)
 
-            # Find message input
             msg_input = await self._first_visible(page, MESSAGE_INPUT_SELECTORS)
             if msg_input is None:
-                raise RuntimeError("Message input box not found")
-
-            # Clear any draft, then paste
+                raise RuntimeError("Message input not found")
             await msg_input.click()
             await asyncio.sleep(0.3)
             await page.keyboard.press(SELECT_ALL)
@@ -180,32 +281,24 @@ class WhatsAppSender:
             await asyncio.sleep(0.3)
             await page.keyboard.press("Control+v")
             await asyncio.sleep(1.5)
-
-            # Send
             await page.keyboard.press("Enter")
             await asyncio.sleep(2)
 
-            # Wait for delivery confirmation
-            # Clock icon = still uploading, check icon = confirmed sent to server
-            print(f"      ⏳ Waiting for delivery confirmation...")
+            # Delivery confirmation
+            print(f"      ⏳ Waiting for text delivery...")
             try:
-                # Wait for clock icon to disappear (upload complete)
                 await page.wait_for_selector(
-                    'span[data-icon="msg-time"]',
-                    state="hidden", timeout=30_000
-                )
-                # Wait for tick to appear (confirmed sent)
+                    'span[data-icon="msg-time"]', state="hidden", timeout=30_000)
                 await page.wait_for_selector(
                     'span[data-icon="msg-check"], span[data-icon="msg-dblcheck"]',
-                    timeout=15_000
-                )
-                print(f"      ✅ Delivered ✓")
+                    timeout=15_000)
+                print(f"      ✅ Text delivered ✓")
             except Exception:
-                print(f"      ⚠️  Could not confirm delivery — check WhatsApp manually")
+                print(f"      ⚠️  Could not confirm text delivery")
 
         except Exception as e:
-            await page.screenshot(path=str(debug_dir / f"ERROR_{voucher.replace(' ','_')}.png"))
-            print(f"      ❌ Error sending {voucher}: {e}")
+            await page.screenshot(path=str(debug_dir / f"ERROR_txt_{voucher}.png"))
+            print(f"      ❌ Text send error ({voucher}): {e}")
 
     @staticmethod
     async def _first_visible(page, selectors):

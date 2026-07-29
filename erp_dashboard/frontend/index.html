@@ -143,6 +143,10 @@ tr:hover td{background:var(--surface2)}
             <option value="low_price">Low Price Agent</option>
             <option value="data_sync">Data Sync Agent</option>
           </select>
+          <input id="log-search" placeholder="🔍 Search logs…" oninput="renderLogs()"
+            style="flex:1;background:var(--surface2);border:1px solid var(--border);
+                   color:var(--text);border-radius:5px;padding:4px 10px;
+                   font-size:12px;font-family:var(--font)">
           <label><input type="checkbox" id="log-auto" checked>Auto-scroll</label>
           <button class="btn btn-ghost btn-sm" onclick="clearLogs()">Clear</button>
         </div>
@@ -377,8 +381,14 @@ function buildSettingsHtml(agentName, settings) {
     var cat=e[0], items=e[1];
     return '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">'+(catLabels[cat]||cat)+'</div>'+
       items.map(function(s){
-        return '<div class="setting-row"><div class="setting-label">'+esc(s.label)+'</div>'+
-          '<input class="setting-input" id="setting-'+agentName+'-'+s.key+'" value="'+esc(s.value)+'"></div>';
+        var isBool = s.key==='send_text'||s.key==='send_image';
+        var field = isBool
+          ? '<select class="setting-input" id="setting-'+agentName+'-'+s.key+'">'+
+            '<option value="true"'+(s.value==='true'?' selected':'')+'>On</option>'+
+            '<option value="false"'+(s.value!=='true'?' selected':'')+'>Off</option>'+
+            '</select>'
+          : '<input class="setting-input" id="setting-'+agentName+'-'+s.key+'" value="'+esc(s.value)+'">';
+        return '<div class="setting-row"><div class="setting-label">'+esc(s.label)+'</div>'+field+'</div>';
       }).join('')+'<div style="height:6px"></div>';
   }).join('');
   return '<div class="card-settings">'+
@@ -391,6 +401,20 @@ function buildSettingsHtml(agentName, settings) {
 function toggleSettings(btn) { btn.classList.toggle('open'); btn.nextElementSibling.classList.toggle('open'); }
 
 async function saveSettings(name) {
+  // Enforce at least one of send_text / send_image is on
+  if (name === 'low_price') {
+    var txtEl = document.getElementById('setting-low_price-send_text');
+    var imgEl = document.getElementById('setting-low_price-send_image');
+    if (txtEl && imgEl) {
+      var txtOn = txtEl.value.toLowerCase() === 'true';
+      var imgOn = imgEl.value.toLowerCase() === 'true';
+      if (!txtOn && !imgOn) {
+        alert('At least one of Send Text or Send Image must be enabled.');
+        txtEl.value = 'true'; // re-enable text
+        return;
+      }
+    }
+  }
   var inputs = document.querySelectorAll('[id^="setting-'+name+'-"]');
   for (var i=0; i<inputs.length; i++) {
     var el = inputs[i]; var key = el.id.replace('setting-'+name+'-','');
@@ -418,12 +442,26 @@ async function refreshCards() {
 // ── Logs ─────────────────────────────────────────────────────────────────────
 async function loadLogs() { allLogs = await fetch('/api/logs?limit=200').then(function(r){return r.json();}); }
 function renderLogs() {
-  var filter = document.getElementById('log-filter').value;
-  var out = document.getElementById('log-output');
-  var logs = filter ? allLogs.filter(function(l){return l.agent===filter;}) : allLogs;
-  if (!logs.length) { out.innerHTML='<div class="log-empty">No logs yet.</div>'; return; }
+  var filter = (document.getElementById('log-filter')||{value:''}).value;
+  var search = ((document.getElementById('log-search')||{value:''}).value||'').toLowerCase();
+  var out    = document.getElementById('log-output');
+  var logs   = filter ? allLogs.filter(function(l){return l.agent===filter;}) : allLogs;
+  if (search) logs = logs.filter(function(l){return (l.message||'').toLowerCase().indexOf(search)!==-1;});
+  if (!logs.length) { out.innerHTML='<div class="log-empty">'+(allLogs.length?'No logs match search.':'No logs yet.')+'</div>'; return; }
+
+  function hlSearch(text) {
+    if (!search) return esc(text);
+    var parts = esc(text).split(new RegExp('('+esc(search).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'));
+    return parts.map(function(p,i){ return i%2===1?'<mark style="background:#e3b341;color:#1a1a1a;border-radius:2px;padding:0 2px">'+p+'</mark>':p; }).join('');
+  }
+
   out.innerHTML = logs.map(function(l){
-    return '<div class="log-line '+l.level+'"><span class="log-ts">'+(l.ts||'')+'</span><span class="log-agent">'+agentShort(l.agent)+'</span><span class="log-msg">'+esc(l.message)+'</span></div>';
+    var isMarker = l.message && l.message.indexOf('\u2501') !== -1;
+    var extra = isMarker ? 'color:var(--accent2);font-weight:600;letter-spacing:.02em' : '';
+    return '<div class="log-line '+(l.level||'')+'" style="'+extra+'">'+
+      '<span class="log-ts">'+(l.ts||'')+'</span>'+
+      '<span class="log-agent">'+agentShort(l.agent)+'</span>'+
+      '<span class="log-msg">'+hlSearch(l.message||'')+'</span></div>';
   }).join('');
   scrollLogs();
 }
@@ -668,23 +706,52 @@ async function applyBulk() {
 }
 
 function inlineEditPb(id) {
-  // Opens the top form with all fields pre-filled
   var item = pbItems.find(function(i){return i.id===id;}); if(!item) return;
+  // Restore any previously editing row first
+  if (pbEditId && pbEditId !== id) loadPb();
   pbEditId = id;
-  document.getElementById('pb-name').value     = item.item_name||'';
-  document.getElementById('pb-code').value     = item.item_code||'';
-  document.getElementById('pb-unit').value     = item.unit_name||'';
-  document.getElementById('pb-currency').value = item.currency||'SGD';
-  document.getElementById('pb-rate').value     = item.rate!=null ? item.rate : '';
-  document.getElementById('pb-minsale').value  = item.min_sale_price!=null ? item.min_sale_price : '';
-  document.getElementById('pb-buying').value   = item.buying_price!=null ? item.buying_price : '';
-  var sel = document.getElementById('pb-cat');
-  if(sel && item.purchase_type_id) sel.value = item.purchase_type_id;
-  document.getElementById('pb-notes').value    = item.notes||'';
-  document.getElementById('add-form').classList.add('visible');
-  document.getElementById('pb-name').focus();
-  // Scroll to form
-  document.getElementById('add-form').scrollIntoView({behavior:'smooth', block:'start'});
+  var row = document.getElementById('pb-row-'+id); if(!row) return;
+
+  var ptOpts = _catOptions(item.purchase_type_id);
+  var iStyle = 'background:var(--surface2);border:1px solid var(--accent2);color:var(--text);border-radius:4px;padding:4px 7px;font-size:12px;font-family:var(--font);width:100%';
+  var sStyle = 'background:var(--surface2);border:1px solid var(--accent2);color:var(--text);border-radius:4px;padding:4px 6px;font-size:11px;font-family:var(--font);width:100%';
+
+  row.innerHTML =
+    '<td><input type="checkbox" class="pb-chk" value="'+id+'" onchange="onRowCheck()"></td>'+
+    '<td colspan="2"><input id="ie-name-'+id+'" style="'+iStyle+'" value="'+esc(item.item_name||'')+'"><br>'+
+    '<input id="ie-code-'+id+'" style="'+iStyle+';margin-top:3px;font-size:10px" placeholder="Item Code" value="'+esc(item.item_code||'')+'"></td>'+
+    '<td><input id="ie-unit-'+id+'" style="'+iStyle+'" placeholder="Unit" value="'+esc(item.unit_name||'')+'"></td>'+
+    '<td><input id="ie-rate-'+id+'" type="number" step="0.01" style="'+iStyle+';text-align:right" value="'+(item.rate!=null?item.rate:'')+'"></td>'+
+    '<td><input id="ie-minsale-'+id+'" type="number" step="0.01" style="'+iStyle+';text-align:right" value="'+(item.min_sale_price!=null?item.min_sale_price:'')+'"></td>'+
+    '<td><input id="ie-buying-'+id+'" type="number" step="0.01" style="'+iStyle+';text-align:right" value="'+(item.buying_price!=null?item.buying_price:'')+'"></td>'+
+    '<td><span style="color:var(--muted);font-size:10px">computed</span></td>'+
+    '<td><select id="ie-pt-'+id+'" style="'+sStyle+'">'+ptOpts+'</select></td>'+
+    '<td style="color:var(--muted);font-size:10px">'+(item.updated_at?new Date(item.updated_at).toLocaleDateString('en-SG'):'')+'</td>'+
+    '<td style="display:flex;gap:4px">'+
+    '<button class="btn btn-primary btn-sm" onclick="saveInlinePb('+id+')">Save</button>'+
+    '<button class="btn btn-ghost btn-sm" onclick="loadPb()">✕</button>'+
+    '</td>';
+  document.getElementById('ie-name-'+id).focus();
+}
+
+async function saveInlinePb(id) {
+  var name = document.getElementById('ie-name-'+id).value.trim();
+  if(!name){alert('Item name required.');return;}
+  var toFloat = function(eid){var v=document.getElementById(eid).value; return v!==''?parseFloat(v):null;};
+  var ptId = document.getElementById('ie-pt-'+id).value;
+  var entry = {
+    item_name:        name,
+    item_code:        document.getElementById('ie-code-'+id).value.trim(),
+    unit_name:        document.getElementById('ie-unit-'+id).value.trim(),
+    currency:         'SGD',
+    rate:             toFloat('ie-rate-'+id),
+    min_sale_price:   toFloat('ie-minsale-'+id),
+    buying_price:     toFloat('ie-buying-'+id),
+    purchase_type_id: ptId ? parseInt(ptId) : null,
+    notes:            ''
+  };
+  var res = await fetch('/api/pricebook/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)});
+  if(res.ok){ pbEditId=null; loadPb(); } else alert('Save failed.');
 }
 
 function showAddForm(){

@@ -50,8 +50,42 @@ async def run_agent():
         excel_path = export_alerts(alerts, output_dir=config.DOWNLOAD_DIR)
 
         print(f"\n📲 Sending {len(alerts)} message(s) to group: '{config.WHATSAPP_GROUP}'...")
+        import os as _os, json as _json
+        send_text  = _os.environ.get("AGENT_SEND_TEXT",  "true").lower() == "true"
+        send_image = _os.environ.get("AGENT_SEND_IMAGE", "true").lower() == "true"
+        wa_groups_raw = _os.environ.get("AGENT_WA_GROUPS", "")
+        print(f"   🔧 AGENT_SEND_TEXT={_os.environ.get('AGENT_SEND_TEXT','not set')}")
+        print(f"   🔧 AGENT_SEND_IMAGE={_os.environ.get('AGENT_SEND_IMAGE','not set')}")
+        print(f"   🔧 AGENT_WA_GROUPS={wa_groups_raw or 'not set'}")
+        if wa_groups_raw:
+            # Try strict JSON first, then tolerant parsing
+            parsed = None
+            try:
+                parsed = _json.loads(wa_groups_raw)
+            except Exception:
+                # Try adding quotes if it looks like [Group Name]
+                try:
+                    fixed = wa_groups_raw.strip()
+                    if fixed.startswith('[') and fixed.endswith(']'):
+                        inner = fixed[1:-1].strip()
+                        # Wrap each comma-separated item in quotes
+                        items = [f'"{x.strip().strip(chr(39)).strip(chr(34))}"' for x in inner.split(',')]
+                        parsed = _json.loads('[' + ','.join(items) + ']')
+                        print(f"   ⚠️  Fixed malformed JSON: {wa_groups_raw} → {parsed}")
+                except Exception as e2:
+                    print(f"   ❌ Could not parse groups JSON: {e2}")
+
+            if parsed:
+                config.WHATSAPP_GROUPS = parsed
+                print(f"   ✅ Groups from dashboard: {config.WHATSAPP_GROUPS}")
+            else:
+                grps = getattr(config, 'WHATSAPP_GROUPS', [getattr(config, 'WHATSAPP_GROUP', 'not set')])
+                print(f"   📋 Falling back to config.py: {grps}")
+        else:
+            grps = getattr(config, 'WHATSAPP_GROUPS', [getattr(config, 'WHATSAPP_GROUP', 'not set')])
+            print(f"   📋 Groups from config.py: {grps}")
         sender = WhatsAppSender()
-        await sender.send(alerts)
+        await sender.send(alerts, send_text=send_text, send_image=send_image)
 
         print(f"\n🎉 Done at {datetime.now().strftime('%I:%M %p')}")
 

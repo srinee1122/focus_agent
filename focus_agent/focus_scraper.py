@@ -401,6 +401,8 @@ class FocusScraper:
                         # Margin based on rate per piece vs landing cost
                         margin = round(((rate_per_piece - landing) / rate_per_piece * 100), 1) if rate_per_piece > 0 else 0
 
+                        diff = round(rate_per_piece - landing, 2)
+
                         items.append({
                             "item"            : description,
                             "unit"            : unit.upper().lstrip("."),
@@ -411,6 +413,7 @@ class FocusScraper:
                             "landing_label"   : landing_label,
                             "rate_per_piece"  : round(rate_per_piece, 2),
                             "prev_price"      : round(prev_price_per_piece, 2),
+                            "diff"            : diff,
                             "margin"          : margin,
                         })
                     except Exception as item_err:

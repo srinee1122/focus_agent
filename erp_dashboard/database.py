@@ -98,6 +98,15 @@ def init_db():
                 FOREIGN KEY (purchase_type_id) REFERENCES purchase_types(id)
             )
         """)
+        # Reset hardcoded "Low price invoice" group to empty so user sets correct group
+        conn.execute("""
+            UPDATE agent_settings
+            SET value = '[]'
+            WHERE agent = 'low_price'
+              AND key   = 'whatsapp_groups'
+              AND value LIKE '%Low price invoice%'
+        """)
+
         # Rename "Standard Import (5%)" → "Default (5%)" if old name exists
         conn.execute("""
             UPDATE purchase_types SET
@@ -186,8 +195,12 @@ def init_db():
         # ── Seed: per-agent settings ──────────────────────────────────────
         agent_cfg = [
             # Low Price Agent
-            ("low_price", "whatsapp_groups",  '["Low price invoice"]',
+            ("low_price", "whatsapp_groups",  '[]',
              "WhatsApp groups (JSON list)", "whatsapp"),
+            ("low_price", "send_text",        "true",
+             "Send text message", "alerts"),
+            ("low_price", "send_image",       "true",
+             "Send table as image", "alerts"),
             ("low_price", "focus_url",        "https://ymt-9.focus9erp.com/focusx",
              "Focus ERP URL", "focus"),
             ("low_price", "credentials_file", "credentials.xlsx",

@@ -4,3 +4,4 @@ openpyxl
 schedule
 pyperclip
 lxml
+Pillow
