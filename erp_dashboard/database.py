@@ -221,6 +221,7 @@ def init_db():
              "Skip these SO numbers (comma-separated, e.g. 42123,42232)", "alerts"),
             ("low_price", "skip_customers",   "",
              "Skip these customer names (comma-separated)", "alerts"),
+
             ("low_price", "skip_sent_sos",   "true",
              "Skip SOs already sent today", "alerts"),
             ("low_price", "send_text",        "true",

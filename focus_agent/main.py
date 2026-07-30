@@ -31,7 +31,11 @@ async def run_agent():
 
         print("\n📡 Connecting to Focus ERP...")
         scraper = FocusScraper()
-        alerts  = await scraper.run(username, password)
+        # Send Specific — pass target vouchers directly to skip grid scan
+        import os as _os2
+        send_only_raw = _os2.environ.get("AGENT_SEND_ONLY", "").strip()
+        target_vouchers = [s.strip() for s in send_only_raw.split(",") if s.strip()] if send_only_raw else None
+        alerts = await scraper.run(username, password, target_vouchers=target_vouchers)
 
         if not alerts:
             print("\nℹ️  No price issues found today. Nothing to send.")
@@ -84,32 +88,42 @@ async def run_agent():
         else:
             grps = getattr(config, 'WHATSAPP_GROUPS', [getattr(config, 'WHATSAPP_GROUP', 'not set')])
             print(f"   📋 Groups from config.py: {grps}")
-        # ── Filter manually skipped SOs ──────────────────────────────────
+        # Helper: normalise SO number for comparison
+        def _norm_so(v):
+            return v.replace("SO : ", "").replace("SO:", "").strip()
+
+        # ── 1. Send Only filter (whitelist) ───────────────────────────────
+        send_only_raw = _os.environ.get("AGENT_SEND_ONLY", "")
+        if send_only_raw:
+            only_list = {s.strip() for s in send_only_raw.split(",") if s.strip()}
+            before = len(alerts)
+            alerts = [a for a in alerts if _norm_so(a["voucher"]) in only_list]
+            print(f"   🎯 Send-only mode: keeping {len(alerts)}/{before} SO(s) matching {send_only_raw}")
+
+        # ── 2. Skip SO numbers (blacklist) ────────────────────────────────
         skip_orders_raw = _os.environ.get("AGENT_SKIP_ORDERS", "")
         if skip_orders_raw:
-            skip_list = {s.strip().lstrip("SO").strip().lstrip(":").strip()
-                         for s in skip_orders_raw.split(",") if s.strip()}
+            skip_list = {s.strip() for s in skip_orders_raw.split(",") if s.strip()}
             before = len(alerts)
-            alerts = [a for a in alerts
-                      if a["voucher"].replace("SO : ", "").replace("SO:", "").strip()
-                      not in skip_list]
-            skipped_count = before - len(alerts)
-            if skipped_count:
-                print(f"   🚫 Skipped {skipped_count} manually excluded SO(s): {skip_orders_raw}")
+            alerts = [a for a in alerts if _norm_so(a["voucher"]) not in skip_list]
+            if before - len(alerts):
+                print(f"   🚫 Skipped {before - len(alerts)} SO(s) by SO number")
 
-        # ── Filter by customer name ───────────────────────────────────────
+        # ── 3. Skip by customer name ──────────────────────────────────────
         skip_customers_raw = _os.environ.get("AGENT_SKIP_CUSTOMERS", "")
         if skip_customers_raw:
-            skip_cust_list = {s.strip().lower() for s in skip_customers_raw.split(",") if s.strip()}
+            skip_cust = {s.strip().lower() for s in skip_customers_raw.split(",") if s.strip()}
             before = len(alerts)
-            alerts = [a for a in alerts
-                      if a.get("party", "").strip().lower() not in skip_cust_list]
-            skipped_count = before - len(alerts)
-            if skipped_count:
-                print(f"   🚫 Skipped {skipped_count} SO(s) for excluded customer(s): {skip_customers_raw}")
+            alerts = [a for a in alerts if a.get("party","").strip().lower() not in skip_cust]
+            if before - len(alerts):
+                print(f"   🚫 Skipped {before - len(alerts)} SO(s) by customer name")
 
         # ── Filter already-sent SOs ──────────────────────────────────────
-        skip_sent   = _os.environ.get("AGENT_SKIP_SENT", "true").lower() == "true"
+        # Send Specific mode always bypasses sent history
+        send_only_active = bool(_os.environ.get("AGENT_SEND_ONLY", "").strip())
+        skip_sent = (not send_only_active) and (_os.environ.get("AGENT_SKIP_SENT", "true").lower() == "true")
+        if send_only_active:
+            print("   🎯 Send Specific mode — bypassing sent history check")
         dashboard_db= _os.environ.get("DASHBOARD_DB", "")
         print(f"   🔧 skip_sent_sos={skip_sent}")
 

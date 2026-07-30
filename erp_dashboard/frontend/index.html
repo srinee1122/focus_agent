@@ -6,144 +6,222 @@
 <title>Sri Ambikas — ERP Agent Dashboard</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#30363d;
-  --text:#e6edf3;--muted:#7d8590;--accent:#2ea043;--accent2:#388bfd;
-  --danger:#da3633;--warn:#d29922;--font:'Segoe UI',system-ui,sans-serif;
-  --mono:'Cascadia Code','Fira Code',monospace;--radius:8px;
+
+/* ── Light theme (default) ── */
+:root,[data-theme="light"]{
+  --bg:#eef1f7;
+  --surface:#f6f8fc;
+  --surface2:#eaecf4;
+  --border:#d0d7e8;
+  --text:#1a2040;
+  --muted:#7080a8;
+  --accent:#059669;
+  --accent2:#4f46e5;
+  --danger:#e11d48;
+  --warn:#d97706;
+  --purple:#7c3aed;
+  --font:'Segoe UI',system-ui,sans-serif;
+  --mono:'Cascadia Code','Fira Code',monospace;
+  --radius:10px;
+  --shadow:rgba(30,50,120,.08);
+  color-scheme:light;
+}
+
+/* ── Dark theme ── */
+[data-theme="dark"]{
+  --bg:#070d1a;
+  --surface:#0e1628;
+  --surface2:#16213a;
+  --border:#1e2d4a;
+  --text:#dde8ff;
+  --muted:#5a7299;
+  --accent:#10d98a;
+  --accent2:#6366f1;
+  --danger:#f43f5e;
+  --warn:#f59e0b;
+  --purple:#a855f7;
+  --shadow:rgba(0,0,0,.3);
+  color-scheme:dark;
 }
 body{background:var(--bg);color:var(--text);font-family:var(--font);display:flex;height:100vh;overflow:hidden}
 
 /* ── Sidebar ── */
-aside{width:220px;min-width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column}
-.logo{padding:20px 20px 16px;border-bottom:1px solid var(--border)}
-.logo h1{font-size:14px;font-weight:600}
-.logo p{font-size:11px;color:var(--muted);margin-top:2px}
-nav{padding:12px 8px;flex:1}
-nav button{width:100%;text-align:left;padding:9px 12px;background:none;border:none;border-radius:var(--radius);color:var(--muted);font-family:var(--font);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .15s,color .15s}
-nav button:hover{background:var(--surface2);color:var(--text)}
-nav button.active{background:var(--surface2);color:var(--text);font-weight:500}
+aside{width:224px;min-width:224px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column}
+.logo{padding:22px 20px 18px;background:linear-gradient(135deg,var(--accent2) 0%,var(--surface) 100%);border-bottom:1px solid var(--border)}
+.logo h1{font-size:15px;font-weight:700;letter-spacing:-.01em;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.3)}
+.logo p{font-size:11px;color:rgba(255,255,255,.75);margin-top:3px}
+nav{padding:14px 10px;flex:1;display:flex;flex-direction:column;gap:2px}
+nav button{width:100%;text-align:left;padding:9px 14px;background:none;border:none;border-radius:8px;
+  color:var(--muted);font-family:var(--font);font-size:13px;cursor:pointer;
+  display:flex;align-items:center;gap:10px;transition:all .15s;border:1px solid transparent}
+nav button:hover{background:var(--surface2);color:var(--text);border-color:var(--border)}
+nav button.active{background:linear-gradient(90deg,rgba(99,102,241,.18) 0%,rgba(99,102,241,.04) 100%);
+  color:#a5b4fc;border-color:rgba(99,102,241,.35);font-weight:600}
 
 /* ── Main ── */
 main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-header{padding:16px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface)}
-header h2{font-size:15px;font-weight:600}
+header{padding:14px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;
+  justify-content:space-between;background:var(--surface);
+  box-shadow:0 1px 0 rgba(255,255,255,.03)}
+header h2{font-size:16px;font-weight:700;letter-spacing:-.01em}
 header .sub{font-size:12px;color:var(--muted)}
-.content{flex:1;overflow-y:auto;padding:24px}
+.content{flex:1;overflow-y:auto;padding:28px}
 
 /* ── Pages ── */
-.page{display:none;flex-direction:column;gap:20px}
+.page{display:none;flex-direction:column;gap:22px}
 .page.active{display:flex}
 
 /* ── Agent cards ── */
-.agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
-.agent-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;
-  cursor:pointer;transition:border-color .15s,transform .1s;overflow:hidden}
-.agent-card:hover{border-color:var(--accent2);transform:translateY(-1px)}
-.agent-card.running{border-color:var(--accent2)}
-.agent-card.error{border-color:var(--danger)}
-.card-main{padding:20px;display:flex;flex-direction:column;gap:12px}
+.agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}
+.agent-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  cursor:pointer;transition:all .2s;overflow:hidden;position:relative}
+.agent-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--accent2),var(--purple));border-radius:12px 12px 0 0;opacity:.85}
+.agent-card:hover{border-color:var(--accent2);transform:translateY(-2px);
+  box-shadow:0 8px 32px rgba(99,102,241,.15),0 2px 8px var(--shadow)}
+.agent-card.running::before{background:linear-gradient(90deg,#10d98a,#6366f1);
+  animation:pulse-bar 2s ease-in-out infinite}
+.agent-card.running{border-color:rgba(16,217,138,.4);
+  box-shadow:0 0 24px rgba(16,217,138,.08)}
+.agent-card.error::before{background:var(--danger)}
+.agent-card.error{border-color:rgba(244,63,94,.35)}
+@keyframes pulse-bar{0%,100%{opacity:1}50%{opacity:.5}}
+.card-main{padding:22px;display:flex;flex-direction:column;gap:14px}
 .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.card-title{font-size:14px;font-weight:600}
-.card-desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
-.badge{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500;white-space:nowrap}
-.badge-idle{background:#21262d;color:var(--muted)}
-.badge-running{background:#1a3a6e;color:#79c0ff}
-.badge-error{background:#3d1a1a;color:#ff7b72}
-.badge-success{background:#1a3a1a;color:#56d364}
+.card-title{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.card-desc{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.6}
+.badge{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;white-space:nowrap;letter-spacing:.02em}
+.badge-idle{background:rgba(90,114,153,.15);color:var(--muted);border:1px solid rgba(90,114,153,.2)}
+.badge-running{background:rgba(16,217,138,.12);color:#10d98a;border:1px solid rgba(16,217,138,.25);
+  box-shadow:0 0 8px rgba(16,217,138,.15)}
+.badge-error{background:rgba(244,63,94,.12);color:#fb7185;border:1px solid rgba(244,63,94,.25)}
+.badge-success{background:rgba(16,217,138,.1);color:#10d98a;border:1px solid rgba(16,217,138,.2)}
 .card-meta{display:flex;gap:20px}
 .meta-item{font-size:11px;color:var(--muted)}
-.meta-item strong{display:block;font-size:12px;color:var(--text);font-weight:500}
-.card-hint{font-size:11px;color:var(--muted);border-top:1px solid var(--border);
-  padding:10px 20px;display:flex;align-items:center;gap:6px}
+.meta-item strong{display:block;font-size:13px;color:var(--text);font-weight:600;margin-bottom:1px}
+.card-hint{font-size:11px;color:var(--muted);
+  background:linear-gradient(90deg,rgba(99,102,241,.06),transparent);
+  border-top:1px solid var(--border);padding:10px 22px;
+  display:flex;align-items:center;gap:6px;letter-spacing:.01em}
 
 /* ── Agent detail page ── */
-.detail-header{display:flex;align-items:center;gap:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
-.back-btn{background:none;border:1px solid var(--border);border-radius:var(--radius);
-  color:var(--muted);padding:6px 12px;cursor:pointer;font-family:var(--font);font-size:12px;
-  display:flex;align-items:center;gap:6px;transition:border-color .15s,color .15s}
-.back-btn:hover{border-color:var(--muted);color:var(--text)}
+.detail-header{display:flex;align-items:center;gap:16px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.back-btn{background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.25);border-radius:8px;
+  color:#a5b4fc;padding:7px 14px;cursor:pointer;font-family:var(--font);font-size:12px;
+  display:flex;align-items:center;gap:6px;transition:all .15s;font-weight:500}
+.back-btn:hover{background:rgba(99,102,241,.15);border-color:var(--accent2);color:#c4b5fd}
 .detail-title{flex:1}
-.detail-title h2{font-size:18px;font-weight:600}
-.detail-title p{font-size:12px;color:var(--muted);margin-top:3px}
+.detail-title h2{font-size:20px;font-weight:800;letter-spacing:-.02em;color:var(--text)}
+.detail-title p{font-size:12px;color:var(--muted);margin-top:4px}
 .detail-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.detail-body{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.detail-body{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 @media(max-width:900px){.detail-body{grid-template-columns:1fr}}
-.settings-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
-.section-label{padding:12px 16px;font-size:11px;font-weight:600;text-transform:uppercase;
-  letter-spacing:.06em;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border)}
-.setting-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.settings-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.section-label{padding:11px 18px;font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--accent2);
+  background:linear-gradient(90deg,rgba(99,102,241,.08),transparent);
+  border-bottom:1px solid var(--border)}
+.setting-row{display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid var(--border)}
 .setting-row:last-child{border-bottom:none}
-.setting-label{font-size:13px;flex:1}
-.setting-label small{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.setting-row:hover{background:rgba(255,255,255,.015)}
+.setting-label{font-size:13px;flex:1;font-weight:500}
+.setting-label small{display:block;font-size:11px;color:var(--muted);margin-top:2px;font-weight:400}
 .setting-input{background:var(--surface2);border:1px solid var(--border);color:var(--text);
-  border-radius:5px;padding:6px 10px;font-size:12px;font-family:var(--font);min-width:160px}
-.setting-input:focus{outline:none;border-color:var(--accent2)}
+  border-radius:7px;padding:7px 12px;font-size:12px;font-family:var(--font);min-width:160px;
+  transition:border-color .15s}
+.setting-input:focus{outline:none;border-color:var(--accent2);box-shadow:0 0 0 3px rgba(99,102,241,.12)}
 .setting-select{background:var(--surface2);border:1px solid var(--border);color:var(--text);
-  border-radius:5px;padding:6px 8px;font-size:12px;font-family:var(--font);min-width:80px}
-.toggle-switch{position:relative;width:44px;height:24px;flex-shrink:0}
+  border-radius:7px;padding:7px 10px;font-size:12px;font-family:var(--font);min-width:80px}
+.toggle-switch{position:relative;width:46px;height:25px;flex-shrink:0}
 .toggle-switch input{opacity:0;width:0;height:0}
-.toggle-track{position:absolute;inset:0;background:#3d444d;border-radius:12px;cursor:pointer;transition:background .2s}
-.toggle-track::after{content:'';position:absolute;width:18px;height:18px;background:#fff;
-  border-radius:50%;top:3px;left:3px;transition:transform .2s}
-.toggle-switch input:checked~.toggle-track{background:var(--accent2)}
-.toggle-switch input:checked~.toggle-track::after{transform:translateX(20px)}
-.save-bar{background:var(--surface);border:1px solid var(--border);border-radius:10px;
-  padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+.toggle-track{position:absolute;inset:0;background:var(--surface2);border:1px solid var(--border);
+  border-radius:13px;cursor:pointer;transition:all .2s}
+.toggle-track::after{content:'';position:absolute;width:19px;height:19px;background:var(--muted);
+  border-radius:50%;top:2px;left:2px;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle-switch input:checked~.toggle-track{background:rgba(99,102,241,.25);border-color:var(--accent2)}
+.toggle-switch input:checked~.toggle-track::after{transform:translateX(21px);background:var(--accent2);
+  box-shadow:0 0 8px rgba(99,102,241,.5)}
+.save-bar{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:16px 22px;display:flex;align-items:center;justify-content:space-between}
 .save-bar p{font-size:12px;color:var(--muted)}
 
 /* ── Buttons ── */
-.btn{padding:6px 14px;border-radius:var(--radius);font-size:12px;font-weight:500;
-  cursor:pointer;border:1px solid transparent;font-family:var(--font);transition:opacity .15s}
-.btn:disabled{opacity:.4;cursor:not-allowed}
-.btn-primary{background:var(--accent);color:#fff;border-color:#2ea043}
-.btn-primary:hover:not(:disabled){opacity:.85}
-.btn-danger{background:transparent;color:var(--danger);border-color:var(--danger)}
-.btn-danger:hover:not(:disabled){background:#3d1a1a}
-.btn-ghost{background:var(--surface2);color:var(--text);border-color:var(--border)}
-.btn-ghost:hover:not(:disabled){border-color:var(--muted)}
-.btn-sm{padding:4px 10px;font-size:11px}
+.btn{padding:7px 16px;border-radius:8px;font-size:12px;font-weight:600;
+  cursor:pointer;border:1px solid transparent;font-family:var(--font);
+  transition:all .15s;letter-spacing:.01em}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn-primary{background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;
+  border-color:rgba(99,102,241,.5);box-shadow:0 2px 8px rgba(99,102,241,.3)}
+.btn-primary:hover:not(:disabled){background:linear-gradient(135deg,#7c7ff5,#6366f1);
+  box-shadow:0 4px 16px rgba(99,102,241,.45);transform:translateY(-1px)}
+.btn-danger{background:rgba(244,63,94,.1);color:#fb7185;border-color:rgba(244,63,94,.3)}
+.btn-danger:hover:not(:disabled){background:rgba(244,63,94,.2);border-color:var(--danger)}
+.btn-ghost{background:rgba(255,255,255,.04);color:var(--text);border-color:var(--border)}
+.btn-ghost:hover:not(:disabled){background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15)}
+.btn-sm{padding:4px 11px;font-size:11px}
 
 /* ── Logs ── */
-.log-panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column}
-.log-toolbar{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.log-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column}
+.log-toolbar{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;
+  background:rgba(99,102,241,.03)}
 .log-toolbar select,.log-toolbar input{background:var(--surface2);border:1px solid var(--border);
-  color:var(--text);border-radius:5px;padding:4px 8px;font-size:12px;font-family:var(--font)}
+  color:var(--text);border-radius:7px;padding:5px 10px;font-size:12px;font-family:var(--font)}
 .log-toolbar label{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px}
-.log-output{flex:1;overflow-y:auto;padding:12px 16px;font-family:var(--mono);font-size:12px;line-height:1.7}
-.log-line{display:flex;gap:10px}
+.log-output{flex:1;overflow-y:auto;padding:14px 18px;font-family:var(--mono);font-size:12px;line-height:1.8}
+.log-line{display:flex;gap:10px;padding:1px 0}
 .log-ts{color:var(--muted);flex-shrink:0}
-.log-agent{color:var(--accent2);flex-shrink:0;width:76px}
+.log-agent{color:var(--accent2);flex-shrink:0;width:76px;font-weight:600}
 .log-msg{color:var(--text);word-break:break-word}
-.log-line.error .log-msg{color:#ff7b72}
-.log-line.warn .log-msg{color:#e3b341}
-.log-empty{color:var(--muted);font-style:italic;padding:20px 0}
+.log-line.error .log-msg{color:var(--danger)}
+.log-line.warn .log-msg{color:var(--warn)}
+.log-empty{color:var(--muted);font-style:italic;padding:24px 0}
 
-/* ── Price book (unchanged) ── */
-.table-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px}
+/* ── Price book ── */
+.table-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:12px}
 table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;padding:10px 12px;color:var(--muted);font-size:11px;font-weight:500;
-  text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border)}
-td{padding:10px 12px;border-bottom:1px solid var(--border)}
+th{text-align:left;padding:11px 14px;color:var(--muted);font-size:10px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border);
+  background:rgba(99,102,241,.04)}
+td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--text)}
 tr:last-child td{border-bottom:none}
-tr:hover td{background:var(--surface2)}
-.pct-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600}
-.pct-low{background:#1a3a1a;color:#56d364}
-.pct-mid{background:#1a3a6e;color:#79c0ff}
-.pct-high{background:#3d1a1a;color:#ff7b72}
-.add-form{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;
+tr:hover td{background:rgba(255,255,255,.02)}
+.pct-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.02em}
+.pct-low{background:rgba(16,217,138,.12);color:#10d98a;border:1px solid rgba(16,217,138,.2)}
+.pct-mid{background:rgba(99,102,241,.15);color:#a5b4fc;border:1px solid rgba(99,102,241,.25)}
+.pct-high{background:rgba(244,63,94,.12);color:#fb7185;border:1px solid rgba(244,63,94,.2)}
+.add-form{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;
   display:none;gap:12px;flex-wrap:wrap;align-items:flex-end}
 .add-form.visible{display:flex}
-.add-form label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px}
+.add-form label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
 .add-form input,.add-form select{background:var(--surface2);border:1px solid var(--border);
-  color:var(--text);border-radius:5px;padding:6px 10px;font-size:13px;font-family:var(--font)}
+  color:var(--text);border-radius:7px;padding:7px 12px;font-size:13px;font-family:var(--font);
+  transition:border-color .15s}
+.add-form input:focus,.add-form select:focus{outline:none;border-color:var(--accent2)}
 .section-header{display:flex;align-items:center;justify-content:space-between}
-.section-header h3{font-size:14px;font-weight:600}
-.empty{text-align:center;padding:48px;color:var(--muted)}
-.empty .icon{font-size:32px;margin-bottom:12px}
+.section-header h3{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.empty{text-align:center;padding:56px;color:var(--muted)}
+.empty .icon{font-size:36px;margin-bottom:14px;filter:grayscale(1);opacity:.5}
 
 /* ── Sent Today ── */
 #sent-panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;flex-direction:column;gap:10px}
+
+/* ── Light theme text corrections ── */
+[data-theme="light"] .log-ts{color:var(--muted)}
+[data-theme="light"] .card-hint{color:var(--muted)}
+[data-theme="light"] .meta-item{color:var(--muted)}
+[data-theme="light"] .card-desc{color:#4a5880}
+[data-theme="light"] .badge-idle{background:rgba(90,114,153,.12);color:#4a5880}
+[data-theme="light"] .badge-running{color:#059669}
+[data-theme="light"] .badge-success{color:#059669}
+[data-theme="light"] .badge-error{color:#e11d48}
+[data-theme="light"] .pct-mid{background:rgba(79,70,229,.1);color:#4f46e5}
+[data-theme="light"] .pct-low{background:rgba(5,150,105,.1);color:#059669}
+[data-theme="light"] .pct-high{background:rgba(225,29,72,.1);color:#e11d48}
+[data-theme="light"] th{background:rgba(79,70,229,.04);color:#6070a0}
+[data-theme="light"] .section-label{color:#4f46e5}
+[data-theme="light"] .log-agent{color:#4f46e5;font-weight:700}
+[data-theme="light"] .toggle-track::after{background:#94a3b8}
+[data-theme="light"] nav button.active{color:#4f46e5;background:rgba(79,70,229,.08)}
 </style>
 </head>
 <body>
@@ -158,8 +236,17 @@ tr:hover td{background:var(--surface2)}
 
 <main>
   <header>
-    <h2 id="page-title">Agents</h2>
-    <span class="sub" id="page-sub">Click an agent to configure and run it</span>
+    <div>
+      <h2 id="page-title">Agents</h2>
+      <span class="sub" id="page-sub">Click an agent to configure and run it</span>
+    </div>
+    <button id="theme-toggle" onclick="toggleTheme()"
+      style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+             padding:6px 14px;cursor:pointer;font-family:var(--font);font-size:12px;
+             color:var(--text);display:flex;align-items:center;gap:6px;font-weight:500;
+             transition:all .15s">
+      ☀️ Light
+    </button>
   </header>
   <div class="content">
 
@@ -353,6 +440,20 @@ tr:hover td{background:var(--surface2)}
 </main>
 
 <script>
+// ── Theme ────────────────────────────────────────────────────────────────────
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('dashboard-theme', theme);
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = theme === 'dark' ? '☀️ Light' : '🌙 Dark';
+}
+function toggleTheme() {
+  var curr = document.documentElement.getAttribute('data-theme') || 'light';
+  applyTheme(curr === 'dark' ? 'light' : 'dark');
+}
+// Load saved theme (default = light)
+applyTheme(localStorage.getItem('dashboard-theme') || 'light');
+
 // ── Globals ──────────────────────────────────────────────────────────────────
 var allLogs=[], pbItems=[], pbEditId=null, pts=[], ptEditId=null;
 var pbSortAsc=true, ptSectionOpen=true, ptEditId=null;
@@ -446,13 +547,26 @@ async function openAgentDetail(name){
 
   // Action buttons
   var isRunning=a.status==='running';
-  var actionsHtml=
-    '<button class="btn btn-primary" id="detail-run-btn" onclick="runAgent(\''+name+'\')" '+(isRunning?'disabled':'')+'>'+
-    (isRunning?'⏳ Running…':'▶ Run Now')+'</button>'+
-    (!isRunning?'<button class="btn btn-ghost" onclick="runAgent(\''+name+'\',true)" title="Send all SOs ignoring sent history">▶ Send All</button>':'')+
-    (isRunning?'<button class="btn btn-danger" onclick="stopAgent(\''+name+'\')">⏹ Stop</button>':'')+
-    (name==='low_price'?'<button class="btn btn-ghost" onclick="showSentAlerts()">📋 Sent Today</button>':'');
-  document.getElementById('detail-actions').innerHTML=actionsHtml;
+  var n = name;
+  var dis = isRunning ? ' disabled' : '';
+  var actionsHtml = '';
+  if (isRunning) {
+    actionsHtml +=
+      '<button class="btn btn-primary" id="detail-run-btn" disabled>⏳ Running…</button>' +
+      '<button class="btn btn-danger" onclick="stopAgent(\'' + n + '\')">⏹ Stop</button>';
+  } else {
+    actionsHtml +=
+      '<button class="btn btn-primary" id="detail-run-btn" onclick="runAgent(\'' + n + '\')">▶ Run Now</button>' +
+      '<button class="btn btn-ghost" onclick="runAgent(\'' + n + '\',true)" title="Send all ignoring sent history">▶ Send All</button>';
+    if (n === 'low_price') {
+      actionsHtml +=
+        '<button class="btn btn-ghost" onclick="openSendSpecificModal(\'' + n + '\')" style="border-color:var(--warn);color:var(--warn)" title="Send for specific SOs only">🎯 Send Specific</button>';
+    }
+  }
+  if (n === 'low_price') {
+    actionsHtml += '<button class="btn btn-ghost" onclick="showSentAlerts()">📋 Sent Today</button>';
+  }
+  document.getElementById('detail-actions').innerHTML = actionsHtml;
 
   // Settings
   var settings=await fetch('/api/agents/'+name+'/settings').then(function(r){return r.json();});
@@ -501,6 +615,7 @@ function renderDetailSettings(agentName,agent,settings){
     html+='<div class="settings-section"><div class="section-label">'+(CAT_LABELS[cat]||cat)+'</div>';
     cats[cat].forEach(function(s){
       var isBool=BOOL_KEYS.indexOf(s.key)!==-1;
+      var isListField=LIST_MODAL_KEYS.indexOf(s.key)!==-1;
       var field='';
       if(isBool){
         var checked=s.value==='true';
@@ -508,6 +623,18 @@ function renderDetailSettings(agentName,agent,settings){
           '<input type="checkbox" id="dsetting-'+agentName+'-'+s.key+'" '+
           (checked?'checked':'')+' onchange="enforceBoolToggle(\''+agentName+'\',\''+s.key+'\',this)">'+
           '<span class="toggle-track"></span></label>';
+      } else if(isListField){
+        var count=s.value?(s.value.split(',').filter(function(x){return x.trim();})).length:0;
+        var lmTitles={'skip_orders':'Skip SO Numbers','skip_customers':'Skip Customer Names','send_only_orders':'Send Only for SO Numbers'};
+        var lmPh={'skip_orders':'e.g. 42123','skip_customers':'e.g. D/SUBETRA ENTERPRISE','send_only_orders':'e.g. 42123'};
+        var curVal=esc(s.value||'').replace(/'/g,"\\'");
+        field='<div style="display:flex;align-items:center;gap:8px">'+
+          '<span id="lm-display-'+agentName+'-'+s.key+'" style="font-size:12px;color:var(--muted);min-width:70px">'+
+          (count?count+' entr'+(count===1?'y':'ies'):'None')+'</span>'+
+          '<button class="btn btn-ghost btn-sm" onclick="openListModal(\''+agentName+'\',\''+s.key+'\','+
+          'getListCurrent(\''+agentName+'\',\''+s.key+'\',\''+curVal+'\'),'+
+          '\''+esc(lmTitles[s.key]||s.label)+'\',\''+esc(lmPh[s.key]||'')+'\')">✎ Edit</button>'+
+          '</div>';
       } else {
         field='<input class="setting-input" id="dsetting-'+agentName+'-'+s.key+
           '" value="'+esc(s.value)+'" placeholder="'+esc(s.label)+'">';
@@ -556,6 +683,17 @@ async function saveDetailSettings(){
       method:'PUT',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({value:value})});
   }
+  // Save list modal values
+  for(var lmKey in _lmStore){
+    var parts=lmKey.split('__');
+    if(parts[0]===currentAgent){
+      await fetch('/api/agents/'+currentAgent+'/settings/'+parts[1],{
+        method:'PUT',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({value:_lmStore[lmKey]})});
+    }
+  }
+  // Clear the store after saving
+  Object.keys(_lmStore).forEach(function(k){if(k.startsWith(currentAgent+'__'))delete _lmStore[k];});
 
   btn.disabled=false; btn.textContent='✓ Saved';
   setTimeout(function(){btn.textContent='Save Settings';},2000);
@@ -651,12 +789,15 @@ async function loadPurchaseTypes(){
   tbody.innerHTML=pts.map(function(c){
     var ptl=PT_LABELS[c.purchase_type]||c.purchase_type;
     var defBadge=c.is_default?'<span class="pct-badge pct-low" style="font-size:10px">★ Default</span> ':'';
+    var usesPct    = c.purchase_type==='standard_import'||c.purchase_type==='import_repacking';
+    var usesRepack = c.purchase_type==='local_repacking'||c.purchase_type==='import_repacking';
+    var usesStock  = c.purchase_type==='stockpile_rice';
     return '<tr>'+
       '<td>'+defBadge+'<strong>'+esc(c.name)+'</strong></td>'+
       '<td style="color:var(--muted);font-size:12px">'+ptl+'</td>'+
-      '<td style="color:var(--muted);text-align:center">'+(c.landing_pct!=null?c.landing_pct+'%':'—')+'</td>'+
-      '<td style="color:var(--muted);text-align:center">'+(c.repacking_cost?'$'+parseFloat(c.repacking_cost).toFixed(2):'—')+'</td>'+
-      '<td style="color:var(--muted);text-align:center">'+(c.stockpile_charge?'$'+parseFloat(c.stockpile_charge).toFixed(2):'—')+'</td>'+
+      '<td style="color:var(--muted);text-align:center">'+(usesPct&&c.landing_pct!=null?c.landing_pct+'%':'—')+'</td>'+
+      '<td style="color:var(--muted);text-align:center">'+(usesRepack&&c.repacking_cost?'$'+parseFloat(c.repacking_cost).toFixed(2):'—')+'</td>'+
+      '<td style="color:var(--muted);text-align:center">'+(usesStock&&c.stockpile_charge?'$'+parseFloat(c.stockpile_charge).toFixed(2):'—')+'</td>'+
       '<td style="color:var(--muted);font-size:11px">'+esc(c.notes||'')+'</td>'+
       '<td style="display:flex;gap:4px">'+
       '<button class="btn btn-ghost btn-sm" onclick="editPt('+c.id+')">Edit</button>'+
@@ -724,9 +865,9 @@ function renderPbTable(){
       '<td style="color:var(--muted);font-size:11px">'+esc(item.item_code||'')+'</td>'+
       '<td style="color:var(--muted);font-size:11px">'+esc(item.unit_name||'')+'</td>'+
       '<td style="text-align:right;font-size:12px">'+fmt(item.rate)+'</td>'+
-      '<td style="text-align:right;font-size:12px;color:var(--warn)">'+fmt(item.min_sale_price)+'</td>'+
+      '<td style="text-align:right;font-size:12px;font-weight:500;color:var(--warn)">'+fmt(item.min_sale_price)+'</td>'+
       '<td style="text-align:right;font-size:12px;color:var(--accent)">'+fmt(item.buying_price)+'</td>'+
-      '<td style="text-align:right;font-size:12px;font-weight:600;color:#e3b341">'+(fc!=null?'$'+fc.toFixed(2):'—')+'</td>'+
+      '<td style="text-align:right;font-size:12px;font-weight:600;color:var(--warn)">'+(fc!=null?'$'+fc.toFixed(2):'—')+'</td>'+
       '<td><span class="pct-badge pct-mid" style="font-size:10px">'+ptName+'</span></td>'+
       '<td style="color:var(--muted);font-size:11px">'+upd+'</td>'+
       '<td style="display:flex;gap:4px">'+
@@ -823,6 +964,138 @@ function toggleDetailSettings(){
   arrow.textContent=open?'▸ Expand':'▾ Collapse';
 }
 
+// ── List-entry modal ─────────────────────────────────────────────────────────
+var _lmItems   = [];
+var _lmKey     = '';   // agent setting key
+var _lmAgent   = '';   // agent name
+
+var LIST_MODAL_KEYS = ['skip_orders', 'skip_customers', 'send_only_orders'];
+
+// ── Send Specific modal ──────────────────────────────────────────────────────
+var _sendSpecificAgent = '';
+var _sendSpecificItems = [];
+
+function openSendSpecificModal(agentName) {
+  _sendSpecificAgent = agentName;
+  _sendSpecificItems = [];
+  document.getElementById('ss-modal').style.display = 'flex';
+  document.getElementById('ss-input').value = '';
+  document.getElementById('ss-list').innerHTML = '<div style="color:var(--muted);font-size:12px;font-style:italic;padding:8px 4px">No SO numbers added yet</div>';
+  document.getElementById('ss-count').textContent = '0 entries';
+  setTimeout(function(){document.getElementById('ss-input').focus();}, 100);
+}
+
+function closeSendSpecificModal() {
+  document.getElementById('ss-modal').style.display = 'none';
+}
+
+function addSsEntry() {
+  var val = document.getElementById('ss-input').value.trim().replace(/^SO\s*:\s*/i,'');
+  if (!val) return;
+  if (_sendSpecificItems.indexOf(val) === -1) _sendSpecificItems.push(val);
+  document.getElementById('ss-input').value = '';
+  renderSsModal();
+  document.getElementById('ss-input').focus();
+}
+
+function removeSsEntry(i) {
+  _sendSpecificItems.splice(i, 1);
+  renderSsModal();
+}
+
+function renderSsModal() {
+  var list = document.getElementById('ss-list');
+  if (!_sendSpecificItems.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:12px;font-style:italic;padding:8px 4px">No SO numbers added yet</div>';
+  } else {
+    list.innerHTML = _sendSpecificItems.map(function(item, i) {
+      return '<div style="display:flex;align-items:center;justify-content:space-between;'+
+        'background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 12px">'+
+        '<span style="font-size:13px;font-family:var(--mono)">SO: '+esc(item)+'</span>'+
+        '<button onclick="removeSsEntry('+i+')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 4px">✕</button>'+
+        '</div>';
+    }).join('');
+  }
+  document.getElementById('ss-count').textContent = _sendSpecificItems.length + ' SO' + (_sendSpecificItems.length===1?'':'s');
+}
+
+async function runSendSpecific() {
+  if (!_sendSpecificItems.length) { alert('Add at least one SO number.'); return; }
+  var sendOnly = _sendSpecificItems.join(', ');
+  closeSendSpecificModal();
+  await fetch('/api/agents/'+_sendSpecificAgent+'/run', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({send_only: sendOnly})
+  });
+  showPage('logs', document.querySelectorAll('nav button')[1]);
+}
+
+function getListCurrent(agentName, key, fallback) {
+  var stored = _lmStore[agentName + '__' + key];
+  return stored !== undefined ? stored : fallback;
+}
+
+function openListModal(agentName, key, currentValue, title, placeholder) {
+  _lmAgent = agentName;
+  _lmKey   = key;
+  _lmItems = currentValue ? currentValue.split(',').map(function(s){return s.trim();}).filter(Boolean) : [];
+  document.getElementById('lm-title').textContent       = title;
+  document.getElementById('lm-input').placeholder       = placeholder;
+  document.getElementById('lm-input').value             = '';
+  renderListModal();
+  document.getElementById('list-modal').style.display   = 'flex';
+  setTimeout(function(){document.getElementById('lm-input').focus();}, 100);
+}
+
+function closeListModal() {
+  document.getElementById('list-modal').style.display = 'none';
+}
+
+function renderListModal() {
+  var list = document.getElementById('lm-list');
+  if (!_lmItems.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:12px;font-style:italic;padding:8px 4px">No entries yet — type above and press Enter or + Add</div>';
+  } else {
+    list.innerHTML = _lmItems.map(function(item, i) {
+      return '<div style="display:flex;align-items:center;justify-content:space-between;'+
+        'background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 12px">'+
+        '<span style="font-size:13px;font-family:var(--mono)">'+esc(item)+'</span>'+
+        '<button onclick="removeListEntry('+i+')" style="background:none;border:none;'+
+        'color:var(--muted);cursor:pointer;font-size:14px;padding:0 4px;line-height:1">✕</button>'+
+        '</div>';
+    }).join('');
+  }
+  document.getElementById('lm-count').textContent = _lmItems.length + ' entr' + (_lmItems.length === 1 ? 'y' : 'ies');
+}
+
+function addListEntry() {
+  var val = document.getElementById('lm-input').value.trim();
+  if (!val) return;
+  if (_lmItems.indexOf(val) === -1) _lmItems.push(val);
+  document.getElementById('lm-input').value = '';
+  renderListModal();
+  document.getElementById('lm-input').focus();
+}
+
+function removeListEntry(i) {
+  _lmItems.splice(i, 1);
+  renderListModal();
+}
+
+async function saveListModal() {
+  var value = _lmItems.join(', ');
+  // Update the hidden display span
+  var span = document.getElementById('lm-display-' + _lmAgent + '-' + _lmKey);
+  if (span) span.textContent = _lmItems.length ? _lmItems.length + ' entr' + (_lmItems.length===1?'y':'ies') : 'None';
+  // Store for saveDetailSettings to pick up
+  _lmStore[_lmAgent + '__' + _lmKey] = value;
+  closeListModal();
+}
+
+// Storage for list modal values (so saveDetailSettings can pick them up)
+var _lmStore = {};
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function removeUnmatched(id,btn){deletePb(id);var row=btn.closest('tr');if(row)row.remove();}
@@ -833,5 +1106,73 @@ loadAgents();
 loadLogs();
 setInterval(loadAgents,20000);
 </script>
+
+<!-- ── Send Specific modal ──────────────────────────────────────────────────── -->
+<div id="ss-modal" style="display:none;position:fixed;inset:0;z-index:1000;
+     background:rgba(0,0,0,.6);align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--warn);border-radius:12px;
+       width:460px;max-width:95vw;display:flex;flex-direction:column;max-height:80vh">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <strong style="font-size:14px;color:var(--warn)">🎯 Send Specific SOs</strong>
+        <p style="font-size:11px;color:var(--muted);margin-top:3px">Only these SO numbers will be checked and sent</p>
+      </div>
+      <button onclick="closeSendSpecificModal()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;gap:8px">
+      <input id="ss-input" placeholder="e.g. 42123" style="flex:1;background:var(--surface2);border:1px solid var(--border);
+        color:var(--text);border-radius:6px;padding:8px 12px;font-size:13px;font-family:var(--mono)"
+        onkeydown="if(event.key==='Enter')addSsEntry()">
+      <button class="btn btn-ghost btn-sm" onclick="addSsEntry()">+ Add</button>
+    </div>
+    <div id="ss-list" style="flex:1;overflow-y:auto;padding:10px 16px;display:flex;flex-direction:column;gap:6px;min-height:80px"></div>
+    <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <span id="ss-count" style="font-size:12px;color:var(--muted)">0 entries</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="closeSendSpecificModal()">Cancel</button>
+        <button class="btn btn-sm" onclick="runSendSpecific()" style="background:var(--warn);color:#1a1a1a;border:none;font-weight:600">🎯 Run for These SOs</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── List-entry modal ───────────────────────────────────────────────────── -->
+<div id="list-modal" style="display:none;position:fixed;inset:0;z-index:1000;
+     background:rgba(0,0,0,.6);align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;
+       width:480px;max-width:95vw;display:flex;flex-direction:column;max-height:80vh">
+
+    <!-- Header -->
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);
+         display:flex;align-items:center;justify-content:space-between">
+      <strong id="lm-title" style="font-size:14px"></strong>
+      <button onclick="closeListModal()" style="background:none;border:none;color:var(--muted);
+        font-size:18px;cursor:pointer;line-height:1">✕</button>
+    </div>
+
+    <!-- Add input -->
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;gap:8px">
+      <input id="lm-input" placeholder="" style="flex:1;background:var(--surface2);border:1px solid var(--border);
+        color:var(--text);border-radius:6px;padding:8px 12px;font-size:13px;font-family:var(--font)"
+        onkeydown="if(event.key==='Enter')addListEntry()">
+      <button class="btn btn-primary btn-sm" onclick="addListEntry()">+ Add</button>
+    </div>
+
+    <!-- List -->
+    <div id="lm-list" style="flex:1;overflow-y:auto;padding:10px 16px;display:flex;
+         flex-direction:column;gap:6px;min-height:80px"></div>
+
+    <!-- Footer -->
+    <div style="padding:14px 20px;border-top:1px solid var(--border);
+         display:flex;align-items:center;justify-content:space-between">
+      <span id="lm-count" style="font-size:12px;color:var(--muted)">0 entries</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="closeListModal()">Cancel</button>
+        <button class="btn btn-primary btn-sm" onclick="saveListModal()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

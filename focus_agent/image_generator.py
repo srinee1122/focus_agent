@@ -41,6 +41,7 @@ def _build_html(alert: dict) -> str:
           <td class="item-name">{item['item']}</td>
           <td>{item['unit'].lstrip('.')}{unit_note}</td>
           <td class="num">{int(item['quantity'])}</td>
+          <td class="num" style="color:#888">${item['pricebook']:.2f}</td>
           <td class="num">${item['landing']:.2f}</td>
           <td class="num">${item['rate_per_piece']:.2f}</td>
           <td class="num {diff_cls}">{diff_sign}${abs(diff):.2f}</td>
@@ -99,6 +100,7 @@ def _build_html(alert: dict) -> str:
       <th>Item</th>
       <th>Unit</th>
       <th class="num">Qty</th>
+      <th class="num">Cost $</th>
       <th class="num">Landing $</th>
       <th class="num">Rate $</th>
       <th class="num">Diff $</th>

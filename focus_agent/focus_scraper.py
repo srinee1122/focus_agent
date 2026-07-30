@@ -79,15 +79,16 @@ def get_landing_cost(item_name: str, pricebook_price: float,
 
 class FocusScraper:
 
-    async def run(self, username: str, password: str) -> list:
+    async def run(self, username: str, password: str,
+                  target_vouchers: list = None) -> list:
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=config.HEADLESS)
             context = await browser.new_context(accept_downloads=True, viewport={"width": 1920, "height": 1080})
-            # Set default timeout to 60 seconds globally
             context.set_default_timeout(60_000)
             page = await context.new_page()
             try:
-                alerts = await self._run_phases(page, username, password)
+                alerts = await self._run_phases(page, username, password,
+                                                target_vouchers=target_vouchers)
             except PlaywrightTimeout as e:
                 print(f"❌ Timeout: {e}")
                 try:
@@ -108,7 +109,8 @@ class FocusScraper:
                 await browser.close()
         return alerts
 
-    async def _run_phases(self, page, username: str, password: str) -> list:
+    async def _run_phases(self, page, username: str, password: str,
+                          target_vouchers: list = None) -> list:
 
         # ── PHASE 1: Login + Navigate to Sales Order ──────────────────────
 
@@ -171,57 +173,65 @@ class FocusScraper:
 
         # ── PHASE 2: Read table, find price-issue vouchers ─────────────────
 
-        print("📊 Phase 2: Reading Sales Order table...")
-        await page.wait_for_selector("table", timeout=30_000)
-        await asyncio.sleep(2)
+        if target_vouchers:
+            # Send Specific mode — skip full grid scan, go directly to targets
+            price_issue_vouchers = set(target_vouchers)
+            print(f"🎯 Send Specific mode: skipping grid scan, targeting {len(price_issue_vouchers)} SO(s):")
+            for v in sorted(price_issue_vouchers):
+                print(f"   → {v}")
+            print()
+        else:
+            print("📊 Phase 2: Reading Sales Order table...")
+            await page.wait_for_selector("table", timeout=30_000)
+            await asyncio.sleep(2)
 
-        result = await page.evaluate("""() => {
-            const tables = document.querySelectorAll('table');
-            let biggest = null, maxRows = 0;
-            for (const t of tables) {
-                const rows = t.querySelectorAll('tr').length;
-                if (rows > maxRows) { maxRows = rows; biggest = t; }
-            }
-            if (!biggest) return { headers: [], rows: [] };
-            const headers = Array.from(biggest.querySelectorAll('thead th')).map(h => h.innerText.trim());
-            const rows = Array.from(biggest.querySelectorAll('tbody tr')).map(row =>
-                Array.from(row.querySelectorAll('td')).map(c => c.innerText.trim())
-            );
-            return { headers, rows };
-        }""")
+            result = await page.evaluate("""() => {
+                const tables = document.querySelectorAll('table');
+                let biggest = null, maxRows = 0;
+                for (const t of tables) {
+                    const rows = t.querySelectorAll('tr').length;
+                    if (rows > maxRows) { maxRows = rows; biggest = t; }
+                }
+                if (!biggest) return { headers: [], rows: [] };
+                const headers = Array.from(biggest.querySelectorAll('thead th')).map(h => h.innerText.trim());
+                const rows = Array.from(biggest.querySelectorAll('tbody tr')).map(row =>
+                    Array.from(row.querySelectorAll('td')).map(c => c.innerText.trim())
+                );
+                return { headers, rows };
+            }""")
 
-        headers = result["headers"]
-        rows    = result["rows"]
-        if not headers or not rows:
-            raise ValueError("Sales Order table not found or empty.")
+            headers = result["headers"]
+            rows    = result["rows"]
+            if not headers or not rows:
+                raise ValueError("Sales Order table not found or empty.")
 
-        df = pd.DataFrame(rows, columns=headers[:len(rows[0])])
+            df = pd.DataFrame(rows, columns=headers[:len(rows[0])])
 
-        auth_col    = next((c for c in df.columns if "authorization" in str(c).lower()), None)
-        lowcost_col = next((c for c in df.columns if str(c).strip().lower() == "lowcost"), None)
-        voucher_col = next((c for c in df.columns if "voucher" in str(c).lower()), None)
+            auth_col    = next((c for c in df.columns if "authorization" in str(c).lower()), None)
+            lowcost_col = next((c for c in df.columns if str(c).strip().lower() == "lowcost"), None)
+            voucher_col = next((c for c in df.columns if "voucher" in str(c).lower()), None)
 
-        if not all([auth_col, lowcost_col, voucher_col]):
-            raise ValueError(f"Required columns not found. Available: {list(df.columns)}")
+            if not all([auth_col, lowcost_col, voucher_col]):
+                raise ValueError(f"Required columns not found. Available: {list(df.columns)}")
 
-        pending = df[df[auth_col].astype(str).str.strip().str.lower() == "pending"]
-        price_issue = pending[
-            pending[lowcost_col].isna() |
-            (pending[lowcost_col].astype(str).str.strip().isin(["", "nan"]))
-        ]
+            pending = df[df[auth_col].astype(str).str.strip().str.lower() == "pending"]
+            price_issue = pending[
+                pending[lowcost_col].isna() |
+                (pending[lowcost_col].astype(str).str.strip().isin(["", "nan"]))
+            ]
 
-        price_issue_vouchers = set(price_issue[voucher_col].dropna().tolist())
+            price_issue_vouchers = set(price_issue[voucher_col].dropna().tolist())
 
-        print(f"   Total rows          : {len(df)}")
-        print(f"   Pending orders      : {len(pending)}")
-        print(f"   Price issue vouchers: {len(price_issue_vouchers)}")
-        for v in sorted(price_issue_vouchers):
-            print(f"   → {v}")
-        print("✅ Phase 2 complete.\n")
+            print(f"   Total rows          : {len(df)}")
+            print(f"   Pending orders      : {len(pending)}")
+            print(f"   Price issue vouchers: {len(price_issue_vouchers)}")
+            for v in sorted(price_issue_vouchers):
+                print(f"   → {v}")
+            print("✅ Phase 2 complete.\n")
 
-        if not price_issue_vouchers:
-            print("ℹ️  No price-issue vouchers found. Nothing to report.")
-            return []
+            if not price_issue_vouchers:
+                print("ℹ️  No price-issue vouchers found. Nothing to report.")
+                return []
 
         # ── PHASE 3 & 4: Click each flagged voucher → read detail table ──────
 

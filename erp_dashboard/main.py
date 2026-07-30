@@ -149,7 +149,7 @@ def get_agent_setting(agent: str, key: str, default: str = "") -> str:
 
 
 # ── Agent runners ──────────────────────────────────────────────────────────
-async def run_low_price_agent(force_all: bool = False):
+async def run_low_price_agent(force_all: bool = False, send_only: str = ""):
     """Run the Low Price Agent as a subprocess using threading (Windows-safe)."""
     set_status("low_price", "running")
     run_start = datetime.now().strftime("%d %b %Y  %I:%M:%S %p")
@@ -176,13 +176,16 @@ async def run_low_price_agent(force_all: bool = False):
                 send_text = "true"
 
             skip_sent   = get_agent_setting("low_price", "skip_sent_sos", "true")
-            skip_orders    = get_agent_setting("low_price", "skip_orders",    "")
-            skip_customers = get_agent_setting("low_price", "skip_customers", "")
+            skip_orders      = get_agent_setting("low_price", "skip_orders",      "")
+            skip_customers   = get_agent_setting("low_price", "skip_customers",   "")
+            send_only_orders = get_agent_setting("low_price", "send_only_orders", "")
             send(f"   ✓ skip_sent_sos={skip_sent}")
-            if skip_orders:
-                send(f"   ✓ skip_orders={skip_orders}")
-            if skip_customers:
-                send(f"   ✓ skip_customers={skip_customers}")
+            if skip_orders:    send(f"   ✓ skip_orders={skip_orders}")
+            if skip_customers: send(f"   ✓ skip_customers={skip_customers}")
+            if send_only_orders: send(f"   ✓ send_only_orders={send_only_orders}")
+            # One-time send_only override from button
+            effective_send_only = send_only if send_only else send_only_orders
+            if send_only: send(f"   🎯 Send-specific mode: {send_only}")
             effective_skip = "false" if force_all else skip_sent
             if force_all:
                 send("⚡ Force-all mode — sending all SOs regardless of sent history")
@@ -195,14 +198,15 @@ async def run_low_price_agent(force_all: bool = False):
                     stdout=lf,
                     stderr=lf,
                     env={**os.environ,
-                         "PYTHONIOENCODING":    "utf-8",
-                         "AGENT_SEND_TEXT":     send_text,
-                         "AGENT_SEND_IMAGE":    send_image,
-                         "AGENT_WA_GROUPS":     whatsapp_groups,
-                         "AGENT_SKIP_ORDERS":   skip_orders,
-                         "AGENT_SKIP_CUSTOMERS":skip_customers,
-                         "AGENT_SKIP_SENT":     effective_skip,
-                         "DASHBOARD_DB":        str(DB_PATH.resolve()),
+                         "PYTHONIOENCODING":     "utf-8",
+                         "AGENT_SEND_TEXT":      send_text,
+                         "AGENT_SEND_IMAGE":     send_image,
+                         "AGENT_WA_GROUPS":      whatsapp_groups,
+                         "AGENT_SKIP_ORDERS":    skip_orders,
+                         "AGENT_SKIP_CUSTOMERS": skip_customers,
+                         "AGENT_SEND_ONLY":      effective_send_only,
+                         "AGENT_SKIP_SENT":      effective_skip,
+                         "DASHBOARD_DB":         str(DB_PATH.resolve()),
                     }
                 )
                 send(f"   ✓ Subprocess started (PID {proc.pid}) — output → last_run.log")
@@ -248,20 +252,19 @@ RUNNERS = {
 }
 
 
-async def trigger(name: str, force_all: bool = False) -> bool:
+async def trigger(name: str, force_all: bool = False, send_only: str = "") -> bool:
     if name in running_tasks and not running_tasks[name].done():
         return False
     runner = RUNNERS.get(name)
     if not runner:
         return False
-    # Only pass force_all to agents that support it
     try:
         import inspect
         sig = inspect.signature(runner)
-        if "force_all" in sig.parameters:
-            running_tasks[name] = asyncio.create_task(runner(force_all=force_all))
-        else:
-            running_tasks[name] = asyncio.create_task(runner())
+        kwargs = {}
+        if "force_all"  in sig.parameters: kwargs["force_all"]  = force_all
+        if "send_only"  in sig.parameters: kwargs["send_only"]  = send_only
+        running_tasks[name] = asyncio.create_task(runner(**kwargs))
     except Exception:
         running_tasks[name] = asyncio.create_task(runner())
     return True
@@ -310,8 +313,9 @@ def update_agent(name: str, body: dict):
 
 @app.post("/api/agents/{name}/run")
 async def run_agent(name: str, body: dict = {}):
-    force_all = body.get("force_all", False) if body else False
-    if not await trigger(name, force_all=force_all):
+    force_all   = body.get("force_all",   False) if body else False
+    send_only   = body.get("send_only",   "")    if body else ""
+    if not await trigger(name, force_all=force_all, send_only=send_only):
         raise HTTPException(400, "Agent already running or not found")
     return {"ok": True}
 

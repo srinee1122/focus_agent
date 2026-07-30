@@ -76,7 +76,7 @@ def format_single_alert(alert: dict) -> str:
             f"  *{item['item']}*",
             f"  📦 Unit             : {item['unit']}{unit_note}",
             f"  🔢 Qty Ordered      : {item['quantity']:.0f} {item['unit']}",
-            f"  💰 Cost/pc          : ${item['pricebook']:.2f}",
+            f"  🏷️ Purchase Cost/pc : ${item['pricebook']:.2f}",
             f"  🚚 Landing Cost/pc  : ${item['landing']:.2f}  _({item.get('landing_label','+5%')})_",
             f"  📅 Prev. Price/pc   : ${item['prev_price']:.2f}",
             f"  💸 Rate/pc          : ${item['rate_per_piece']:.2f}",
