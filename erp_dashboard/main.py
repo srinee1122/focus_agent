@@ -1,5 +1,5 @@
 """
-main.py — ERP Agent Dashboard backend (FastAPI)
+main.py — ERP Agent Dashboard backend for multi agents (FastAPI)
 
 Run:
     python -m uvicorn main:app --reload --port 8000
