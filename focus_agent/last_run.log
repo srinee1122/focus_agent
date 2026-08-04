@@ -1,6 +1,6 @@
 
 ==================================================
-🤖 Focus ERP Agent — 30 Jul 2026 02:40 PM
+🤖 Focus ERP Agent — 03 Aug 2026 04:11 PM
 ==================================================
 ✅ Credentials loaded for: mahendran@sriambikas.com
 
@@ -15,11 +15,11 @@
 ✅ Phase 1 complete.
 
 🎯 Send Specific mode: skipping grid scan, targeting 1 SO(s):
-   → 42443
+   → 42737
 
 🔍 Phase 3: Opening each price-issue voucher to read line items.
 
-   📋 Opening voucher 42443...
+   📋 Opening voucher 42737...
       Columns : ['Warehouse', 'Item', 'Description', 'Unit', 'Quantity', 'Last Selling Price', 'Rate', 'Gross', 'Discount%', 'Discount Amt', 'Rate in Base Qty', 'Cost Price', 'Cost Restriction', 'Customer Name', 'Snumber', 'Pricebook Buying Price', 'Qty per CTN', 'Stock Balance (Pcs)', 'Stock Balance (CTN)']
       ✅ 3 low-price item(s) found.
 
@@ -29,41 +29,41 @@
 📋 1 order(s) flagged. Preview:
 
 ── MESSAGE ──────────────────────────────────────
-🚨 *LOW PRICE ALERT*  |  30 Jul 2026, 02:40 PM
+🚨 *LOW PRICE ALERT*  |  03 Aug 2026, 04:12 PM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 *SO : 42443*
-🏢 RES/VILLAGE CURRY
-👤 Salesman: RAJASEKAR
+📋 *SO : 42737*
+🏢 A/CASH (JEEVA)
+👤 Salesman: RANJITHA
 
-  *IDLY PARBOILED PONNI RICE- 25kg*
+  *BRU COFFEE ORG PKT- 200gm X40*
+  📦 Unit             : PCS
+  🔢 Qty Ordered      : 10 PCS
+  🏷️ Purchase Cost/pc : $4.55
+  🚚 Landing Cost/pc  : $4.78  _(+5.0%)_
+  📅 Prev. Price/pc   : $5.30
+  💸 Rate/pc          : $5.30
+  📊 Diff (Rate−Land) : +$0.52
+  📈 Margin           : +9.8%  🟢 OK
+
+  *UNITY BASMATHI RICE 25KG*
   📦 Unit             : BAG
-  🔢 Qty Ordered      : 2 BAG
-  🏷️ Purchase Cost/pc : $18.50
-  🚚 Landing Cost/pc  : $19.43  _(+5.0%)_
-  📅 Prev. Price/pc   : $23.00
-  💸 Rate/pc          : $23.00
-  📊 Diff (Rate−Land) : +$3.57
-  📈 Margin           : +15.5%  ✅ HEALTHY
+  🔢 Qty Ordered      : 1 BAG
+  🏷️ Purchase Cost/pc : $36.84
+  🚚 Landing Cost/pc  : $38.68  _(+5.0%)_
+  📅 Prev. Price/pc   : $46.00
+  💸 Rate/pc          : $46.00
+  📊 Diff (Rate−Land) : +$7.32
+  📈 Margin           : +15.9%  ✅ HEALTHY
 
-  *RICE FLOUR 25KG*
-  📦 Unit             : PCS
-  🔢 Qty Ordered      : 1 PCS
-  🏷️ Purchase Cost/pc : $31.00
-  🚚 Landing Cost/pc  : $32.55  _(+5.0%)_
-  📅 Prev. Price/pc   : $32.50
-  💸 Rate/pc          : $32.50
-  📊 Diff (Rate−Land) : $0.05
-  📈 Margin           : -0.2%  🔴 BELOW COST
-
-  *AJINOMOTO 1KGX20*
-  📦 Unit             : PCS
-  🔢 Qty Ordered      : 2 PCS
-  🏷️ Purchase Cost/pc : $2.50
-  🚚 Landing Cost/pc  : $2.62  _(+5.0%)_
-  📅 Prev. Price/pc   : $4.00
-  💸 Rate/pc          : $4.00
-  📊 Diff (Rate−Land) : +$1.38
-  📈 Margin           : +34.5%  ✅ HEALTHY
+  *OOTY PREMIUM PARBOILED PONNI RICE - 25KG*
+  📦 Unit             : BAG
+  🔢 Qty Ordered      : 4 BAG
+  🏷️ Purchase Cost/pc : $18.75
+  🚚 Landing Cost/pc  : $19.69  _(+5.0%)_
+  📅 Prev. Price/pc   : $25.00
+  💸 Rate/pc          : $25.00
+  📊 Diff (Rate−Land) : +$5.31
+  📈 Margin           : +21.2%  ✅ HEALTHY
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 _Reply to take action — ShopAide Agent 🤖_
@@ -71,7 +71,7 @@ _Reply to take action — ShopAide Agent 🤖_
 
 
 📊 Saving Excel backup...
-   📊 Excel saved: downloads\LowPrice_Alert_2026-07-30.xlsx
+   📊 Excel saved: downloads\LowPrice_Alert_2026-08-03.xlsx
 
 📲 Sending 1 message(s) to group: 'Test Low Price'...
    🔧 AGENT_SEND_TEXT=false
@@ -79,21 +79,21 @@ _Reply to take action — ShopAide Agent 🤖_
    🔧 AGENT_WA_GROUPS=[Test Low Price]
    ⚠️  Fixed malformed JSON: [Test Low Price] → ['Test Low Price']
    ✅ Groups from dashboard: ['Test Low Price']
-   🎯 Send-only mode: keeping 1/1 SO(s) matching 42443
+   🎯 Send-only mode: keeping 1/1 SO(s) matching 42737
    🎯 Send Specific mode — bypassing sent history check
    🔧 skip_sent_sos=False
    📋 WhatsApp groups from config: ['Test Low Price']
    🔀 Send text: False | Send image: True
    📸 Generating alert images...
-   📸 Image saved: downloads\alert_SO__42443_144050.jpg
+   📸 Image saved: downloads\alert_SO__42737_161244.jpg
    Opening WhatsApp Web...
    Waiting for WhatsApp to load (scan QR if first run)...
 
    📢 Sending to: 'Test Low Price'
    🔍 Searching: 'Test Low Price'...
    ✅ Group opened.
-      📤 Sending image for SO : 42443...
-      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42443_144050_photo.jpg
+      📤 Sending image for SO : 42737...
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42737_161244_photo.jpg
       🔍 Waiting for file chooser...
       ✅ File set via chooser
       ⏳ Waiting for image delivery...
@@ -104,4 +104,4 @@ _Reply to take action — ShopAide Agent 🤖_
    WhatsApp browser closed.
    📝 Recorded 3 sent item(s) across 1 SO(s).
 
-🎉 Done at 02:41 PM
+🎉 Done at 04:14 PM
