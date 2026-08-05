@@ -8,6 +8,18 @@ Usage:
 """
 
 import asyncio
+import sys as _sys
+from pathlib import Path as _Path
+
+# When running as PyInstaller exe, add the exe's directory to sys.path
+# so the external config.py and credentials.xlsx are found
+if getattr(_sys, 'frozen', False):
+    _exe_dir = str(_Path(_sys.executable).parent)
+    if _exe_dir not in _sys.path:
+        _sys.path.insert(0, _exe_dir)
+    # Set working directory to exe location so relative paths work
+    import os as _os_init
+    _os_init.chdir(_exe_dir)
 import sys
 import time
 import schedule
@@ -165,10 +177,10 @@ async def run_agent():
 
         if alerts:
             sender = WhatsAppSender()
-            await sender.send(alerts, send_text=send_text, send_image=send_image)
+            groups_sent = await sender.send(alerts, send_text=send_text, send_image=send_image)
 
-            # Record sent SOs in dashboard DB
-            if dashboard_db and _os.path.exists(dashboard_db):
+            # Record sent SOs in dashboard DB — ONLY if at least one group received them
+            if groups_sent and dashboard_db and _os.path.exists(dashboard_db):
                 import sqlite3 as _sq
                 conn = _sq.connect(dashboard_db)
                 rows = []
@@ -184,6 +196,9 @@ async def run_agent():
                 conn.commit()
                 conn.close()
                 print(f"   📝 Recorded {len(rows)} sent item(s) across {len(alerts)} SO(s).")
+            elif not groups_sent:
+                print("   ⚠️ Nothing recorded — no WhatsApp group received the alerts.")
+                print("      These SOs will be retried on the next run.")
 
         print(f"\n🎉 Done at {datetime.now().strftime('%I:%M %p')}")
 

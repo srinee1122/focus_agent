@@ -54,7 +54,7 @@ class WhatsAppSender:
                    send_text: bool = None, send_image: bool = None):
         if not alerts:
             print("   No alerts to send.")
-            return
+            return 0
 
         # Resolve toggles (from config unless overridden)
         use_text  = send_text  if send_text  is not None else getattr(config, "SEND_TEXT",  True)
@@ -117,12 +117,14 @@ class WhatsAppSender:
             )
             await asyncio.sleep(3)
 
+            groups_sent = 0
             for group in groups:
                 print(f"\n   📢 Sending to: '{group}'")
                 opened = await self._open_group(page, group, debug_dir)
                 if not opened:
                     print(f"   ❌ Could not open group '{group}' — skipping.")
                     continue
+                groups_sent += 1
 
                 for alert in alerts:
                     voucher = alert["voucher"]
@@ -144,7 +146,12 @@ class WhatsAppSender:
                 print(f"   ✅ Done sending to '{group}'.")
 
             await asyncio.sleep(3)
-            print("\n✅ All WhatsApp messages sent and confirmed.")
+            if groups_sent == len(groups):
+                print("\n✅ All WhatsApp messages sent and confirmed.")
+            elif groups_sent > 0:
+                print(f"\n⚠️ Sent to {groups_sent}/{len(groups)} group(s) — some failed.")
+            else:
+                print("\n❌ NO messages were sent — all groups failed to open.")
             await ctx.close()
             print("   WhatsApp browser closed.")
 
@@ -155,36 +162,76 @@ class WhatsAppSender:
                     os.remove(path)
                 except Exception:
                     pass
+        return groups_sent
 
     # ── Open group ─────────────────────────────────────────────────────────
     async def _open_group(self, page, group_name: str, debug_dir: Path) -> bool:
+        """Opens the group ONLY on an exact title match, and verifies the opened
+        chat header matches before returning success. Never falls back to a
+        'first result' — wrong-recipient sends are worse than no send."""
         try:
-            print(f"   🔍 Searching: '{group_name}'...")
-            search = await self._first_visible(page, SEARCH_SELECTORS)
-            if search is None:
-                raise RuntimeError("Search box not found")
-            await search.click()
-            await asyncio.sleep(0.4)
-            await page.keyboard.press(SELECT_ALL)
-            await page.keyboard.press("Delete")
-            await page.keyboard.type(group_name, delay=40)
-            await asyncio.sleep(2)
+            for attempt in (1, 2):
+                print(f"   🔍 Searching: '{group_name}' (attempt {attempt})...")
+                # Reset any open search/chat state so the search box is reachable
+                await page.keyboard.press("Escape")
+                await asyncio.sleep(0.8)
+                search = await self._first_visible(page, SEARCH_SELECTORS)
+                if search is None:
+                    raise RuntimeError("Search box not found")
+                await search.click()
+                await asyncio.sleep(0.6)
+                await page.keyboard.press(SELECT_ALL)
+                await page.keyboard.press("Delete")
+                await asyncio.sleep(0.6)
+                # Slower typing on retry — WhatsApp sometimes misses fast input
+                await page.keyboard.type(group_name, delay=40 if attempt == 1 else 140)
+                await asyncio.sleep(3)
 
-            group_el = page.locator(f'span[title="{group_name}"]').first
-            try:
-                await group_el.wait_for(timeout=8_000)
-                await group_el.click()
-            except PWTimeout:
-                first = page.locator(
-                    '[aria-label="Search results."] div[role="listitem"],'
-                    'div[data-testid="cell-frame-container"]'
-                ).first
-                await first.wait_for(timeout=5_000)
-                await first.click()
+                # Re-trigger the filter in case WhatsApp missed the input event
+                await page.keyboard.press("Backspace")
+                await asyncio.sleep(0.4)
+                await page.keyboard.type(group_name[-1], delay=100)
+                await asyncio.sleep(2.5)
 
-            await asyncio.sleep(2)
-            print(f"   ✅ Group opened.")
-            return True
+                # STRICT: exact title match only
+                group_el = page.locator(f'span[title="{group_name}"]').first
+                try:
+                    await group_el.wait_for(timeout=8_000)
+                    await group_el.click()
+                    await asyncio.sleep(2)
+                except PWTimeout:
+                    print(f"   ⚠️ Exact group name not found in results."
+                          + (" Retrying..." if attempt == 1 else ""))
+                    continue
+
+                # VERIFY: the opened chat header must contain this group name
+                header_ok = False
+                try:
+                    header = page.locator('#main header').first
+                    await header.wait_for(state="visible", timeout=6_000)
+                    header_text = (await header.inner_text()) or ""
+                    header_ok = group_name.lower() in header_text.lower()
+                except Exception:
+                    # Fallback: title-attribute check anywhere in the chat header
+                    try:
+                        header_ok = await page.locator(
+                            f'#main [title="{group_name}"]'
+                        ).first.is_visible()
+                    except Exception:
+                        header_ok = False
+
+                if header_ok:
+                    print(f"   ✅ Group opened and verified: '{group_name}'")
+                    return True
+                else:
+                    print(f"   ⚠️ Opened chat header does not match '{group_name}' — aborting this chat.")
+                    # Do NOT send to an unverified chat
+                    continue
+
+            await page.screenshot(path=str(debug_dir / "ERROR_open_group.png"))
+            print(f"   ❌ Group '{group_name}' not found with exact match. Nothing sent.")
+            print(f"      Check the group name spelling in agent settings matches WhatsApp exactly.")
+            return False
         except Exception as e:
             await page.screenshot(path=str(debug_dir / "ERROR_open_group.png"))
             print(f"   ❌ Could not open group: {e}")

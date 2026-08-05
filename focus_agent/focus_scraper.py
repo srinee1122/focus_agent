@@ -160,15 +160,19 @@ class FocusScraper:
         await asyncio.sleep(4)
         print("   Sales Order page opened.")
 
-        print("🔽 Applying pending filter...")
-        await page.wait_for_selector("i.icon-filter.hiconright2", timeout=30_000)
-        await page.click("i.icon-filter.hiconright2")
-        await asyncio.sleep(2)
-        await page.wait_for_selector('[id="2106_2_DefaultFilter_3"]', timeout=15_000)
-        await page.fill('[id="2106_2_DefaultFilter_3"]', "pending")
-        await asyncio.sleep(0.5)
-        await page.click("#btnSetFilterVal")
-        await asyncio.sleep(4)
+        if target_vouchers:
+            # Send Specific — no pending filter; open SOs from the default view
+            print("🎯 Send Specific mode: skipping pending filter.")
+        else:
+            print("🔽 Applying pending filter...")
+            await page.wait_for_selector("i.icon-filter.hiconright2", timeout=30_000)
+            await page.click("i.icon-filter.hiconright2")
+            await asyncio.sleep(2)
+            await page.wait_for_selector('[id="2106_2_DefaultFilter_3"]', timeout=15_000)
+            await page.fill('[id="2106_2_DefaultFilter_3"]', "pending")
+            await asyncio.sleep(0.5)
+            await page.click("#btnSetFilterVal")
+            await asyncio.sleep(4)
         print("✅ Phase 1 complete.\n")
 
         # ── PHASE 2: Read table, find price-issue vouchers ─────────────────
@@ -241,6 +245,20 @@ class FocusScraper:
         for voucher_num in sorted(price_issue_vouchers):
             print(f"   📋 Opening voucher {voucher_num}...")
             try:
+                if target_vouchers:
+                    # Send Specific: use the SO page's search box to filter the
+                    # grid to this voucher (triggers onkeyup handler via typing)
+                    try:
+                        search = page.locator("#txtSearch")
+                        await search.wait_for(state="visible", timeout=10_000)
+                        await search.click()
+                        await page.keyboard.press("Control+A")
+                        await page.keyboard.type(str(voucher_num), delay=60)
+                        await asyncio.sleep(2.5)  # let the grid filter
+                        print(f"      🔎 Searched grid for {voucher_num}")
+                    except Exception as fe:
+                        print(f"      ⚠️ Search box failed ({fe}); trying direct row search...")
+
                 # Scroll list to bring row into view
                 await page.evaluate(f"""() => {{
                     for (const row of document.querySelectorAll('tr')) {{
@@ -462,12 +480,13 @@ class FocusScraper:
                         await asyncio.sleep(1)
                         await page.get_by_role("link", name="Sales Order").first.click()
                         await asyncio.sleep(3)
-                        await page.click("i.icon-filter.hiconright2")
-                        await asyncio.sleep(1.5)
-                        await page.fill('[id="2106_2_DefaultFilter_3"]', "pending")
-                        await asyncio.sleep(0.5)
-                        await page.click("#btnSetFilterVal")
-                        await asyncio.sleep(3)
+                        if not target_vouchers:
+                            await page.click("i.icon-filter.hiconright2")
+                            await asyncio.sleep(1.5)
+                            await page.fill('[id="2106_2_DefaultFilter_3"]', "pending")
+                            await asyncio.sleep(0.5)
+                            await page.click("#btnSetFilterVal")
+                            await asyncio.sleep(3)
                     except Exception as nav_err:
                         print(f"   ❌ Could not re-navigate: {nav_err}")
 
