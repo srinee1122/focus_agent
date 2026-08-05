@@ -225,6 +225,37 @@ tr:hover td{background:rgba(255,255,255,.02)}
 </style>
 </head>
 <body>
+
+<!-- ── Login overlay ─────────────────────────────────────────────────────── -->
+<div id="login-overlay" style="position:fixed;inset:0;z-index:2000;background:var(--bg);
+     display:flex;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;
+       width:380px;max-width:92vw;padding:36px 32px;display:flex;flex-direction:column;gap:18px;
+       box-shadow:0 12px 48px var(--shadow)">
+    <div style="text-align:center">
+      <div style="font-size:28px;margin-bottom:8px">⚡</div>
+      <h1 style="font-size:18px;font-weight:800;letter-spacing:-.01em">Sri Ambikas</h1>
+      <p style="font-size:12px;color:var(--muted);margin-top:4px">ERP Agent Dashboard</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <input id="login-email" type="email" placeholder="Email address" autocomplete="email"
+        style="background:var(--surface2);border:1px solid var(--border);color:var(--text);
+               border-radius:8px;padding:11px 14px;font-size:14px;font-family:var(--font)"
+        onkeydown="if(event.key==='Enter')document.getElementById('login-password').focus()">
+      <input id="login-password" type="password" placeholder="Password" autocomplete="current-password"
+        style="background:var(--surface2);border:1px solid var(--border);color:var(--text);
+               border-radius:8px;padding:11px 14px;font-size:14px;font-family:var(--font)"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div id="login-error" style="display:none;background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.3);
+         color:var(--danger);border-radius:8px;padding:10px 14px;font-size:12px"></div>
+    <button id="login-btn" class="btn btn-primary" onclick="doLogin()"
+      style="padding:11px;font-size:14px">Sign In</button>
+  </div>
+</div>
+
+<!-- ── Signed-in user chip (in sidebar, populated after login) ──────────── -->
+
 <aside>
   <div class="logo"><h1>Sri Ambikas</h1><p>ERP Agent Dashboard</p></div>
   <nav>
@@ -232,6 +263,12 @@ tr:hover td{background:rgba(255,255,255,.02)}
     <button onclick="showPage('logs',this)">📋 Live Logs</button>
     <button onclick="showPage('pricebook',this)">💰 Price Book</button>
   </nav>
+  <div id="user-chip" style="display:none;padding:14px 16px;border-top:1px solid var(--border);
+       align-items:center;gap:10px;justify-content:space-between">
+    <span id="user-email" style="font-size:11px;color:var(--muted);overflow:hidden;
+          text-overflow:ellipsis;white-space:nowrap;flex:1"></span>
+    <button class="btn btn-ghost btn-sm" onclick="doLogout()" title="Sign out">⏻</button>
+  </div>
 </aside>
 
 <main>
@@ -439,7 +476,94 @@ tr:hover td{background:rgba(255,255,255,.02)}
   </div>
 </main>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
+// ── Firebase Auth ────────────────────────────────────────────────────────────
+firebase.initializeApp({
+  apiKey: "AIzaSyDzkB_M1G3rBjYT5A9cim5oNeeWnx5UuPo",
+  authDomain: "sriambikasagents.firebaseapp.com",
+  projectId: "sriambikasagents",
+});
+
+var authToken = null;
+var appStarted = false;
+
+// Wrap fetch: attach token to /api/ calls; force re-login on 401
+var _origFetch = window.fetch;
+window.fetch = function(url, opts) {
+  opts = opts || {};
+  if (typeof url === 'string' && url.indexOf('/api/') === 0 && authToken) {
+    opts.headers = Object.assign({}, opts.headers || {}, {'Authorization': 'Bearer ' + authToken});
+  }
+  return _origFetch(url, opts).then(function(res){
+    if (res.status === 401 && typeof url === 'string' && url.indexOf('/api/') === 0) {
+      showLogin('Your access has been revoked or session expired.');
+    }
+    return res;
+  });
+};
+
+function showLogin(msg) {
+  document.getElementById('login-overlay').style.display = 'flex';
+  if (msg) {
+    var err = document.getElementById('login-error');
+    err.textContent = msg; err.style.display = 'block';
+  }
+}
+
+function hideLogin() {
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('login-error').style.display = 'none';
+}
+
+async function doLogin() {
+  var email = document.getElementById('login-email').value.trim();
+  var pass  = document.getElementById('login-password').value;
+  var btn   = document.getElementById('login-btn');
+  var err   = document.getElementById('login-error');
+  if (!email || !pass) { err.textContent = 'Enter email and password.'; err.style.display='block'; return; }
+  btn.disabled = true; btn.textContent = 'Signing in…'; err.style.display = 'none';
+  try {
+    await firebase.auth().signInWithEmailAndPassword(email, pass);
+    // onAuthStateChanged handles the rest
+  } catch(e) {
+    var msgs = {
+      'auth/invalid-credential': 'Incorrect email or password.',
+      'auth/user-disabled': 'This account has been disabled. Contact admin.',
+      'auth/too-many-requests': 'Too many attempts. Try again later.',
+      'auth/invalid-email': 'Invalid email address.',
+    };
+    err.textContent = msgs[e.code] || ('Login failed: ' + (e.message||e.code));
+    err.style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = 'Sign In';
+}
+
+function doLogout() {
+  firebase.auth().signOut();
+}
+
+firebase.auth().onAuthStateChanged(async function(user) {
+  if (user) {
+    authToken = await user.getIdToken();
+    // Refresh token every 30 min
+    setInterval(async function(){
+      try { authToken = await firebase.auth().currentUser.getIdToken(true); }
+      catch(e) { showLogin('Session expired.'); }
+    }, 30*60*1000);
+    document.getElementById('user-email').textContent = user.email;
+    document.getElementById('user-chip').style.display = 'flex';
+    hideLogin();
+    if (!appStarted) { appStarted = true; startApp(); }
+    else { loadAgents(); loadLogs().then(renderLogs); connectWS(); }
+  } else {
+    authToken = null;
+    document.getElementById('user-chip').style.display = 'none';
+    showLogin();
+  }
+});
+
 // ── Theme ────────────────────────────────────────────────────────────────────
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
@@ -478,15 +602,19 @@ function showPage(name,btn){
 }
 
 // ── WebSocket ────────────────────────────────────────────────────────────────
+var _ws = null;
 function connectWS(){
+  if (_ws && _ws.readyState === WebSocket.OPEN) return;
+  if (!authToken) return;
   var proto=location.protocol==='https:'?'wss':'ws';
-  var ws=new WebSocket(proto+'://'+location.host+'/ws');
+  var ws=new WebSocket(proto+'://'+location.host+'/ws?token='+encodeURIComponent(authToken));
+  _ws = ws;
   ws.onmessage=function(e){
     var msg=JSON.parse(e.data);
     if(msg.type==='log'){allLogs.push(msg);if(allLogs.length>1000)allLogs.shift();appendLog(msg);}
     if(msg.type==='status') refreshAgentBadge(msg.agent,msg.status);
   };
-  ws.onclose=function(){setTimeout(connectWS,3000);};
+  ws.onclose=function(){_ws=null;if(authToken)setTimeout(connectWS,3000);};
 }
 
 // ── Agents list ───────────────────────────────────────────────────────────────
@@ -1100,11 +1228,13 @@ var _lmStore = {};
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function removeUnmatched(id,btn){deletePb(id);var row=btn.closest('tr');if(row)row.remove();}
 
-// ── Init ─────────────────────────────────────────────────────────────────────
-connectWS();
-loadAgents();
-loadLogs();
-setInterval(loadAgents,20000);
+// ── Init (called after successful login) ────────────────────────────────────
+function startApp(){
+  connectWS();
+  loadAgents();
+  loadLogs().then(renderLogs);
+  setInterval(function(){ if(authToken) loadAgents(); }, 20000);
+}
 </script>
 
 <!-- ── Send Specific modal ──────────────────────────────────────────────────── -->

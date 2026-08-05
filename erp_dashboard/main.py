@@ -1,5 +1,5 @@
 """
-main.py — ERP Agent Dashboard backend for multi agents (FastAPI)
+main.py — ERP Agent Dashboard backend (FastAPI)
 
 Run:
     python -m uvicorn main:app --reload --port 8000
@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, UploadFile, File
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, UploadFile, File, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -22,6 +22,47 @@ from pydantic import BaseModel
 
 import sys, io, threading, concurrent.futures
 from database import get_db, init_db, DB_PATH
+
+# ── Firebase Authentication ──────────────────────────────────────────────────
+FIREBASE_API_KEY = "AIzaSyDzkB_M1G3rBjYT5A9cim5oNeeWnx5UuPo"
+AUTH_ENABLED     = True   # set False to disable login (local dev)
+
+import urllib.request as _urlreq
+import urllib.error as _urlerr
+import time as _time
+
+_token_cache = {}  # token -> (expiry_ts, email)
+
+def verify_firebase_token(id_token: str):
+    """Verify token against Firebase. Returns email if valid+enabled, None otherwise.
+    Results cached for 60s so revocation takes effect quickly without hammering the API."""
+    if not id_token:
+        return None
+    now = _time.time()
+    cached = _token_cache.get(id_token)
+    if cached and cached[0] > now:
+        return cached[1]
+    try:
+        req = _urlreq.Request(
+            f"https://identitytoolkit.googleapis.com/v1/accounts:lookup?key={FIREBASE_API_KEY}",
+            data=json.dumps({"idToken": id_token}).encode(),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with _urlreq.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode())
+        users = data.get("users", [])
+        if not users:
+            return None
+        u = users[0]
+        if u.get("disabled"):
+            _token_cache.pop(id_token, None)
+            return None
+        email = u.get("email", "")
+        _token_cache[id_token] = (now + 60, email)
+        return email
+    except Exception:
+        return None
 
 # Thread pool — each agent runs in its own thread with its own event loop
 # This is needed on Windows where uvicorn uses SelectorEventLoop which
@@ -55,17 +96,30 @@ async def drain_log_queue(agent: str):
     for msg in msgs:
         await log(agent, msg)
 
-# Try standard subfolder first, fall back to sibling or same level
-_base = Path(__file__).parent.parent
-_candidates = [
-    _base / "focus_agent",          # focus_agent_complete/focus_agent/
-    Path(__file__).parent.parent,   # if erp_dashboard & focus_agent are siblings at same level
-    Path(__file__).parent.parent / "focus_agent_complete" / "focus_agent",
-]
-AGENT_DIR = next((p for p in _candidates if (p / "main.py").exists()), _candidates[0])
-print(f"[Dashboard] AGENT_DIR resolved to: {AGENT_DIR}")
+# Detect if running as PyInstaller frozen exe
+IS_FROZEN = getattr(sys, 'frozen', False)
 
-if str(AGENT_DIR) not in sys.path:
+if IS_FROZEN:
+    # Running as exe — agent exe is in same folder, frontend bundled in _MEIPASS
+    import sys as _sys
+    EXE_DIR      = Path(_sys.executable).parent
+    AGENT_DIR    = EXE_DIR          # focus_agent.exe lives here
+    FRONTEND_DIR = Path(_sys._MEIPASS) / "frontend"
+    print(f"[Dashboard] Running as exe from: {EXE_DIR}")
+else:
+    # Running from source
+    EXE_DIR = None
+    FRONTEND_DIR = Path(__file__).parent / "frontend"
+    _base = Path(__file__).parent.parent
+    _candidates = [
+        _base / "focus_agent",
+        Path(__file__).parent.parent,
+        Path(__file__).parent.parent / "focus_agent_complete" / "focus_agent",
+    ]
+    AGENT_DIR = next((p for p in _candidates if (p / "main.py").exists()), _candidates[0])
+    print(f"[Dashboard] AGENT_DIR resolved to: {AGENT_DIR}")
+
+if not IS_FROZEN and str(AGENT_DIR) not in sys.path:
     sys.path.insert(0, str(AGENT_DIR))
 
 
@@ -79,6 +133,20 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(title="ERP Agent Dashboard", lifespan=lifespan)
+
+
+@app.middleware("http")
+async def auth_middleware(request, call_next):
+    """Require a valid Firebase token for all /api/ routes."""
+    if AUTH_ENABLED and request.url.path.startswith("/api/"):
+        auth_header = request.headers.get("authorization", "")
+        token = auth_header.replace("Bearer ", "") if auth_header.startswith("Bearer ") else ""
+        email = verify_firebase_token(token)
+        if not email:
+            from starlette.responses import JSONResponse
+            return JSONResponse({"detail": "Not authenticated"}, status_code=401)
+        request.state.user_email = email
+    return await call_next(request)
 app.add_middleware(CORSMiddleware, allow_origins=["*"],
                    allow_methods=["*"], allow_headers=["*"])
 
@@ -149,7 +217,7 @@ def get_agent_setting(agent: str, key: str, default: str = "") -> str:
 
 
 # ── Agent runners ──────────────────────────────────────────────────────────
-async def run_low_price_agent(force_all: bool = False, send_only: str = ""):
+async def run_low_price_agent(force_all: bool = False, send_only: str = "", auth_token: str = ""):
     """Run the Low Price Agent as a subprocess using threading (Windows-safe)."""
     set_status("low_price", "running")
     run_start = datetime.now().strftime("%d %b %Y  %I:%M:%S %p")
@@ -191,9 +259,14 @@ async def run_low_price_agent(force_all: bool = False, send_only: str = ""):
                 send("⚡ Force-all mode — sending all SOs regardless of sent history")
             log_file = Path(AGENT_DIR) / "last_run.log"
             send(f"🚀 Launching subprocess in: {str(AGENT_DIR)}")
+            if IS_FROZEN:
+                agent_cmd = [str(AGENT_DIR / "focus_agent.exe"), "--now"]
+            else:
+                agent_cmd = [sys.executable, "main.py", "--now"]
+            send(f"   Command: {agent_cmd[0]}")
             with open(log_file, "w", encoding="utf-8") as lf:
                 proc = subprocess.Popen(
-                    [sys.executable, "main.py", "--now"],
+                    agent_cmd,
                     cwd=str(AGENT_DIR),
                     stdout=lf,
                     stderr=lf,
@@ -206,6 +279,7 @@ async def run_low_price_agent(force_all: bool = False, send_only: str = ""):
                          "AGENT_SKIP_CUSTOMERS": skip_customers,
                          "AGENT_SEND_ONLY":      effective_send_only,
                          "AGENT_SKIP_SENT":      effective_skip,
+                         "AGENT_AUTH_TOKEN":     auth_token,
                          "DASHBOARD_DB":         str(DB_PATH.resolve()),
                     }
                 )
@@ -252,7 +326,8 @@ RUNNERS = {
 }
 
 
-async def trigger(name: str, force_all: bool = False, send_only: str = "") -> bool:
+async def trigger(name: str, force_all: bool = False, send_only: str = "",
+                  auth_token: str = "") -> bool:
     if name in running_tasks and not running_tasks[name].done():
         return False
     runner = RUNNERS.get(name)
@@ -264,6 +339,7 @@ async def trigger(name: str, force_all: bool = False, send_only: str = "") -> bo
         kwargs = {}
         if "force_all"  in sig.parameters: kwargs["force_all"]  = force_all
         if "send_only"  in sig.parameters: kwargs["send_only"]  = send_only
+        if "auth_token" in sig.parameters: kwargs["auth_token"] = auth_token
         running_tasks[name] = asyncio.create_task(runner(**kwargs))
     except Exception:
         running_tasks[name] = asyncio.create_task(runner())
@@ -312,10 +388,13 @@ def update_agent(name: str, body: dict):
 
 
 @app.post("/api/agents/{name}/run")
-async def run_agent(name: str, body: dict = {}):
+async def run_agent(name: str, request: Request, body: dict = {}):
     force_all   = body.get("force_all",   False) if body else False
     send_only   = body.get("send_only",   "")    if body else ""
-    if not await trigger(name, force_all=force_all, send_only=send_only):
+    # Pass the caller's Firebase token to the agent so it can fetch cloud credentials
+    auth_header = request.headers.get("authorization", "")
+    user_token  = auth_header.replace("Bearer ", "") if auth_header.startswith("Bearer ") else ""
+    if not await trigger(name, force_all=force_all, send_only=send_only, auth_token=user_token):
         raise HTTPException(400, "Agent already running or not found")
     return {"ok": True}
 
@@ -727,6 +806,12 @@ def update_config(key: str, body: ConfigUpdate):
 # ── WebSocket ──────────────────────────────────────────────────────────────
 @app.websocket("/ws")
 async def ws_endpoint(ws: WebSocket):
+    # Verify Firebase token passed as query param
+    if AUTH_ENABLED:
+        token = ws.query_params.get("token", "")
+        if not verify_firebase_token(token):
+            await ws.close(code=4401)
+            return
     await mgr.connect(ws)
     try:
         while True:
@@ -736,8 +821,8 @@ async def ws_endpoint(ws: WebSocket):
 
 
 # ── Serve frontend ─────────────────────────────────────────────────────────
-app.mount("/static", StaticFiles(directory="frontend"), name="static")
+app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 @app.get("/")
 def serve():
-    return FileResponse("frontend/index.html")
+    return FileResponse(str(FRONTEND_DIR / "index.html"))

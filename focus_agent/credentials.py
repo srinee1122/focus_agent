@@ -1,26 +1,68 @@
 """
-credentials.py — Reads login from credentials.xlsx
+credentials.py — Fetches Focus ERP login from Firestore (cloud-only).
+
+The dashboard passes the logged-in user's Firebase ID token via the
+AGENT_AUTH_TOKEN environment variable. This module uses that token to
+read the credentials document from Firestore. No local fallback:
+if the user is disabled or the token is invalid, the agent cannot run.
+
+Firestore structure:
+  Collection: app_config
+  Document:   erp_credentials
+  Fields:     username (string), password (string)
 """
-import pandas as pd
+import json
 import os
 import sys
+import urllib.request
+import urllib.error
 
-def get_credentials(filepath: str) -> tuple[str, str]:
-    if not os.path.exists(filepath):
-        print(f"❌ credentials.xlsx not found at '{filepath}'")
-        print("   Create it with columns: username | password")
+FIREBASE_PROJECT_ID = "sriambikasagents"
+
+FIRESTORE_URL = (
+    f"https://firestore.googleapis.com/v1/projects/{FIREBASE_PROJECT_ID}"
+    f"/databases/(default)/documents/app_config/erp_credentials"
+)
+
+
+def get_credentials(filepath: str = None) -> tuple:
+    """Fetch ERP credentials from Firestore using the user's auth token.
+    The filepath argument is kept for call-compatibility but ignored."""
+    token = os.environ.get("AGENT_AUTH_TOKEN", "").strip()
+    if not token:
+        print("❌ No auth token provided (AGENT_AUTH_TOKEN).")
+        print("   The agent must be run from the dashboard by a signed-in user.")
         sys.exit(1)
+
+    req = urllib.request.Request(
+        FIRESTORE_URL,
+        headers={"Authorization": f"Bearer {token}"},
+    )
     try:
-        df = pd.read_excel(filepath)
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = json.loads(resp.read().decode())
+    except urllib.error.HTTPError as e:
+        if e.code in (401, 403):
+            print("❌ Access denied fetching credentials.")
+            print("   Your account may be disabled or the session expired.")
+        elif e.code == 404:
+            print("❌ Credentials document not found in Firestore.")
+            print("   Expected: app_config/erp_credentials with username+password fields.")
+        else:
+            print(f"❌ Firestore error {e.code}: {e.reason}")
+        sys.exit(1)
     except Exception as e:
-        print(f"❌ Error reading credentials file: {e}")
+        print(f"❌ Could not reach Firestore: {e}")
+        print("   Check the internet connection.")
         sys.exit(1)
-    df.columns = df.columns.str.lower()
-    if not {"username", "password"}.issubset(df.columns):
-        print("❌ credentials.xlsx must have columns: username and password")
+
+    fields = data.get("fields", {})
+    username = fields.get("username", {}).get("stringValue", "").strip()
+    password = fields.get("password", {}).get("stringValue", "").strip()
+
+    if not username or not password:
+        print("❌ Credentials document is missing username or password fields.")
         sys.exit(1)
-    row = df.iloc[0]
-    username = str(row["username"]).strip()
-    password = str(row["password"]).strip()
-    print(f"✅ Credentials loaded for: {username}")
+
+    print(f"✅ Credentials loaded from cloud for: {username}")
     return username, password
