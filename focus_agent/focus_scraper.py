@@ -109,6 +109,21 @@ class FocusScraper:
                 await browser.close()
         return alerts
 
+    async def wait_page_ready(self, page, label: str = "", timeout: int = 30_000,
+                              settle: float = 0.5):
+        """Reusable page-readiness wait: lets in-flight AJAX finish
+        (networkidle) plus a short settle pause. Use after every navigation,
+        click, or action that triggers page/grid loading — in this and all
+        future agents. Never raises on timeout (busy pages may never idle)."""
+        try:
+            await page.wait_for_load_state("networkidle", timeout=timeout)
+        except Exception:
+            pass  # page kept polling/streaming — proceed anyway
+        if settle:
+            await asyncio.sleep(settle)
+        if label:
+            print(f"      ⏱ Page ready: {label}")
+
     async def _run_phases(self, page, username: str, password: str,
                           target_vouchers: list = None) -> list:
 
@@ -158,6 +173,7 @@ class FocusScraper:
         await asyncio.sleep(1.5)
         await page.get_by_role("link", name="Sales Order").first.click()
         await asyncio.sleep(4)
+        await self.wait_page_ready(page, "Sales Order list")
         print("   Sales Order page opened.")
 
         if target_vouchers:
@@ -173,6 +189,7 @@ class FocusScraper:
             await asyncio.sleep(0.5)
             await page.click("#btnSetFilterVal")
             await asyncio.sleep(4)
+            await self.wait_page_ready(page, "pending filter applied")
         print("✅ Phase 1 complete.\n")
 
         # ── PHASE 2: Read table, find price-issue vouchers ─────────────────
@@ -249,32 +266,101 @@ class FocusScraper:
                     # Send Specific: use the SO page's search box to filter the
                     # grid to this voucher (triggers onkeyup handler via typing)
                     try:
-                        search = page.locator("#txtSearch")
-                        await search.wait_for(state="visible", timeout=10_000)
-                        await search.click()
-                        await page.keyboard.press("Control+A")
-                        await page.keyboard.type(str(voucher_num), delay=60)
-                        await asyncio.sleep(2.5)  # let the grid filter
-                        print(f"      🔎 Searched grid for {voucher_num}")
+                        # Wait until the page's network activity settles (grid
+                        # AJAX finished), then wait for #txtSearch to appear.
+                        await self.wait_page_ready(page, "SO grid loaded", settle=0)
+                        ctx = None
+                        try:
+                            await page.wait_for_selector("#txtSearch", state="attached",
+                                                         timeout=20_000)
+                            ctx = page
+                        except PlaywrightTimeout:
+                            # Not on the main page — check inside iframes
+                            for fr in page.frames:
+                                try:
+                                    if await fr.locator("#txtSearch").count():
+                                        ctx = fr
+                                        break
+                                except Exception:
+                                    continue
+                        if ctx is None:
+                            raise RuntimeError("#txtSearch not found after page finished loading")
+                        where = "main page" if ctx is page else "iframe"
+                        print(f"      ✓ Found #txtSearch on {where}")
+
+                        search = ctx.locator("#txtSearch")
+                        try:
+                            await search.wait_for(state="visible", timeout=5_000)
+                            await search.click()
+                            await page.keyboard.press("Control+A")
+                            await page.keyboard.type(str(voucher_num), delay=60)
+                            await asyncio.sleep(2.5)
+                            print(f"      🔎 Searched grid for {voucher_num}")
+                        except Exception:
+                            # Hidden — set value via JS and fire the keyup handler
+                            await ctx.evaluate(f"""() => {{
+                                const el = document.querySelector('#txtSearch');
+                                if (!el) return;
+                                el.value = '{voucher_num}';
+                                el.dispatchEvent(new KeyboardEvent('keyup', {{bubbles: true}}));
+                            }}""")
+                            await asyncio.sleep(2.5)
+                            print(f"      🔎 Searched grid via JS for {voucher_num}")
                     except Exception as fe:
                         print(f"      ⚠️ Search box failed ({fe}); trying direct row search...")
 
-                # Scroll list to bring row into view
-                await page.evaluate(f"""() => {{
-                    for (const row of document.querySelectorAll('tr')) {{
-                        if (row.innerText.includes('{voucher_num}')) {{
-                            row.scrollIntoView({{ block: 'center' }});
-                            break;
+                if not target_vouchers:
+                    # ── NORMAL MODE: original working behavior, unchanged ──
+                    # Small pending-filtered grid; substring match is safe here.
+                    await page.evaluate(f"""() => {{
+                        for (const row of document.querySelectorAll('tr')) {{
+                            if (row.innerText.includes('{voucher_num}')) {{
+                                row.scrollIntoView({{ block: 'center' }});
+                                break;
+                            }}
                         }}
-                    }}
-                }}""")
-                await asyncio.sleep(0.5)
+                    }}""")
+                    await asyncio.sleep(0.5)
+                    row_locator = page.locator(f"tr:has-text('{voucher_num}')").first
+                    await row_locator.wait_for(state="visible", timeout=10_000)
+                    await row_locator.dblclick()
+                    await asyncio.sleep(3)
+                    await self.wait_page_ready(page, "voucher opened")
+                else:
+                    # ── SEND SPECIFIC: exact cell match + native dblclick ──
+                    try:
+                        await page.wait_for_selector("table tbody tr", timeout=15_000)
+                    except PlaywrightTimeout:
+                        pass
+                    await asyncio.sleep(1.5)
 
-                # Double-click the row to open the voucher
-                row_locator = page.locator(f"tr:has-text('{voucher_num}')").first
-                await row_locator.wait_for(state="visible", timeout=10_000)
-                await row_locator.dblclick()
-                await asyncio.sleep(3)
+                    exact_row = page.locator(f'tr:has(td:text-is("{voucher_num}"))')
+                    found = False
+                    for _attempt in range(8):
+                        if await exact_row.count():
+                            found = True
+                            break
+                        await page.evaluate("""() => {
+                            let best = null, max = 0;
+                            for (const el of document.querySelectorAll('*')) {
+                                if (el.scrollHeight > el.clientHeight + 50) {
+                                    if (el.clientHeight > max) { max = el.clientHeight; best = el; }
+                                }
+                            }
+                            if (best) best.scrollTop += best.clientHeight * 2;
+                        }""")
+                        await asyncio.sleep(1.5)
+
+                    if not found:
+                        print(f"   ❌ No row with exact voucher '{voucher_num}' in the grid — skipping.")
+                        continue
+
+                    row_locator = exact_row.first
+                    await row_locator.scroll_into_view_if_needed()
+                    await asyncio.sleep(0.4)
+                    await row_locator.dblclick()
+                    await asyncio.sleep(3)
+                    await self.wait_page_ready(page, "voucher opened")
 
                 # Wait for the detail grid to attach (retry once if slow)
                 try:
@@ -286,9 +372,41 @@ class FocusScraper:
                     await page.wait_for_selector("#id_transaction_entry_detail_table",
                                                  state="attached", timeout=20_000)
 
+                # SAFETY (send-specific only): verify the opened voucher matches.
+                if target_vouchers:
+                    matched_val = await page.evaluate(f"""() => {{
+                        const re = new RegExp('(^|\\\\D)' + '{voucher_num}' + '(\\\\D|$)');
+                        for (const el of document.querySelectorAll('input')) {{
+                            const vals = [el.value, el.getAttribute('data-focustext')];
+                            for (const v of vals) {{
+                                if (v && re.test(v)) return v.trim();
+                            }}
+                        }}
+                        return null;
+                    }}""")
+                    if not matched_val:
+                        diag = await page.evaluate("""() => {
+                            const out = [];
+                            for (const el of document.querySelectorAll('input')) {
+                                const v = (el.value || el.getAttribute('data-focustext') || '').trim();
+                                if (v && /\\d{4,}/.test(v) && out.length < 8) out.push(v);
+                            }
+                            return out;
+                        }""")
+                        print(f"   ❌ Opened voucher does NOT match '{voucher_num}' — wrong SO opened. Skipping for safety.")
+                        print(f"      Header values seen: {diag}")
+                        continue
+                    print(f"      ✓ Voucher verified on page: '{matched_val}'")
+
                 # Scroll table into view and trigger full render of all columns
                 await page.evaluate("""() => {
-                    const tbl = document.querySelector('#id_transaction_entry_detail_table');
+                    // Multiple instances of this id can exist (stale screens).
+                    // Pick the one with the most data rows.
+                    let tbl = null, best = -1;
+                    for (const t of document.querySelectorAll('[id="id_transaction_entry_detail_table"]')) {
+                        const n = t.querySelectorAll(':scope > tbody > tr').length;
+                        if (n > best) { best = n; tbl = t; }
+                    }
                     if (!tbl) return;
                     tbl.scrollIntoView({ behavior: 'instant', block: 'center' });
 
@@ -306,21 +424,99 @@ class FocusScraper:
                 }""")
                 await asyncio.sleep(4)  # Wait for all cells to render
 
-                # Read headers and rows
+                # Read the table as NAME-KEYED records: every cell is looked up
+                # under its named column (e.g. "Cost Restriction"), never by
+                # position. Hidden/reordered columns cannot shift values.
+                if target_vouchers:
+                    # Diagnostic: enumerate table instances and their row counts
+                    diag = await page.evaluate("""() => {
+                        const insts = Array.from(document.querySelectorAll('[id="id_transaction_entry_detail_table"]'));
+                        const out = ['instances=' + insts.length];
+                        insts.forEach((t, i) => {
+                            const n = t.querySelectorAll(':scope > tbody > tr').length;
+                            out.push('inst[' + i + '] rows=' + n + ' visible=' + (!!t.offsetParent));
+                        });
+                        return out.join('\\n');
+                    }""")
+                    for _line in str(diag).split("\n"):
+                        print(f"      🔬 {_line}")
+
+                # Wait until the items grid actually contains data — the
+                # voucher header can appear before Focus fills the line items.
+                for _wait in range(30):
+                    grid_ready = await page.evaluate("""() => {
+                        const tbl = document.querySelector('[id="id_transaction_entry_detail_table"]');
+                        if (!tbl) return false;
+                        const named = tbl.querySelectorAll('th[data-heading]').length;
+                        if (!named) return false;
+                        const minCells = Math.max(5, Math.floor(named / 2));
+                        for (const tr of tbl.querySelectorAll('tbody tr')) {
+                            if (tr.cells.length < minCells) continue;
+                            // data row must have text beyond the row-number cell
+                            for (let i = 1; i < tr.cells.length; i++) {
+                                if (tr.cells[i].innerText.replace(/\u00a0/g, ' ').trim() !== '')
+                                    return true;
+                            }
+                        }
+                        return false;
+                    }""")
+                    if grid_ready:
+                        break
+                    if _wait == 0:
+                        print("      ⏳ Waiting for line items to load...")
+                    await asyncio.sleep(1)
+                else:
+                    print("      ⚠️ Items grid still empty after 30s")
+
                 result = await page.evaluate("""() => {
-                    const tbl = document.querySelector('#id_transaction_entry_detail_table');
-                    if (!tbl) return { headers: [], rows: [] };
-                    const headers = Array.from(tbl.querySelectorAll('th[data-heading]'))
-                        .map(h => h.getAttribute('data-heading').trim())
-                        .filter(h => h !== '');
-                    // Skip first cell (# row-number column — no header)
-                    // Use innerText — data-value returns internal IDs for text columns
-                    const rows = Array.from(tbl.querySelectorAll('tbody tr')).map(row => {
-                        const cells = Array.from(row.querySelectorAll('td')).slice(1);
-                        return cells.map(c => c.innerText.trim());
-                    }).filter(r => r.some(c => c !== ''));
-                    return { headers, rows };
+                    // The id element holds the NAMED HEADERS, but the data body
+                    // table can be a SIBLING outside it (split header/body grids).
+                    // Take headers from the id element, then search outward for
+                    // rows with a realistic cell count.
+                    const tbl = document.querySelector('[id="id_transaction_entry_detail_table"]');
+                    if (!tbl) return { headers: [], rows: [], dbg: 'no wrapper' };
+
+                    const cols = [], seen = {};
+                    for (const h of tbl.querySelectorAll('th[data-heading]')) {
+                        const name = (h.getAttribute('data-heading') || '').trim();
+                        if (name && !seen[name]) {
+                            seen[name] = true;
+                            cols.push({ name: name, idx: h.cellIndex });
+                        }
+                    }
+                    if (!cols.length) return { headers: [], rows: [], dbg: 'no named headers' };
+
+                    const minCells = Math.max(5, Math.floor(cols.length / 2));
+                    const collect = (root) => Array.from(root.querySelectorAll('tbody tr'))
+                        .filter(tr => tr.cells.length >= minCells);
+
+                    // Expand scope: wrapper → parents → whole document
+                    let scope = tbl, dataTrs = [], level = 0;
+                    for (let i = 0; i < 7 && scope; i++) {
+                        dataTrs = collect(scope);
+                        if (dataTrs.length) { level = i; break; }
+                        scope = scope.parentElement;
+                    }
+                    if (!dataTrs.length) { dataTrs = collect(document); level = 99; }
+
+                    const rows = [];
+                    for (const tr of dataTrs) {
+                        const rec = {};
+                        let hasData = false;
+                        for (const c of cols) {
+                            const td = tr.cells[c.idx];
+                            const v = td ? td.innerText.replace(/\u00a0/g, ' ').trim() : '';
+                            rec[c.name] = v;
+                            if (v !== '') hasData = true;
+                        }
+                        if (hasData) rows.push(rec);
+                    }
+                    const dbg = 'scopeLevel=' + level + ' dataTrs=' + dataTrs.length +
+                                ' firstCells=' + (dataTrs.length ? dataTrs[0].cells.length : 0);
+                    return { headers: cols.map(c => c.name), rows: rows, dbg: dbg };
                 }""")
+                if target_vouchers and result.get("dbg"):
+                    print(f"      🔬 {result['dbg']}")
 
                 headers = result["headers"]
                 rows    = result["rows"]
@@ -329,15 +525,16 @@ class FocusScraper:
                     print(f"   ⚠️  No detail table found for {voucher_num} — skipping.")
                     raise Exception("No table data")
 
-                # Build DataFrame
+                # DataFrame from name-keyed records — columns are the names
                 detail_df = pd.DataFrame(rows)
-                if len(headers) == detail_df.shape[1]:
-                    detail_df.columns = headers
-                else:
-                    col_names = list(headers) + [f"Col_{i}" for i in range(len(headers), detail_df.shape[1])]
-                    detail_df.columns = col_names[:detail_df.shape[1]]
 
                 print(f"      Columns : {list(detail_df.columns)}")
+                if target_vouchers and len(rows):
+                    first = rows[0]
+                    print(f"      Row[0]  : CR='{first.get('Cost Restriction','?')}' "
+                          f"Rate='{first.get('Rate','?')}' "
+                          f"Buy='{first.get('Pricebook Buying Price','?')}' "
+                          f"Desc='{str(first.get('Description',''))[:30]}'")
 
                 # Map columns
                 col_map = {
@@ -362,34 +559,54 @@ class FocusScraper:
                     const el = document.querySelector('input[data-fieldname="Salesman"]');
                     return el ? el.getAttribute('data-focustext') : '';
                 }""")
-                party    = str(party).strip()    or str(voucher_num)
-                salesman = str(salesman).strip()  or "Unknown"
+                def _clean_hdr(v, fallback):
+                    s = str(v or "").replace("\xa0", "").strip()
+                    return fallback if not s or s.lower() in ("none", "nan", "null") else s
+                party    = _clean_hdr(party, str(voucher_num))
+                salesman = _clean_hdr(salesman, "Unknown")
 
                 # Filter rows where Cost Restriction is empty or 0 = price issue
                 # (Cost Restriction = 1.00 means payment block; 0.00 or empty = price issue)
                 if col_map["cost_restr"]:
-                    low_cost = detail_df[
-                        detail_df[col_map["cost_restr"]].isna() |
-                        (detail_df[col_map["cost_restr"]].astype(str).str.strip().isin(["", "nan", "0", "0.0", "0.00"]))
-                    ]
+                    # Flag ONLY explicit 0 values (0 / 0.0 / 0.00).
+                    # Blank cells are filler rows or FOC lines — never flagged.
+                    _cr = (detail_df[col_map["cost_restr"]].astype(str)
+                           .str.replace("\xa0", "", regex=False).str.strip())
+                    low_cost = detail_df[_cr.isin(["0", "0.0", "0.00"])]
                 else:
                     low_cost = detail_df
 
                 import re as _re
+
+                def _num(val) -> float:
+                    """Robust cell-to-float: handles None, ',', '\xa0', blanks."""
+                    s = str(val if val is not None else "")
+                    s = s.replace(",", "").replace("\xa0", "").strip()
+                    if not s or s.lower() == "nan":
+                        return 0.0
+                    try:
+                        return float(s)
+                    except ValueError:
+                        return 0.0
+
                 items = []
                 for _, row in low_cost.iterrows():
                     try:
-                        description = str(row.get(col_map["item"], ""))
+                        description = str(row.get(col_map["item"], "")).replace("\xa0", "").strip()
                         unit        = str(row.get(unit_col, "pcs")).strip() if unit_col else "pcs"
+
+                        # Skip blank/filler rows — a real item always has a description
+                        if not description or description.lower() == "nan":
+                            continue
 
                         # Skip FOC (Free of Charge) items — these are intentional promotions
                         if "foc" in unit.lower():
                             continue
 
                         unit = unit.lower()
-                        pricebook   = float(str(row.get(col_map["buy_price"], 0) or 0).replace(",", ""))
-                        rate_total  = float(str(row.get(col_map["rate"], 0) or 0).replace(",", ""))
-                        prev_price  = float(str(row.get(col_map["last_price"], 0) or 0).replace(",", ""))
+                        pricebook   = _num(row.get(col_map["buy_price"], 0))
+                        rate_total  = _num(row.get(col_map["rate"], 0))
+                        prev_price  = _num(row.get(col_map["last_price"], 0))
 
                         # Convert rate to per-piece if NOT sold as individual pieces
                         # Unit = pcs/pieces/pc → no conversion needed (rate is already per piece)
@@ -398,10 +615,7 @@ class FocusScraper:
                         is_pieces = any(p in unit.lstrip(".") for p in ("pcs", "pc", "piece"))
                         if not is_pieces:
                             if col_map["qty_per_ctn"]:
-                                try:
-                                    pieces_per_unit = int(float(str(row.get(col_map["qty_per_ctn"], 1) or 1)))
-                                except (ValueError, TypeError):
-                                    pieces_per_unit = 1
+                                pieces_per_unit = int(_num(row.get(col_map["qty_per_ctn"], 1))) or 1
                             if pieces_per_unit <= 1:
                                 # Fallback: parse from description e.g. "GHEE 1LTR X 16"
                                 match = _re.search(r'[Xx]\s*(\d+)\s*$', description.strip())
@@ -414,12 +628,7 @@ class FocusScraper:
                         prev_price_per_piece = prev_price / pieces_per_unit if pieces_per_unit > 1 and prev_price > 0 else prev_price
 
                         # Quantity ordered
-                        quantity = 0
-                        if col_map["quantity"]:
-                            try:
-                                quantity = float(str(row.get(col_map["quantity"], 0) or 0).replace(",", ""))
-                            except (ValueError, TypeError):
-                                quantity = 0
+                        quantity = _num(row.get(col_map["quantity"], 0)) if col_map["quantity"] else 0
 
                         # Landing cost — looks up price book, falls back to default %
                         landing, landing_label = get_landing_cost(description, pricebook)
@@ -428,6 +637,15 @@ class FocusScraper:
                         margin = round(((rate_per_piece - landing) / rate_per_piece * 100), 1) if rate_per_piece > 0 else 0
 
                         diff = round(rate_per_piece - landing, 2)
+
+                        # Send Specific: log every included item's numbers for visibility
+                        if target_vouchers:
+                            flag = "BELOW COST" if diff < 0 else "ok"
+                            if pricebook == 0:
+                                flag += " (⚠️ no buying price!)"
+                            print(f"      · {description[:38]:38} "
+                                  f"rate/pc={rate_per_piece:7.2f}  landing={landing:7.2f}  "
+                                  f"diff={diff:+7.2f}  [{flag}]")
 
                         items.append({
                             "item"            : description,
@@ -462,6 +680,7 @@ class FocusScraper:
                     await close_btn.wait_for(state="visible", timeout=4_000)
                     await close_btn.click()
                     await asyncio.sleep(2)
+                    await self.wait_page_ready(page, "back to list", settle=0)
                 except Exception:
                     pass
 
