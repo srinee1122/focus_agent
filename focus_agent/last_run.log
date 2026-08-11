@@ -1,6 +1,6 @@
 
 ==================================================
-🤖 Focus ERP Agent — 05 Aug 2026 05:50 PM
+🤖 Focus ERP Agent — 06 Aug 2026 10:15 AM
 ==================================================
 ✅ Credentials loaded from cloud for: srini@sriambikas.com
 
@@ -15,69 +15,108 @@
 🎯 Send Specific mode: skipping pending filter.
 ✅ Phase 1 complete.
 
-🎯 Send Specific mode: skipping grid scan, targeting 1 SO(s):
-   → 42983
+🎯 Send Specific mode: skipping grid scan, targeting 3 SO(s):
+   → 43009
+   → 43010
+   → 43012
 
 🔍 Phase 3: Opening each price-issue voucher to read line items.
 
-   📋 Opening voucher 42983...
+   📋 Opening voucher 43009...
       ⏱ Page ready: SO grid loaded
       ✓ Found #txtSearch on main page
-      🔎 Searched grid for 42983
+      🔎 Searched grid for 43009
       ⏱ Page ready: voucher opened
-      ✓ Voucher verified on page: '42983'
+      ✓ Voucher verified on page: '43009'
       🔬 instances=1
-      🔬 inst[0] rows=31 visible=true
-      🔬 scopeLevel=0 dataTrs=31 firstCells=20
+      🔬 inst[0] rows=8 visible=true
+      🔬 scopeLevel=0 dataTrs=8 firstCells=20
       Columns : ['Warehouse', 'Item', 'Description', 'Unit', 'Quantity', 'Last Selling Price', 'Rate', 'Gross', 'Discount%', 'Discount Amt', 'Rate in Base Qty', 'Cost Price', 'Cost Restriction', 'Customer Name', 'Snumber', 'Pricebook Buying Price', 'Qty per CTN', 'Stock Balance (Pcs)', 'Stock Balance (CTN)']
-      Row[0]  : CR='1.00' Rate='5.50' Buy='4.92' Desc='777 BULLET PARBOILED RICE 5KGX'
-      · B.MILK BIKIES CREAM - 100gm X 48       rate/pc=   0.65  landing=   0.00  diff=  +0.65  [ok (⚠️ no buying price!)]
-      · AMUL TAAZA UHT MILK 1LTR X 12          rate/pc=   1.75  landing=   1.51  diff=  +0.24  [ok]
-      · M.BASMATHI DAILY - 25KG                rate/pc=  39.00  landing=  31.50  diff=  +7.50  [ok]
-      ✅ 3 low-price item(s) found.
+      Row[0]  : CR='0.00' Rate='8.50' Buy='4.06' Desc='VIP HAIR DYE 180ML X 26'
+      · VIP HAIR DYE 180ML X 26                rate/pc=   8.50  landing=   4.26  diff=  +4.24  [ok]
+      · VIP HAIR DYE 20ML X 240                rate/pc=   1.10  landing=   0.44  diff=  +0.66  [ok]
+      ✅ 2 low-price item(s) found.
+      ⏱ Page ready: back to list
+   📋 Opening voucher 43010...
+      ⏱ Page ready: SO grid loaded
+      ✓ Found #txtSearch on main page
+      🔎 Searched grid for 43010
+      ⏱ Page ready: voucher opened
+      ✓ Voucher verified on page: '43010'
+      🔬 instances=1
+      🔬 inst[0] rows=8 visible=true
+      🔬 scopeLevel=0 dataTrs=8 firstCells=20
+      Columns : ['Warehouse', 'Item', 'Description', 'Unit', 'Quantity', 'Last Selling Price', 'Rate', 'Gross', 'Discount%', 'Discount Amt', 'Rate in Base Qty', 'Cost Price', 'Cost Restriction', 'Customer Name', 'Snumber', 'Pricebook Buying Price', 'Qty per CTN', 'Stock Balance (Pcs)', 'Stock Balance (CTN)']
+      Row[0]  : CR='1.00' Rate='19.00' Buy='9.70' Desc='OOTY GOLD PARBOILED PONNI RICE'
+      ℹ️  No low-price items in this voucher.
+      ⏱ Page ready: back to list
+   📋 Opening voucher 43012...
+      ⏱ Page ready: SO grid loaded
+      ✓ Found #txtSearch on main page
+      🔎 Searched grid for 43012
+      ⏱ Page ready: voucher opened
+      ✓ Voucher verified on page: '43012'
+      🔬 instances=1
+      🔬 inst[0] rows=8 visible=true
+      🔬 scopeLevel=0 dataTrs=8 firstCells=20
+      Columns : ['Warehouse', 'Item', 'Description', 'Unit', 'Quantity', 'Last Selling Price', 'Rate', 'Gross', 'Discount%', 'Discount Amt', 'Rate in Base Qty', 'Cost Price', 'Cost Restriction', 'Customer Name', 'Snumber', 'Pricebook Buying Price', 'Qty per CTN', 'Stock Balance (Pcs)', 'Stock Balance (CTN)']
+      Row[0]  : CR='1.00' Rate='34.00' Buy='5.09' Desc='IG HAR ROOZ BASMATI RICE - 5KG'
+      · IG ROZANA BASMATI RICE - 1KG X 20      rate/pc=   2.10  landing=   1.26  diff=  +0.84  [ok]
+      ✅ 1 low-price item(s) found.
       ⏱ Page ready: back to list
 
-✅ Phase 3 complete. 1 voucher(s) flagged.
+✅ Phase 3 complete. 2 voucher(s) flagged.
 
 
-📋 1 order(s) flagged. Preview:
+📋 2 order(s) flagged. Preview:
 
 ── MESSAGE ──────────────────────────────────────
-🚨 *LOW PRICE ALERT*  |  05 Aug 2026, 05:51 PM
+🚨 *LOW PRICE ALERT*  |  06 Aug 2026, 10:16 AM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 *SO : 42983*
-🏢 RES/SALAAM FOODS SINGAPORE PTE.LTD(3.7.26)
-👤 Salesman: RAJASEKAR
+📋 *SO : 43009*
+🏢 AR/HANIFFA PTE LTD
+👤 Salesman: ARUN
 
-  *B.MILK BIKIES CREAM - 100gm X 48*
-  📦 Unit             :  (48 pcs/)
-  🔢 Qty Ordered      : 1 
-  🏷️ Purchase Cost/pc : $0.00
-  🚚 Landing Cost/pc  : $0.00  _(+5.0%)_
+  *VIP HAIR DYE 180ML X 26*
+  📦 Unit             : PCS
+  🔢 Qty Ordered      : 52 PCS
+  🏷️ Purchase Cost/pc : $4.06
+  🚚 Landing Cost/pc  : $4.26  _(+5.0%)_
   📅 Prev. Price/pc   : $0.00
-  💸 Rate/pc          : $0.65
-  📊 Diff (Rate−Land) : +$0.65
-  📈 Margin           : +100.0%  ✅ HEALTHY
+  💸 Rate/pc          : $8.50
+  📊 Diff (Rate−Land) : +$4.24
+  📈 Margin           : +49.9%  ✅ HEALTHY
 
-  *AMUL TAAZA UHT MILK 1LTR X 12*
-  📦 Unit             : CTN (12 pcs/CTN)
-  🔢 Qty Ordered      : 2 CTN
-  🏷️ Purchase Cost/pc : $1.44
-  🚚 Landing Cost/pc  : $1.51  _(+5.0%)_
-  📅 Prev. Price/pc   : $1.75
-  💸 Rate/pc          : $1.75
-  📊 Diff (Rate−Land) : +$0.24
-  📈 Margin           : +13.7%  🟢 OK
+  *VIP HAIR DYE 20ML X 240*
+  📦 Unit             : PCS
+  🔢 Qty Ordered      : 72 PCS
+  🏷️ Purchase Cost/pc : $0.42
+  🚚 Landing Cost/pc  : $0.44  _(+5.0%)_
+  📅 Prev. Price/pc   : $0.00
+  💸 Rate/pc          : $1.10
+  📊 Diff (Rate−Land) : +$0.66
+  📈 Margin           : +60.0%  ✅ HEALTHY
 
-  *M.BASMATHI DAILY - 25KG*
-  📦 Unit             : BAG
-  🔢 Qty Ordered      : 1 BAG
-  🏷️ Purchase Cost/pc : $30.00
-  🚚 Landing Cost/pc  : $31.50  _(+5.0%)_
-  📅 Prev. Price/pc   : $39.00
-  💸 Rate/pc          : $39.00
-  📊 Diff (Rate−Land) : +$7.50
-  📈 Margin           : +19.2%  ✅ HEALTHY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+_Reply to take action — ShopAide Agent 🤖_
+─────────────────────────────────────────────────
+
+── MESSAGE ──────────────────────────────────────
+🚨 *LOW PRICE ALERT*  |  06 Aug 2026, 10:16 AM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 *SO : 43012*
+🏢 AR/HANIFFA PTE LTD
+👤 Salesman: ARUN
+
+  *IG ROZANA BASMATI RICE - 1KG X 20*
+  📦 Unit             : CTN (20 pcs/CTN)
+  🔢 Qty Ordered      : 5 CTN
+  🏷️ Purchase Cost/pc : $1.20
+  🚚 Landing Cost/pc  : $1.26  _(+5.0%)_
+  📅 Prev. Price/pc   : $2.10
+  💸 Rate/pc          : $2.10
+  📊 Diff (Rate−Land) : +$0.84
+  📈 Margin           : +40.0%  ✅ HEALTHY
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 _Reply to take action — ShopAide Agent 🤖_
@@ -85,29 +124,36 @@ _Reply to take action — ShopAide Agent 🤖_
 
 
 📊 Saving Excel backup...
-   📊 Excel saved: downloads\LowPrice_Alert_2026-08-05.xlsx
+   📊 Excel saved: downloads\LowPrice_Alert_2026-08-06.xlsx
 
-📲 Sending 1 message(s) to group: 'Test Low Price'...
+📲 Sending 2 message(s) to group: 'Test Low Price'...
    🔧 AGENT_SEND_TEXT=false
    🔧 AGENT_SEND_IMAGE=true
    🔧 AGENT_WA_GROUPS=[Test Low Price]
    ⚠️  Fixed malformed JSON: [Test Low Price] → ['Test Low Price']
    ✅ Groups from dashboard: ['Test Low Price']
-   🎯 Send-only mode: keeping 1/1 SO(s) matching 42983
+   🎯 Send-only mode: keeping 2/2 SO(s) matching 43009, 43010, 43012
    🎯 Send Specific mode — bypassing sent history check
    🔧 skip_sent_sos=False
    📋 WhatsApp groups from config: ['Test Low Price']
    🔀 Send text: False | Send image: True
    📸 Generating alert images...
-   📸 Image saved: downloads\alert_SO__42983_175142.jpg
+   📸 Image saved: downloads\alert_SO__43009_101630.jpg
+   📸 Image saved: downloads\alert_SO__43012_101631.jpg
    Opening WhatsApp Web...
    Waiting for WhatsApp to load (scan QR if first run)...
 
    📢 Sending to: 'Test Low Price'
    🔍 Searching: 'Test Low Price' (attempt 1)...
    ✅ Group opened and verified: 'Test Low Price'
-      📤 Sending image for SO : 42983...
-      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__42983_175142_photo.jpg
+      📤 Sending image for SO : 43009...
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__43009_101630_photo.jpg
+      🔍 Waiting for file chooser...
+      ✅ File set via chooser
+      ⏳ Waiting for image delivery...
+      ⚠️  Could not confirm image delivery — check WhatsApp manually
+      📤 Sending image for SO : 43012...
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__43012_101631_photo.jpg
       🔍 Waiting for file chooser...
       ✅ File set via chooser
       ⏳ Waiting for image delivery...
@@ -116,6 +162,6 @@ _Reply to take action — ShopAide Agent 🤖_
 
 ✅ All WhatsApp messages sent and confirmed.
    WhatsApp browser closed.
-   📝 Recorded 3 sent item(s) across 1 SO(s).
+   📝 Recorded 3 sent item(s) across 2 SO(s).
 
-🎉 Done at 05:52 PM
+🎉 Done at 10:17 AM
