@@ -165,6 +165,73 @@ class WhatsAppSender:
         return groups_sent
 
     # ── Open group ─────────────────────────────────────────────────────────
+    async def send_files(self, image_paths: list, groups: list) -> int:
+        """Generic sender: deliver one or more images to WhatsApp groups.
+        Same safety model as alerts (exact group match + header verify).
+        Returns the number of groups that received the files."""
+        if not image_paths or not groups:
+            print("   Nothing to send (no files or no groups).")
+            return 0
+        _ensure_pyperclip()
+        debug_dir = Path("wa_debug") / datetime.now().strftime("%Y%m%d-%H%M%S")
+        debug_dir.mkdir(parents=True, exist_ok=True)
+
+        # Remove Chrome lock files before opening WhatsApp
+        for lock in ["SingletonLock", "SingletonCookie", "SingletonSocket", "lockfile"]:
+            lock_path = Path(self.session_dir) / lock
+            if lock_path.exists():
+                try:
+                    lock_path.unlink()
+                except Exception:
+                    pass
+
+        async with async_playwright() as p:
+            ctx = await p.chromium.launch_persistent_context(
+                self.session_dir, headless=False,
+                viewport={"width": 1280, "height": 900},
+                args=["--disable-blink-features=AutomationControlled"])
+            page = ctx.pages[0] if ctx.pages else await ctx.new_page()
+            print("   Opening WhatsApp Web...")
+            await page.goto("https://web.whatsapp.com", timeout=120_000)
+            print("   Waiting for WhatsApp to load (scan QR if first run)...")
+            try:
+                await page.wait_for_selector(
+                    'div[contenteditable="true"], canvas[aria-label*="QR" i]',
+                    timeout=90_000)
+            except Exception:
+                pass
+            await asyncio.sleep(5)
+
+            groups_sent = 0
+            for group in groups:
+                print(f"\n   📢 Sending to: '{group}'")
+                opened = await self._open_group(page, group, debug_dir)
+                if not opened:
+                    print(f"   ❌ Could not open group '{group}' — skipping.")
+                    continue
+                all_ok = True
+                for path in image_paths:
+                    try:
+                        await self._send_image(page, path,
+                                               Path(path).stem, debug_dir)
+                    except Exception as e:
+                        print(f"   ⚠️ Failed sending {path}: {e}")
+                        all_ok = False
+                if all_ok:
+                    groups_sent += 1
+                await asyncio.sleep(2)
+
+            await asyncio.sleep(3)
+            if groups_sent == len(groups):
+                print("\n✅ Files sent to all groups.")
+            elif groups_sent:
+                print(f"\n⚠️ Sent to {groups_sent}/{len(groups)} group(s).")
+            else:
+                print("\n❌ NO groups received the files.")
+            await ctx.close()
+            print("   WhatsApp browser closed.")
+        return groups_sent
+
     async def _open_group(self, page, group_name: str, debug_dir: Path) -> bool:
         """Opens the group ONLY on an exact title match, and verifies the opened
         chat header matches before returning success. Never falls back to a

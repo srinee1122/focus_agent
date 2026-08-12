@@ -8,6 +8,7 @@ Then open: http://localhost:8000
 """
 import asyncio
 import json
+import os
 import sys
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
@@ -822,6 +823,18 @@ async def ws_endpoint(ws: WebSocket):
 
 # ── Serve frontend ─────────────────────────────────────────────────────────
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
+
+# ── Sales Report agent (self-contained in sales_agent/) ──────────────
+# Isolated by design: if the agent has any problem, the dashboard and the
+# other agents keep working — only these /api/sales/* routes go missing.
+try:
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from sales_agent.sales_api import router as _sales_router
+    app.include_router(_sales_router)
+    print("[Dashboard] Sales Report agent loaded.")
+except Exception as _sales_err:
+    print(f"[Dashboard] Sales Report agent NOT loaded: {_sales_err}")
+
 
 @app.get("/")
 def serve():

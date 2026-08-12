@@ -1,6 +1,6 @@
 
 ==================================================
-🤖 Focus ERP Agent — 06 Aug 2026 10:15 AM
+🤖 Focus ERP Agent — 12 Aug 2026 11:11 AM
 ==================================================
 ✅ Credentials loaded from cloud for: srini@sriambikas.com
 
@@ -15,153 +15,26 @@
 🎯 Send Specific mode: skipping pending filter.
 ✅ Phase 1 complete.
 
-🎯 Send Specific mode: skipping grid scan, targeting 3 SO(s):
-   → 43009
-   → 43010
-   → 43012
+🎯 Send Specific mode: skipping grid scan, targeting 1 SO(s):
+   → 75
 
 🔍 Phase 3: Opening each price-issue voucher to read line items.
 
-   📋 Opening voucher 43009...
+   📋 Opening voucher 75...
       ⏱ Page ready: SO grid loaded
       ✓ Found #txtSearch on main page
-      🔎 Searched grid for 43009
+      🔎 Searched grid for 75
       ⏱ Page ready: voucher opened
-      ✓ Voucher verified on page: '43009'
+      ✓ Voucher verified on page: '75'
       🔬 instances=1
       🔬 inst[0] rows=8 visible=true
       🔬 scopeLevel=0 dataTrs=8 firstCells=20
       Columns : ['Warehouse', 'Item', 'Description', 'Unit', 'Quantity', 'Last Selling Price', 'Rate', 'Gross', 'Discount%', 'Discount Amt', 'Rate in Base Qty', 'Cost Price', 'Cost Restriction', 'Customer Name', 'Snumber', 'Pricebook Buying Price', 'Qty per CTN', 'Stock Balance (Pcs)', 'Stock Balance (CTN)']
-      Row[0]  : CR='0.00' Rate='8.50' Buy='4.06' Desc='VIP HAIR DYE 180ML X 26'
-      · VIP HAIR DYE 180ML X 26                rate/pc=   8.50  landing=   4.26  diff=  +4.24  [ok]
-      · VIP HAIR DYE 20ML X 240                rate/pc=   1.10  landing=   0.44  diff=  +0.66  [ok]
-      ✅ 2 low-price item(s) found.
-      ⏱ Page ready: back to list
-   📋 Opening voucher 43010...
-      ⏱ Page ready: SO grid loaded
-      ✓ Found #txtSearch on main page
-      🔎 Searched grid for 43010
-      ⏱ Page ready: voucher opened
-      ✓ Voucher verified on page: '43010'
-      🔬 instances=1
-      🔬 inst[0] rows=8 visible=true
-      🔬 scopeLevel=0 dataTrs=8 firstCells=20
-      Columns : ['Warehouse', 'Item', 'Description', 'Unit', 'Quantity', 'Last Selling Price', 'Rate', 'Gross', 'Discount%', 'Discount Amt', 'Rate in Base Qty', 'Cost Price', 'Cost Restriction', 'Customer Name', 'Snumber', 'Pricebook Buying Price', 'Qty per CTN', 'Stock Balance (Pcs)', 'Stock Balance (CTN)']
-      Row[0]  : CR='1.00' Rate='19.00' Buy='9.70' Desc='OOTY GOLD PARBOILED PONNI RICE'
+      Row[0]  : CR='1.00' Rate='4.10' Buy='0.00' Desc='WB.GREEN TEA (KAHWA ORG) 62.5G'
       ℹ️  No low-price items in this voucher.
       ⏱ Page ready: back to list
-   📋 Opening voucher 43012...
-      ⏱ Page ready: SO grid loaded
-      ✓ Found #txtSearch on main page
-      🔎 Searched grid for 43012
-      ⏱ Page ready: voucher opened
-      ✓ Voucher verified on page: '43012'
-      🔬 instances=1
-      🔬 inst[0] rows=8 visible=true
-      🔬 scopeLevel=0 dataTrs=8 firstCells=20
-      Columns : ['Warehouse', 'Item', 'Description', 'Unit', 'Quantity', 'Last Selling Price', 'Rate', 'Gross', 'Discount%', 'Discount Amt', 'Rate in Base Qty', 'Cost Price', 'Cost Restriction', 'Customer Name', 'Snumber', 'Pricebook Buying Price', 'Qty per CTN', 'Stock Balance (Pcs)', 'Stock Balance (CTN)']
-      Row[0]  : CR='1.00' Rate='34.00' Buy='5.09' Desc='IG HAR ROOZ BASMATI RICE - 5KG'
-      · IG ROZANA BASMATI RICE - 1KG X 20      rate/pc=   2.10  landing=   1.26  diff=  +0.84  [ok]
-      ✅ 1 low-price item(s) found.
-      ⏱ Page ready: back to list
 
-✅ Phase 3 complete. 2 voucher(s) flagged.
+✅ Phase 3 complete. 0 voucher(s) flagged.
 
 
-📋 2 order(s) flagged. Preview:
-
-── MESSAGE ──────────────────────────────────────
-🚨 *LOW PRICE ALERT*  |  06 Aug 2026, 10:16 AM
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 *SO : 43009*
-🏢 AR/HANIFFA PTE LTD
-👤 Salesman: ARUN
-
-  *VIP HAIR DYE 180ML X 26*
-  📦 Unit             : PCS
-  🔢 Qty Ordered      : 52 PCS
-  🏷️ Purchase Cost/pc : $4.06
-  🚚 Landing Cost/pc  : $4.26  _(+5.0%)_
-  📅 Prev. Price/pc   : $0.00
-  💸 Rate/pc          : $8.50
-  📊 Diff (Rate−Land) : +$4.24
-  📈 Margin           : +49.9%  ✅ HEALTHY
-
-  *VIP HAIR DYE 20ML X 240*
-  📦 Unit             : PCS
-  🔢 Qty Ordered      : 72 PCS
-  🏷️ Purchase Cost/pc : $0.42
-  🚚 Landing Cost/pc  : $0.44  _(+5.0%)_
-  📅 Prev. Price/pc   : $0.00
-  💸 Rate/pc          : $1.10
-  📊 Diff (Rate−Land) : +$0.66
-  📈 Margin           : +60.0%  ✅ HEALTHY
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-_Reply to take action — ShopAide Agent 🤖_
-─────────────────────────────────────────────────
-
-── MESSAGE ──────────────────────────────────────
-🚨 *LOW PRICE ALERT*  |  06 Aug 2026, 10:16 AM
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 *SO : 43012*
-🏢 AR/HANIFFA PTE LTD
-👤 Salesman: ARUN
-
-  *IG ROZANA BASMATI RICE - 1KG X 20*
-  📦 Unit             : CTN (20 pcs/CTN)
-  🔢 Qty Ordered      : 5 CTN
-  🏷️ Purchase Cost/pc : $1.20
-  🚚 Landing Cost/pc  : $1.26  _(+5.0%)_
-  📅 Prev. Price/pc   : $2.10
-  💸 Rate/pc          : $2.10
-  📊 Diff (Rate−Land) : +$0.84
-  📈 Margin           : +40.0%  ✅ HEALTHY
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-_Reply to take action — ShopAide Agent 🤖_
-─────────────────────────────────────────────────
-
-
-📊 Saving Excel backup...
-   📊 Excel saved: downloads\LowPrice_Alert_2026-08-06.xlsx
-
-📲 Sending 2 message(s) to group: 'Test Low Price'...
-   🔧 AGENT_SEND_TEXT=false
-   🔧 AGENT_SEND_IMAGE=true
-   🔧 AGENT_WA_GROUPS=[Test Low Price]
-   ⚠️  Fixed malformed JSON: [Test Low Price] → ['Test Low Price']
-   ✅ Groups from dashboard: ['Test Low Price']
-   🎯 Send-only mode: keeping 2/2 SO(s) matching 43009, 43010, 43012
-   🎯 Send Specific mode — bypassing sent history check
-   🔧 skip_sent_sos=False
-   📋 WhatsApp groups from config: ['Test Low Price']
-   🔀 Send text: False | Send image: True
-   📸 Generating alert images...
-   📸 Image saved: downloads\alert_SO__43009_101630.jpg
-   📸 Image saved: downloads\alert_SO__43012_101631.jpg
-   Opening WhatsApp Web...
-   Waiting for WhatsApp to load (scan QR if first run)...
-
-   📢 Sending to: 'Test Low Price'
-   🔍 Searching: 'Test Low Price' (attempt 1)...
-   ✅ Group opened and verified: 'Test Low Price'
-      📤 Sending image for SO : 43009...
-      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__43009_101630_photo.jpg
-      🔍 Waiting for file chooser...
-      ✅ File set via chooser
-      ⏳ Waiting for image delivery...
-      ⚠️  Could not confirm image delivery — check WhatsApp manually
-      📤 Sending image for SO : 43012...
-      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__43012_101631_photo.jpg
-      🔍 Waiting for file chooser...
-      ✅ File set via chooser
-      ⏳ Waiting for image delivery...
-      ⚠️  Could not confirm image delivery — check WhatsApp manually
-   ✅ Done sending to 'Test Low Price'.
-
-✅ All WhatsApp messages sent and confirmed.
-   WhatsApp browser closed.
-   📝 Recorded 3 sent item(s) across 2 SO(s).
-
-🎉 Done at 10:17 AM
+ℹ️  No price issues found today. Nothing to send.

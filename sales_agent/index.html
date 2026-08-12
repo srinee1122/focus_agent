@@ -432,6 +432,18 @@ tr:hover td{background:rgba(255,255,255,.02)}
       </div>
       <div id="rep-view"></div>
 
+      <div class="section-header" style="margin-top:18px">
+        <div><h3>Company Sales Report</h3>
+          <p style="font-size:12px;color:var(--muted);margin-top:2px">Overall company sales for a date range — full, or one salesman. Downloads as PDF.</p></div>
+      </div>
+      <div class="add-form visible" style="margin-bottom:12px">
+        <div><label>Salesman</label><select id="cr-sman" style="min-width:200px"><option value="">Full company (by salesman)</option><option value="__PRODUCTS__">All products — no salesman split</option></select></div>
+        <div><label>From</label><input id="cr-from" type="date"></div>
+        <div><label>To</label><input id="cr-to" type="date"></div>
+        <button class="btn btn-primary btn-sm" onclick="downloadCompanyReport()">⬇ Download PDF</button>
+        <span id="cr-busy" style="display:none;font-size:12px;color:var(--muted)">Generating…</span>
+      </div>
+
     </div>
 
 
@@ -1406,9 +1418,14 @@ async function srFetch(){
 async function loadSalesMonPage(){
   loadSalesGroups(); loadSalesSalesmen();
   var t = new Date(), first = new Date(t.getFullYear(), t.getMonth(), 1);
+  var f = first.toISOString().slice(0,10), tt = t.toISOString().slice(0,10);
   if(!document.getElementById('rep-from').value){
-    document.getElementById('rep-from').value = first.toISOString().slice(0,10);
-    document.getElementById('rep-to').value = t.toISOString().slice(0,10);
+    document.getElementById('rep-from').value = f;
+    document.getElementById('rep-to').value = tt;
+  }
+  if(!document.getElementById('cr-from').value){
+    document.getElementById('cr-from').value = f;
+    document.getElementById('cr-to').value = tt;
   }
 }
 
@@ -1592,6 +1609,40 @@ async function loadSalesSalesmen(){
     d.salesmen.forEach(function(s){ opts += '<option>'+s.name+'</option>'; });
   }
   sel.innerHTML = opts;
+  // Company report salesman selector
+  var cr = document.getElementById('cr-sman');
+  if(cr){
+    var o = '<option value="">Full company (by salesman)</option>' +
+            '<option value="__PRODUCTS__">All products — no salesman split</option>';
+    if(d.configured){
+      d.salesmen.forEach(function(s){ if(s.is_salesman) o += '<option>'+s.name+'</option>'; });
+      o += '<option>DIRECT SALES</option>';
+    } else {
+      d.salesmen.forEach(function(s){ o += '<option>'+s.name+'</option>'; });
+    }
+    var prev = cr.value; cr.innerHTML = o;
+    if(prev) cr.value = prev;
+  }
+}
+
+async function downloadCompanyReport(){
+  var dfrom = document.getElementById('cr-from').value;
+  var dto = document.getElementById('cr-to').value;
+  var sman = document.getElementById('cr-sman').value;
+  if(!dfrom || !dto) return alert('Pick the date range');
+  var busy = document.getElementById('cr-busy'); busy.style.display='inline';
+  try{
+    var res = await fetch('/api/sales/company-report/pdf', {method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({date_from:dfrom, date_to:dto, salesman:sman})});
+    if(!res.ok){ var d=await res.json(); throw new Error(d.detail||'Failed'); }
+    var blob = await res.blob();
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'CompanySales_'+(sman==='__PRODUCTS__'?'ALL_PRODUCTS':(sman||'FULL'))+'_'+dfrom+'_to_'+dto+'.pdf';
+    a.click(); URL.revokeObjectURL(a.href);
+  }catch(e){ alert('❌ '+e.message); }
+  busy.style.display='none';
 }
 
 async function openSalesmenModal(){
