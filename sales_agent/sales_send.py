@@ -153,10 +153,117 @@ async def _render_image(rep: dict) -> str:
         await page.set_content(html)
         await asyncio.sleep(0.6)
         el = await page.query_selector("body")
-        await el.screenshot(path=str(out), type="jpeg", quality=92)
+        await el.screenshot(path=str(out), type="jpeg", quality=88)
         await browser.close()
-    print(f"   📸 Report image: {out}")
+
+    # Keep the file light so WhatsApp's preview loads within the sender's
+    # fixed timing (big/tall images previously previewed too slowly)
+    try:
+        from PIL import Image as _PIL
+        with _PIL.open(out) as img:
+            w, h = img.size
+            if w > 1100 or h > 3200:
+                scale = min(1100 / w, 3200 / h, 1.0)
+                img = img.resize((int(w * scale), int(h * scale)),
+                                 _PIL.LANCZOS)
+            img.convert("RGB").save(str(out), format="JPEG",
+                                    quality=82, optimize=True)
+    except Exception as e:
+        print(f"   ⚠️ Image slimming skipped: {e}")
+    import os as _os
+    print(f"   📸 Report image: {out} ({_os.path.getsize(out)//1024} KB)")
     return str(out)
+
+
+async def _send_to_groups(image_path: str, groups: list) -> int:
+    """Deliver the report image using the UNMODIFIED WhatsAppSender's own
+    methods, replicating the exact browser flow of its proven send():
+    same launch args, same chat-list wait, same lock cleanup."""
+    sender = WhatsAppSender()
+    debug_dir = Path("wa_debug") / datetime.now().strftime("%Y%m%d-%H%M%S")
+    debug_dir.mkdir(parents=True, exist_ok=True)
+
+    # Remove Chrome lock files before opening WhatsApp (as send() does)
+    import subprocess as _sp
+    for lock in ["SingletonLock", "SingletonCookie", "SingletonSocket", "lockfile"]:
+        lock_path = Path(sender.session_dir) / lock
+        if lock_path.exists():
+            try:
+                lock_path.unlink()
+                print(f"   🔓 Removed stale lock: {lock}")
+            except Exception:
+                pass
+    try:
+        _sp.run(["wmic", "process", "where",
+                 "CommandLine like '%whatsapp_session%'",
+                 "call", "terminate"],
+                capture_output=True, timeout=5)
+    except Exception:
+        pass
+
+    groups_sent = 0
+    async with async_playwright() as p:
+        ctx = await p.chromium.launch_persistent_context(
+            sender.session_dir,
+            headless=False,
+            args=["--no-sandbox", "--disable-dev-shm-usage"],
+            viewport={"width": 1280, "height": 800},
+        )
+        page = ctx.pages[0] if ctx.pages else await ctx.new_page()
+
+        print("   Opening WhatsApp Web...")
+        await page.goto("https://web.whatsapp.com", wait_until="domcontentloaded")
+        print("   Waiting for WhatsApp to load (scan QR if first run)...")
+        await page.wait_for_selector(
+            '[aria-label="Chat list"], #pane-side, [data-testid="chat-list"]',
+            timeout=180_000,
+        )
+        await asyncio.sleep(3)
+
+        for group in groups:
+            print(f"\n   📢 Sending to: '{group}'")
+            opened = await sender._open_group(page, group, debug_dir)
+            if not opened:
+                print(f"   ❌ Could not open group '{group}' — skipping.")
+                continue
+            try:
+                await sender._send_image(page, image_path,
+                                         Path(image_path).stem, debug_dir)
+                # The sender's internal delivery check only warns; verify
+                # here and only count/close once truly delivered.
+                confirmed = False
+                try:
+                    await page.wait_for_selector(
+                        'span[data-icon="msg-time"]', state="hidden",
+                        timeout=60_000)
+                    await page.wait_for_selector(
+                        'span[data-icon="msg-check"], '
+                        'span[data-icon="msg-dblcheck"]', timeout=30_000)
+                    confirmed = True
+                except Exception:
+                    pass
+                if confirmed:
+                    groups_sent += 1
+                    print(f"   ✅ Delivery confirmed for '{group}'.")
+                else:
+                    await page.screenshot(
+                        path=str(debug_dir / f"UNCONFIRMED_{group[:20]}.png"))
+                    print(f"   ⚠️ Could not confirm delivery to '{group}' — "
+                          f"screenshot saved, not counted as sent.")
+            except Exception as e:
+                print(f"   ⚠️ Failed sending to '{group}': {e}")
+
+        await asyncio.sleep(5)
+        if groups_sent == len(groups):
+            print("\n✅ Report sent to all groups.")
+        elif groups_sent:
+            print(f"\n⚠️ Sent to {groups_sent}/{len(groups)} group(s).")
+        else:
+            print("\n❌ NO groups received the report.")
+        await ctx.close()
+        print("   WhatsApp browser closed.")
+
+    return groups_sent
 
 
 async def main():
@@ -174,8 +281,7 @@ async def main():
     print(f"📋 Groups: {groups}")
 
     image = await _render_image(rep)
-    sender = WhatsAppSender()
-    sent = await sender.send_files([image], groups)
+    sent = await _send_to_groups(image, groups)
     if sent == 0:
         sys.exit(2)
 

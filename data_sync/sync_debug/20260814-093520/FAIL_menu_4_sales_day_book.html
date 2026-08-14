@@ -1,0 +1,2625 @@
+<!DOCTYPE html><html class="ltr"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus</title>
+    <link rel="shortcut icon" type="image/x-icon" href="/FocusX/Content/Images/FocusXIcon.png">
+            <link href="/FocusX/Content/bootstrap.css" rel="stylesheet">
+            <link href="/FocusX/Content/bootstrap.min.css" rel="stylesheet">
+            <link href="/FocusX/Content/bootstrap-grid.css" rel="stylesheet">
+            <link href="/FocusX/Content/bootstrap-grid.rtl.css" rel="stylesheet">
+            <link href="/FocusX/Content/bootstrap-grid.rtl.min.css" rel="stylesheet">
+            <link href="/FocusX/Content/bootstrap-grid.min.css" rel="stylesheet">
+            <link href="/FocusX/Content/bootstrap-reboot.css" rel="stylesheet">
+            <link href="/FocusX/Content/bootstrap-reboot.min.css" rel="stylesheet">
+            <link href="/FocusX/Content/font-awesome.min.css" rel="stylesheet">
+            <link href="/FocusX/fonts/FocusFont/styles.css" rel="stylesheet">
+            <link href="/FocusX/Resources/DashBoard/Css/NewDashboard.css" rel="stylesheet">
+            <script src="/FocusX/scripts/jquery-3.6.0.min.js"></script>
+                <script src="/FocusX/scripts/jquery.signalR-2.4.3.js"></script>
+                <script src="/FocusX/signalr/Hubs"></script>
+                <script type="text/javascript">
+                    $(function () {
+                        $.connection.hub.start().done(function () {
+                            console.log('Now connected, connection ID=' + $.connection.hub.id);
+                            if (FCommon.String.isNullOrEmpty(GlobalPref.SessionId) == false) {
+                                $.connection.signalRHub.server.register(GlobalPref.SessionId, NETWORK.getCurrentTabId());
+                            }
+                            //debugger;
+                            //generateGUID();
+                            //const localSystemGUID = getGUID();
+                            //$.connection.signalRHub.server.getMACAddress([localSystemGUID]);
+
+                        }).fail(function () {
+                            console.log('Could not Connect!');
+                        });
+
+                        $.connection.signalRHub.client.SendFileToClient = function (sessionId, fileName) {
+                            if (FCommon.String.isNullOrEmpty(sessionId, true) == true) {
+                                return;
+                            }
+                            if (GlobalPref.SessionId != sessionId) {
+                                return;
+                            }
+                            // string onlyfileName = FCommon.String.getFileNameFromPath(fileName);
+                            try {
+                                const parts = fileName.split(/[/\\]/);
+                                var fname = parts.pop(); // Last element is the file name
+                                FUIElement.showAlert("Your report file " + fname + " is ready to download.");
+                                REPORTRENDERNEW.GetExportedFile_Success(fileName);
+                            }
+                            catch (err) {
+                                FUIElement.showAlert(JSON.stringify(err));
+                            }
+                        };
+
+                        $.connection.signalRHub.client.AfterLogin = function (sSessionId) {
+                            if (FCommon.String.isNullOrEmpty(GlobalPref.SessionId, true) == false) {
+                                return;
+                            }
+
+                            if (FCommon.String.isNullOrEmpty(sSessionId, true) == true) {
+                                return;
+                            }
+
+                            $.connection.signalRHub.server.register(sSessionId, NETWORK.getCurrentTabId());
+                        };
+
+                        $.connection.signalRHub.client.TransactionSave = function (sSessionId, result) {
+                            //debugger
+                            if (GlobalPref.SessionId !== sSessionId) {
+                                return;
+                            }
+
+                            EntryMainCallback.saveVoucherInBackground(result);
+                        };
+
+                        $.connection.signalRHub.client.NotifyDeleteInactiveSession = function (sSessionId) {
+                            if (GlobalPref.SessionId !== sSessionId) {
+                                return;
+                            }
+
+                            alert("Your session has expired due to inactivity. Kindly refresh the browser.");
+                        };
+
+                        $.connection.signalRHub.client.ManuallyLogout = function (sSessionId) {
+                            if (GlobalPref.SessionId !== sSessionId) {
+                                return;
+                            }
+
+                            FUIElement.showAlert("Your session has been logged-out manually from another tab. Kindly refresh the browser.");
+                            setTimeout(function () {
+                                GLOBAL.gotoHomePage();
+                            }, 5000);
+                        };
+
+                        $.connection.signalRHub.client.AIResult = function (sSessionId, objResult) {
+                            let obj = {};
+                            //alert('AI Result');
+                            FUIElement.writeConsoleLog("{AIResult} [SessionId-" + sSessionId + "][ResultType-" + AIOutput.getAIResultTypeName(objResult.Type) + "]", "blue");
+
+                            if (GlobalPref.SessionId !== sSessionId) {
+                                FUIElement.writeConsoleLog("{AIResult} [Current-" + GlobalPref.SessionId + "][Error: Session id not matching.]", "blue");
+                                return;
+                            }
+
+                            obj.SessionId = sSessionId;
+                            obj.Data = objResult;
+
+                            eval("AIResult")(obj); // AIOutput.js has AIResult function
+                        };
+
+                        $.connection.signalRHub.client.broadcastMethod = function (sSessionId, sMessage) {
+                            if (FCommon.String.isNullOrEmpty(sSessionId, true) == false && GlobalPref.SessionId !== sSessionId) {
+                                FUIElement.writeConsoleLog("{broadcastMethod} [Current-" + GlobalPref.SessionId + "][Error: Session id not matching.]", "blue");
+                                return;
+                            }
+
+                            FUIElement.showAlert(sMessage);
+                        };
+                        $.connection.signalRHub.client.weighingScaleWhileAddProductResult = function (arrParams) {
+                            PRODUCTMETHODNEW.weighingScaleWhileAddProductResult(arrParams);
+                        };
+                        $.connection.signalRHub.client.weighingScaleAfterAddProductResult = function (arrParams) {
+                            PRODUCTMETHODNEW.weighingScaleAfterAddProductResult(arrParams);
+                        };
+                        $.connection.signalRHub.client.enableWeighingScannerResult = function (arrParams) {
+                            debugger;
+                            POSCOMMUNICATIONSERVICE.enableWeighingScannerResult(arrParams);
+                        };
+                        $.connection.signalRHub.client.resetWeighingScannerResult = function (arrParams) {
+                            POSCOMMUNICATIONSERVICE.resetWeighingScannerResult(arrParams);
+                        };
+                        $.connection.signalRHub.client.weighingScannerResult = function (arrParams) {
+                            PRODUCTMETHODNEW.weighingScannerResult(arrParams);
+                        };
+                        $.connection.signalRHub.client.setMACAddress = function (arrParams) {
+                            debugger;
+                            setMACAddress(arrParams);
+                        };
+                        $.connection.signalRHub.client.localMACAddress = function (arrParams) {
+                            debugger;
+                            // 1. Can not get 'IP Address' in JavaScript
+                            alert("SignalR push notification from Focus10 controller :: Response are - " + arrParams);
+                        };
+                        $.connection.signalRHub.client.DUSMinuteAppPreOrderRaised = function (arrParams) {
+                            PREORDER.DUSMINUTESAPPINTEGRATION.newDUSMinutePreOrderVoucher(arrParams);
+                        };
+                        $.connection.signalRHub.client.DUSMinuteAppPreOrderCancelled = function (arrParams) {
+                            PREORDER.DUSMINUTESAPPINTEGRATION.cancelDUSMinutePreOrderVoucher(arrParams);
+                        };
+                        $.connection.signalRHub.client.DUSMinuteAppPreOrderChangeStatus = function (arrParams) {
+                            PREORDER.DUSMINUTESAPPINTEGRATION.updateStatusDUSMinutePreOrderVoucher(arrParams);
+                        };
+                        $.connection.signalRHub.client.UpdateAlertCount = function () {
+                            LAYOUT.UpdateAlerts(true);
+                        };
+
+                        $.connection.hub.stateChanged(function (state) {
+                            let sMessage = "";
+                            let stateConversion = { 0: 'connecting', 1: 'connected', 2: 'reconnecting', 4: 'disconnected' };
+
+                            //$.signalR.connectionState
+                            sMessage = 'SignalR state changed from: ' + stateConversion[state.oldState] + ' to: ' + stateConversion[state.newState];
+
+                            if (FCommon.String.isNullOrEmpty(GlobalPref.SessionId) == false && state.newState == 1) {
+                                $.connection.signalRHub.server.changeupdatestate(GlobalPref.SessionId, $.connection.hub.id);
+                            }
+
+
+                            FUIElement.writeConsoleLog(sMessage, "blue");
+                        });
+                        $.connection.hub.connectionSlow(function () {
+                        });
+
+                        $.connection.hub.reconnecting(function () {
+                        });
+
+                        $.connection.hub.reconnected(function () {
+                            $.connection.signalRHub.server.changeupdatestate(GlobalPref.SessionId, $.connection.hub.id);
+                        });
+
+                        $.connection.hub.disconnected(function () {
+                            console.log('Nos disconnected');
+
+                            if ($.connection.hub.lastError) {
+                                console.log("Disconnected. Reason: " + $.connection.hub.lastError.message);
+                            }
+
+                            setTimeout(function () {
+                                $.connection.hub.start();
+                            }, 1000);
+                        });
+
+                    });
+
+                    const SignalRInfo = new function () {
+                        Object.defineProperties(this, {
+                            "ConnectionId": {
+                                get: function () {
+                                    try {
+                                        return ($.connection.hub.id);
+                                    }
+                                    catch (err) {
+                                    }
+
+                                    return ("");
+                                }
+                            },
+                            "State": {
+                                get: function () {
+                                    let iState = 0;
+
+                                    try {
+                                        iState = $.connection.hub.state;
+                                        if (iState == $.signalR.connectionState.connecting) {
+                                            return ("Connecting");
+                                        }
+                                        else if (iState == $.signalR.connectionState.connected) {
+                                            return ("Connected");
+                                        }
+                                        else if (iState == $.signalR.connectionState.reconnecting) {
+                                            return ("Reconnecting");
+
+                                        }
+                                        else if (iState == $.signalR.connectionState.disconnected) {
+                                            return ("Disconnected");
+                                        }
+                                    }
+                                    catch (err) {
+                                    }
+
+                                    return ("");
+                                }
+                            }
+                        });
+                    };
+                </script>
+<link href="/FocusX/Bundle/sass?v=9dw-ly73pokjYYVc3H5bhOf-R4PRZq4yLj5kmfYPfmU1" rel="stylesheet">
+<link href="/FocusX/bundles/CSS?v=dT5bnwg_h2ABTRvFsxTkI24LceZRkT83wevzr5iFgFQ1" rel="stylesheet">
+<script src="/FocusX/bundles/Script?v=O32vRUw9Q-ezfxSX9nMt1x-oMVBur3iMjtbam7jtx4c1"></script>
+<script src="/FocusX/bundles/Script/Common?v=GrpKw8-AqPGV2OWOhqKwx2A3GrNDBKBYVFbX4D_lDos1"></script>
+<link href="/FocusX/bundles/CSS/Common?v=4ixRsdLwnDs505H7NbGLH8h5srv-EcVObHtt9jT-koQ1" rel="stylesheet">
+<script src="/FocusX/bundles/Script/AI?v=5nmbkClXCNnoV0VOp9tz9R6rb83ltfaSthUNqY6hqr81"></script>
+<script src="/FocusX/bundles/Script/CreditManagement?v=QPYrhVRwCvwkrf6w5_J4_ZCdRh00w_m57xU63zmEuEw1"></script>
+<link href="/FocusX/bundles/CSS/CreditManagement?v=JLfcPu367QIjyELp6ot3Z19QzVfKaPQUwyMMrxh-m6c1" rel="stylesheet">
+<link href="/FocusX/bundles/CSS/Transactions?v=uVGR4ANdvl7wxNHQyq5wB70IH8bPM9uOvbajnS36iHc1" rel="stylesheet">
+<script src="/FocusX/bundles/Script/Transactions?v=cWit8iuWuLPfaY3LVNOD1m8ALlS6JSte4c7cVY-c7-Q1"></script>
+<script src="/FocusX/bundles/Script/TransactionsHome?v=aaRTHZ2gdmu_X8bWnNJdD346_iz_7kKWlDgz7lnCXSE1"></script>
+<link href="/FocusX/bundles/CSS/Masters?v=1uh3pEQZLXqPt9Q3D-mLS6YCn7sflXGoSU33Y-u0yas1" rel="stylesheet">
+<script src="/FocusX/bundles/Script/Masters?v=LkoBzpyIPKKbVdw5BMRyT9dvxoSrOK3dfIun39s2d_Q1"></script>
+<script src="/FocusX/bundles/Script/Forms?v=QfGb0grEoknlk6M8zlo5A-kB8b79i_6pkMtvre7U1NQ1"></script>
+<link href="/FocusX/bundles/CSS/Report?v=7-5jxQT_Uy0YYEZV59Ob1XBq68elCNcoK2hFdd-QwSA1" rel="stylesheet">
+<link href="/FocusX/bundles/Style/RDAnalyze?v=CsLjyq_1pTpzz5nXgfczgsyEQUmhKgQ5756FtlD4uNw1" rel="stylesheet">
+<script src="/FocusX/bundles/Script/CoreTransaction?v=0-xQ0lSJuykk0vgqrqso_vtbJadk1PpjF1y7I5cComo1"></script>
+<link href="/FocusX/bundles/CSS/CoreTransaction?v=E0oyd-Bl_MLPznt9SsB1viTiBajOAn8aJgKvFUhESuc1" rel="stylesheet">
+<script src="/FocusX/bundles/Script/WMS?v=s_X9nryKdnoD1mKZGJbQxSfZUuDz9ctRtc-a8udM0m01"></script>
+<link href="/FocusX/bundles/CSS/MRP?v=PbbQbYqkg3_mEQsyYMKVf4ZHp6uom9NoaysG-7IkFM01" rel="stylesheet">
+<script src="/FocusX/bundles/Script/MRP?v=R-9xEKmlhtwv8oHc3wAasGVnzA3aXe0n1mRmPOVTItE1"></script>
+<link href="/FocusX/bundles/CSS/PointOfSale?v=T7_jicLYYZSqhJIDyAZb9m7nIZmMSyq9J3xflPPdohw1" rel="stylesheet">
+<script src="/FocusX/bundles/Script/PointOfSale?v=Glw-IXh6i4jDZmq4YObYpn-7J8MGG0tGvgHYOq-Ct9c1"></script>
+<script src="/FocusX/bundles/Script/ERPSchemeImplementation?v=3sVb5JcElvMqHk1Q1Xk4IW82jEchPXqWxbwX9izPC_Q1"></script>
+<link href="/FocusX/bundles/CSS/Synchronization?v=k9vgY0snTwhmY49KR2qFU7EWVg6COrvgzXcrjdp6Y8w1" rel="stylesheet">
+<script src="/FocusX/bundles/Script/Synchronization?v=2dw57mTufm0WpHOqJSmNPq-hQTFq6kqsbDHR-cXKwZQ1"></script>
+
+    <script>
+        $('.parent-menu li a').click(function () {
+            $(this).next('ul').slideToggle('500');
+            $(this).find('i').toggleClass('icon-plus icon-minus')
+        });
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            //This will connect to Console App and retrive MAC Address of local system.
+
+
+            //This will connect to WPF App (.NET 4.7 version).
+            /*startWPFFrameWorkSignalRServer();*/
+        });
+
+        function startWPFFrameWorkSignalRServer() {
+            debugger;
+            const protocol = window.location.protocol;
+            let urlHubConnection = "";
+
+            if (protocol == "https")
+                urlHubConnection = "https://127.0.0.1:5000";
+            else
+                urlHubConnection = "http://127.0.0.1:5000";
+
+            var connectServer = null, signalRHub = null;
+            connectServer = $.hubConnection(urlHubConnection);
+            signalRHub = connectServer.createHubProxy("signalRHub");
+            signalRHub.on("setLocalSystemMACAddress", function (sParameters) {
+                debugger;
+                try {
+                    console.log("Server :: WPF 4.7 Framework :: File :: _Layout.cshtml :: Function :: startWPFFrameWorkSignalRServer :: Information :: Server Response :: " + sParameters);
+                }
+                catch (err) {
+                    console.log("Server :: WPF 4.7 Framework :: File :: _Layout.cshtml :: Function :: startWPFFrameWorkSignalRServer :: Catch Block :: Exception :: " + JSON.stringify(err));
+                }
+            });
+            connectServer.start()
+                .done(function () {
+                    debugger;
+                    console.log("Server :: WPF 4.7 Framework :: File :: _Layout.cshtml :: Function :: startWPFFrameWorkSignalRServer :: Code Block :: connectServer.start().done() :: Information :: WPF Framework SignalR Server Connected Successfully...");
+                    signalRHub.invoke("getLocalSystemMACAddress");
+                })
+                .fail(function (err) {
+                    console.log("Server :: WPF 4.7 Framework :: File :: _Layout.cshtml :: Function :: startWPFFrameWorkSignalRServer :: Code Block :: connectServer.start().fail() :: Connecting To WPF Framework SignalR Server Failed :: Reason :: " + JSON.stringify(err));
+                });
+        }
+        function startWebSocketConnection() {
+            const socket = new WebSocket("ws://127.0.0.1:8000/ws");
+            socket.onopen = (event) =>
+            {
+                console.log("Server :: Console App 4.7 Framework :: File :: _Layout.cshtml :: Function :: startWebSocketConnection :: Code Block :: socket.onopen :: Information :: .NET Console App (4.7 Framework) SignalR Server Connected Successfully...");
+                if (socket.readyState == WebSocket.OPEN)
+                    socket.send("Request for local system's MAC Address.");
+            };
+            socket.onmessage = (event) => {
+                debugger;
+                console.log("Server :: Console App 4.7 Framework :: File :: _Layout.cshtml :: Function :: startWebSocketConnection :: Code Block :: socket.onmessage :: Information :: Receiving message from .NET Console App (4.7 Framework) signlar server :: Information :: " + JSON.stringify(event.data));
+                //alert("Receiving message from .NET Console (4.7 Framework) Server :: " + JSON.stringify(event.data));
+            };
+            socket.onclose = () => {
+                console.log("Server :: Console App 4.7 Framework :: File :: _Layout.cshtml :: Function :: startWebSocketConnection :: Code Block :: socket.onclose :: Information :: .NET Console App (4.7 Framework) signlar server disconnected successfully :: Information :: " + JSON.stringify(event.data));
+            };
+            socket.onerror = (err) => {
+                console.log("Server :: Console App 4.7 Framework :: File :: _Layout.cshtml :: Function :: startWebSocketConnection :: Code Block :: socket.onerror :: Exception :: Exception while connecting .NET Console (4.7 Framework) signalr server :: Reason :: " + JSON.stringify(err));
+            };
+        }
+        function generateGUID() {
+            debugger;
+            const localSystemGUID = localStorage.getItem("localSystemGUID");
+            if (localSystemGUID == null || localSystemGUID == undefined || localSystemGUID.length <= 0) {
+                const str = Math.random().toString(36).substring(2, 10);
+                localStorage.setItem("localSystemGUID", str);
+            }
+        }
+        function getGUID() {
+            debugger;
+            return localStorage.getItem("localSystemGUID");
+        }
+        function setMACAddress(arrParams)
+        {
+            debugger;
+            arrParams = JSON.parse(arrParams);
+            const localSystemGUID = localStorage.getItem("localSystemGUID");
+            if (localSystemGUID != null && localSystemGUID != undefined && localSystemGUID.length > 0) {
+                if (localSystemGUID == arrParams[0]) {
+                    localStorage.setItem("localSystemMACAddress", arrParams[1]);
+                }
+            }
+        }
+
+        document.getElementsByTagName("html")[0].className = "ltr";
+        transEntryGlobal.Version = eVersion.Version10;
+
+        function mainScroll(body, evt) {
+            OPTIONCONTROL.updatePopupPosition();
+            DATEPICKER.collapseAllPopups();
+            FILTER.CollapseFilterTree();
+        }
+
+        function onBodyKeyDown(body, evt) {
+            switch (evt.which || evt.keyCode) {
+                case eKeyCode.E: // (Used in transaction)
+                    if (evt.altKey == true || evt.ctrlKey == true) {
+                        return (false);
+                    }
+                    break;
+                case eKeyCode.R: // (Used in transaction)
+                    if (evt.ctrlKey == true) {
+                        return (false);
+                    }
+                    break;
+                case 83: // S (Used in POS)
+                    if (evt.ctrlKey == true) {
+                        return (false);
+                    }
+                    break;
+                case eKeyCode.L: // (Used in transaction)
+                    if (evt.ctrlKey == true) {
+                        return (false);
+                    }
+                    break;
+                case eKeyCode.F3: // (Used in option control)
+                    return (false);
+                case eKeyCode.F4: // (Used in transaction)
+                    return (false);
+                case eKeyCode.F5: // (Used in optioncontrol)
+                    //GLOBAL.gotoHomePage();
+                    return (false);
+            }
+
+            return (true);
+        }
+
+        window.addEventListener("beforeunload", async function (e) {
+            if (AISearch.SCREEN.isTransactionOpened(true) == true && EntryMain.isDirty() == true) {
+                e.preventDefault();
+                return;
+            }
+
+            transEntryGlobal.clear(false, true);
+        });
+    </script>
+
+<script src="https://crm.centrahub.com/centrabot/res/scripts/BotChat.js"></script><script type="text/javascript" src="https://crm.centrahub.com/centrabot/res/scripts/simpleConnection.js"></script><script type="text/javascript" src="https://crm.centrahub.com/centrabot/res/scripts/utilities.js"></script><script type="text/javascript" src="https://crm.centrahub.com/centrabot/res/scripts/DynamicIncResources.js"></script><script type="text/javascript" src="https://crm.centrahub.com/centrabot/res/scripts/BotChatHandler.js"></script><script type="text/javascript" src="https://crm.centrahub.com/centrabot/res/scripts/vue.js"></script><script type="text/javascript" src="https://crm.centrahub.com/centrabot/res/scripts/botui.min.js"></script><script type="text/javascript" src="https://crm.centrahub.com/centrabot/res/scripts/ScreenRecorder.js"></script><link type="text/css" rel="stylesheet" href="https://crm.centrahub.com/centrabot/res/styles/BotChatFrame.css"><link type="text/css" rel="stylesheet" href="https://crm.centrahub.com/centrabot/res/styles/chatbot.css"><link type="text/css" rel="stylesheet" href="https://crm.centrahub.com/centrabot/res/styles/BotChat.css"><link type="text/css" rel="stylesheet" href="https://crm.centrahub.com/centrabot/res/styles/chatbot.css"><link type="text/css" rel="stylesheet" href="https://crm.centrahub.com/centrabot/res/styles/botui.min.css"><link type="text/css" rel="stylesheet" href="https://crm.centrahub.com/centrabot/res/styles/botui-theme-blue.css"></head>
+<body class=" custom_scrollbar" style="background-color:#f5f7f7 !important" onscroll="mainScroll(this, event);" onkeydown="return onBodyKeyDown(this, event);" onbeforeunload="RETAILMAIN.beforeUnloadPOSMainScreen();" data-version="2">
+            <section id="mainDiv" style="margin: 0px !important; overflow: hidden !important; pointer-events: auto;" class="animated flip">
+
+
+
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus</title>
+    <link rel="shortcut icon" type="image/x-icon" href="/FocusX/Content/Images/FocusXIcon.png">
+
+    <script>
+        $('.parent-menu li a').click(function () {
+            $(this).next('ul').slideToggle('500');
+            $(this).find('i').toggleClass('icon-plus icon-minus')
+        });
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            //This will connect to Console App and retrive MAC Address of local system.
+
+
+            //This will connect to WPF App (.NET 4.7 version).
+            /*startWPFFrameWorkSignalRServer();*/
+        });
+
+        function startWPFFrameWorkSignalRServer() {
+            debugger;
+            const protocol = window.location.protocol;
+            let urlHubConnection = "";
+
+            if (protocol == "https")
+                urlHubConnection = "https://127.0.0.1:5000";
+            else
+                urlHubConnection = "http://127.0.0.1:5000";
+
+            var connectServer = null, signalRHub = null;
+            connectServer = $.hubConnection(urlHubConnection);
+            signalRHub = connectServer.createHubProxy("signalRHub");
+            signalRHub.on("setLocalSystemMACAddress", function (sParameters) {
+                debugger;
+                try {
+                    console.log("Server :: WPF 4.7 Framework :: File :: _Layout.cshtml :: Function :: startWPFFrameWorkSignalRServer :: Information :: Server Response :: " + sParameters);
+                }
+                catch (err) {
+                    console.log("Server :: WPF 4.7 Framework :: File :: _Layout.cshtml :: Function :: startWPFFrameWorkSignalRServer :: Catch Block :: Exception :: " + JSON.stringify(err));
+                }
+            });
+            connectServer.start()
+                .done(function () {
+                    debugger;
+                    console.log("Server :: WPF 4.7 Framework :: File :: _Layout.cshtml :: Function :: startWPFFrameWorkSignalRServer :: Code Block :: connectServer.start().done() :: Information :: WPF Framework SignalR Server Connected Successfully...");
+                    signalRHub.invoke("getLocalSystemMACAddress");
+                })
+                .fail(function (err) {
+                    console.log("Server :: WPF 4.7 Framework :: File :: _Layout.cshtml :: Function :: startWPFFrameWorkSignalRServer :: Code Block :: connectServer.start().fail() :: Connecting To WPF Framework SignalR Server Failed :: Reason :: " + JSON.stringify(err));
+                });
+        }
+        function startWebSocketConnection() {
+            const socket = new WebSocket("ws://127.0.0.1:8000/ws");
+            socket.onopen = (event) =>
+            {
+                console.log("Server :: Console App 4.7 Framework :: File :: _Layout.cshtml :: Function :: startWebSocketConnection :: Code Block :: socket.onopen :: Information :: .NET Console App (4.7 Framework) SignalR Server Connected Successfully...");
+                if (socket.readyState == WebSocket.OPEN)
+                    socket.send("Request for local system's MAC Address.");
+            };
+            socket.onmessage = (event) => {
+                debugger;
+                console.log("Server :: Console App 4.7 Framework :: File :: _Layout.cshtml :: Function :: startWebSocketConnection :: Code Block :: socket.onmessage :: Information :: Receiving message from .NET Console App (4.7 Framework) signlar server :: Information :: " + JSON.stringify(event.data));
+                //alert("Receiving message from .NET Console (4.7 Framework) Server :: " + JSON.stringify(event.data));
+            };
+            socket.onclose = () => {
+                console.log("Server :: Console App 4.7 Framework :: File :: _Layout.cshtml :: Function :: startWebSocketConnection :: Code Block :: socket.onclose :: Information :: .NET Console App (4.7 Framework) signlar server disconnected successfully :: Information :: " + JSON.stringify(event.data));
+            };
+            socket.onerror = (err) => {
+                console.log("Server :: Console App 4.7 Framework :: File :: _Layout.cshtml :: Function :: startWebSocketConnection :: Code Block :: socket.onerror :: Exception :: Exception while connecting .NET Console (4.7 Framework) signalr server :: Reason :: " + JSON.stringify(err));
+            };
+        }
+        function generateGUID() {
+            debugger;
+            const localSystemGUID = localStorage.getItem("localSystemGUID");
+            if (localSystemGUID == null || localSystemGUID == undefined || localSystemGUID.length <= 0) {
+                const str = Math.random().toString(36).substring(2, 10);
+                localStorage.setItem("localSystemGUID", str);
+            }
+        }
+        function getGUID() {
+            debugger;
+            return localStorage.getItem("localSystemGUID");
+        }
+        function setMACAddress(arrParams)
+        {
+            debugger;
+            arrParams = JSON.parse(arrParams);
+            const localSystemGUID = localStorage.getItem("localSystemGUID");
+            if (localSystemGUID != null && localSystemGUID != undefined && localSystemGUID.length > 0) {
+                if (localSystemGUID == arrParams[0]) {
+                    localStorage.setItem("localSystemMACAddress", arrParams[1]);
+                }
+            }
+        }
+
+        document.getElementsByTagName("html")[0].className = "ltr";
+        transEntryGlobal.Version = eVersion.Version10;
+
+        function mainScroll(body, evt) {
+            OPTIONCONTROL.updatePopupPosition();
+            DATEPICKER.collapseAllPopups();
+            FILTER.CollapseFilterTree();
+        }
+
+        function onBodyKeyDown(body, evt) {
+            switch (evt.which || evt.keyCode) {
+                case eKeyCode.E: // (Used in transaction)
+                    if (evt.altKey == true || evt.ctrlKey == true) {
+                        return (false);
+                    }
+                    break;
+                case eKeyCode.R: // (Used in transaction)
+                    if (evt.ctrlKey == true) {
+                        return (false);
+                    }
+                    break;
+                case 83: // S (Used in POS)
+                    if (evt.ctrlKey == true) {
+                        return (false);
+                    }
+                    break;
+                case eKeyCode.L: // (Used in transaction)
+                    if (evt.ctrlKey == true) {
+                        return (false);
+                    }
+                    break;
+                case eKeyCode.F3: // (Used in option control)
+                    return (false);
+                case eKeyCode.F4: // (Used in transaction)
+                    return (false);
+                case eKeyCode.F5: // (Used in optioncontrol)
+                    //GLOBAL.gotoHomePage();
+                    return (false);
+            }
+
+            return (true);
+        }
+
+        window.addEventListener("beforeunload", async function (e) {
+            if (AISearch.SCREEN.isTransactionOpened(true) == true && EntryMain.isDirty() == true) {
+                e.preventDefault();
+                return;
+            }
+
+            transEntryGlobal.clear(false, true);
+        });
+    </script>
+
+
+
+
+
+    
+
+
+
+
+
+<link rel="stylesheet" href="/FocusX/Resources/Company/Css/keyboard.css" type="text/css">
+<link rel="stylesheet" href="/FocusX/Content/jquery-ui.css" type="text/css">
+
+<script src="/FocusX/CommonScripts/External/aes.js"></script>
+<script src="/FocusX/CommonScripts/External/core-min.js"></script>
+<script src="/FocusX/CommonScripts/External/enc-base64.js"></script>
+<script src="/FocusX/CommonScripts/External/sha256.js"></script>
+<script src="/FocusX/Resources/Company/Js/jquery.keyboard.min.js" type="text/javascript"></script>
+<script src="/FocusX/Resources/Company/Js/jquery.keyboard.js" type="text/javascript"></script>
+<script src="/FocusX/Resources/Security/Js/CreateUser.js"></script>
+
+
+<style>
+
+    .ltr .optioncontrol_image_margin {
+        margin-left: 81% !important;
+        margin-right: 2px;
+        /*font-size: 13px !important;*/
+        background-color: white !important;
+    }
+
+    .ltr .optioncontrol_settings_margin {
+        margin-left: 82% !important;
+        margin-right: 2px;
+        /*font-size: 13px !important;*/
+        background-color: white !important;
+    }
+
+    .ltr .optioncontrol_arrow_margin {
+        margin-left: 77% !important;
+        margin-right: 2px;
+        /*font-size: 13px !important;*/
+        background-color: white !important;
+    }
+
+    .rtl .optioncontrol_image_margin {
+        margin-left: 81% !important;
+        margin-right: 0px !important;
+        /*font-size: 13px !important;*/
+        background-color: white !important;
+    }
+
+    .rtl .optioncontrol_settings_margin {
+        margin-left: 82% !important;
+        margin-right: 2px;
+        /*font-size: 13px !important;*/
+        background-color: white !important;
+    }
+
+    .rtl .optioncontrol_arrow_margin {
+        margin-left: 77% !important;
+        margin-right: 2px;
+        /*font-size: 13px !important;*/
+        background-color: white !important;
+    }
+
+    .foptctrlcls {
+        margin-left: 10.6%;
+    }
+</style>
+<style>
+    .LicensingProducts {
+        height: 30px;
+        text-align: center;
+        background-color: white;
+        padding: 0px;
+        cursor: pointer;
+        padding-top: 5px;
+    }
+
+        .LicensingProducts span {
+            font-family: sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+    .LicensingProductfeaturesDiv {
+        padding-left: 20px;
+        padding-top: 10px;
+        color: #414141;
+        font-family: sans-serif;
+        font-weight: 700;
+        font-size: 13px;
+        overflow: auto;
+        height: 490px;
+    }
+
+    .LicensingProductfeaturesDivGroup {
+        display: inline-flex;
+        width: 100%;
+    }
+
+    .LicensingProductfeatures1 {
+        padding-left: 8px;
+        color: #414141;
+        font-family: sans-serif;
+        font-weight: 700;
+        font-size: 14px;
+        overflow: auto;
+    }
+
+    .LicensingProductfeatures2 {
+        padding-left: 5px;
+        color: #414141;
+        font-family: sans-serif;
+        font-size: 12px;
+        overflow: auto;
+    }
+
+    .LicensingProductfeatures3 {
+        padding-left: 5px;
+        color: #414141;
+        font-family: sans-serif;
+        font-size: 10px;
+        overflow: auto;
+    }
+
+    .LicensingProductsUnSelectLeft {
+        border-top-left-radius: 10px;
+        border-bottom-left-radius: 10px;
+        border-left: 10px solid #0292D4;
+        border-top: 0px;
+        border-bottom: 0px;
+        border-right: 0px;
+        background-color: #0292D4;
+    }
+
+    .LicensingProductsUnSelectRight {
+        border-top-right-radius: 10px;
+        border-bottom-right-radius: 10px;
+        border-left: 0px;
+        border-top: 0px;
+        border-bottom: 0px;
+        border-right: 10px solid #0292D4;
+        background-color: #0292D4;
+    }
+
+    .LicensingProductsSelectLeft {
+        border-top-left-radius: 10px;
+        border-bottom-left-radius: 10px;
+        border-left: 10px solid #0073AC;
+        border-top: 0px;
+        border-bottom: 0px;
+        border-right: 0px;
+        background-color: #0073AC;
+    }
+
+    .LicensingProductsSelectRight {
+        border-top-right-radius: 10px;
+        border-bottom-right-radius: 10px;
+        border-left: 0px;
+        border-top: 0px;
+        border-bottom: 0px;
+        border-right: 10px solid #0073AC;
+        background-color: #0073AC;
+    }
+
+    #focus_camera {
+        /* width: 100%;
+        height: 240px; */
+        /*border: 1px solid black;*/
+    }
+</style>
+<script>
+    GlobalPref.clearMemoryObject();
+
+    GetClientTimeZone();
+    function displayStandardProducts(){
+        try{
+            document.getElementById("divStandardProductFeatures").style.display = "";
+            document.getElementById("divProfessionalProductFeatures").style.display = "none";
+            document.getElementById("divEnterpriseProductFeatures").style.display = "none";
+            document.getElementById("divStandardProducts").children[0].style.backgroundColor = "#0073AC";
+            document.getElementById("divStandardProducts").className = "LicensingProducts LicensingProductsSelectLeft";
+            document.getElementById("divProfessionalProducts").style.backgroundColor="#0292D4";
+            document.getElementById("divProfessionalProducts").children[0].style.backgroundColor = "#0292D4";
+            document.getElementById("divEnterpriseProducts").className = "LicensingProducts LicensingProductsUnSelectRight";
+            document.getElementById("divEnterpriseProducts").children[0].style.backgroundColor = "#0292D4";
+        }
+        catch(ex){
+
+        }
+    }
+
+    function displayProfessionalProducts(){
+        try{
+            document.getElementById("divStandardProductFeatures").style.display = "none";
+            document.getElementById("divProfessionalProductFeatures").style.display = "";
+            document.getElementById("divEnterpriseProductFeatures").style.display = "none";
+            document.getElementById("divStandardProducts").className = "LicensingProducts LicensingProductsUnSelectLeft";
+            document.getElementById("divStandardProducts").children[0].style.backgroundColor = "#0292D4";
+            document.getElementById("divProfessionalProducts").style.backgroundColor="#0073AC";
+            document.getElementById("divProfessionalProducts").children[0].style.backgroundColor = "#0073AC";
+            document.getElementById("divEnterpriseProducts").className = "LicensingProducts LicensingProductsUnSelectRight";
+            document.getElementById("divEnterpriseProducts").children[0].style.backgroundColor = "#0292D4";
+        }
+        catch(ex){
+
+        }
+    }
+
+    function displayEnterpriseProducts(){
+        try{
+            document.getElementById("divStandardProductFeatures").style.display = "none";
+            document.getElementById("divProfessionalProductFeatures").style.display = "none";
+            document.getElementById("divEnterpriseProductFeatures").style.display = "";
+            document.getElementById("divStandardProducts").className = "LicensingProducts LicensingProductsUnSelectLeft";
+            document.getElementById("divProfessionalProducts").style.backgroundColor="#0292D4";
+            document.getElementById("divProfessionalProducts").children[0].style.backgroundColor = "#0292D4";
+            document.getElementById("divEnterpriseProducts").className = "LicensingProducts LicensingProductsSelectRight";
+            document.getElementById("divEnterpriseProducts").children[0].style.backgroundColor = "#0073AC";
+        }
+        catch(ex){
+
+        }
+    }
+
+    function GetClientTimeZone(){
+        //debugger
+        var offset = new Date().getTimezoneOffset(),
+        o = Math.abs(offset);
+        var iTT= (offset < 0 ? "+" : "-") + ("00" + Math.floor(o / 60)).slice(-2) + ":" + ("00" + (o % 60)).slice(-2);
+        var iZone=-1;
+        if (iTT == '+03:00')
+            iZone=1;
+        else if (iTT == '+04:00')
+            iZone=2;
+        else if (iTT == '+03:30')
+            iZone=3;
+        else
+            iZone=0;
+        var Basezone = 0;
+        if(iZone != Basezone){
+            document.cookie = "ClientTimeZone=" + iZone + ";path=/";
+            window.location = GLOBAL.getContextPath("", "", "");
+            //var url = GLOBAL.getContextPath("OpenCompany", "Home");
+            //var result = NETWORK.executeServerMethod(url, true, { bRefresh: false },
+            //    "html", true, "", "", null, csId);
+        }
+    }
+</script>
+
+<div class="modal-backdrop in" style="opacity: 0;display:none"></div>
+<div class="loginbg" id="login_div">
+    <input type="hidden" id="companyId" value="0" style="">
+    <input type="hidden" id="DLId" value="0" style="">
+    <input type="hidden" id="ADIIs" style="">
+    <input type="hidden" id="iCompanyKey" value="" style="">
+    <input type="hidden" id="msgInvalidCustomerId" value="CustomerID can be only a numeric value." style="">
+    <input type="hidden" id="currentTabId" value="0" style="">
+    <input type="hidden" id="hndFingerPrint" value="0" style="">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12 col-lg-12 col-12">
+                        <ul class="logintopicons">
+                            <li>
+                                <a href="#" onclick="LOGIN.openAuthForCreateRestore(2, this)">
+                                    <i class="icon-licenses icon htop2" style="color: #818181;" data-toggle="tooltip" data-placement="bottom" title="Settings"></i>
+                                </a>
+                            </li>
+                            <li style="color:#cccccc">|</li>
+                            <li>
+                                <a href="#" onclick="LOGIN.openAuthForCreateRestore(1, this)">
+                                    <i class="icon-new-company htop1" style="color: #818181;" data-toggle="tooltip" data-placement="bottom" title="Create Company"></i>
+                                </a>
+                            </li>
+                            <li style="color:#cccccc">|</li>
+                            <li>
+                                <a href="#" onclick="LOGIN.openAuthForCreateRestore(0,this)">
+                                    <i class="icon-restore htop2" style="color: #818181;" data-toggle="tooltip" data-placement="bottom" title="Restore Company"></i>
+                                </a>
+                            </li>
+                            <li style="color:#cccccc">|</li>
+                            
+                            <li>
+                                <a href="#" onclick="LOGIN.ShowProtectedCompay()">
+                                    <i class="icon-security1 htop" style="color: #818181;" data-toggle="tooltip" data-placement="bottom" title="Protected Companies"></i>
+                                </a>
+                            </li>
+                            <li style="color:#cccccc">|</li>
+                            <li id="imgVirtutalKeyboard">
+                                <a href="#">
+                                    <i class="icon-keyboard htop3" style="color: #818181;" data-toggle="tooltip" data-placement="bottom" title="Keyboard "></i>
+                                </a>
+                                <input type="checkbox" id="chkVirtutalKeyboard" style="display: none !important;">
+                            </li>
+                            <li style="color:#cccccc">|</li>
+                            <li>
+                                
+                                <a href="#" onclick="LOGIN.openAuthForCreateRestore(4, this)">
+                                    <i class="icon-uer-refresh htop4" style="color: #818181;" data-toggle="tooltip" data-placement="bottom" title="Refresh"></i>
+                                </a>
+                            </li>
+                            <li style="color:#cccccc">|</li>
+                            <li>
+                                <a href="#" onclick="LOGIN.openAuthForCreateRestore(3, this)">
+                                    <i class="icon-confirmation htop4" style="color: #818181;" data-toggle="tooltip" data-placement="bottom" title="DbConfig"></i>
+                                </a>
+                            </li>
+                        </ul>
+
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+<input id="SelectedLanguageId" name="SelectedLanguageId" type="hidden" value="0" style="">                
+                                                        <div style="text-align:right">
+                            <a href="#" style="font-size:14px; margin-right:10px;" data-toggle="tooltip" data-placement="bottom" title="Spanish" onclick="LOGIN.onChangeLanguage(4,0);" id="langSpanish_par" class="red-tooltip">
+                                <label style="cursor:pointer;">Español</label>
+                            </a>
+                        </div>
+
+            </div>
+        </div>
+    <div class="row" id="div_LoginPage_Body">
+            <div class="col-md-6 col-lg-6" id="loginbody_leftdiv" style="display:table;height:250px;float:left">
+                <div class="logo" style="margin-top:195px !important">
+
+                        <img src="/FocusX/Content/Images/Focus x-logo2.png" class="logo_image flipImg" draggable="false">
+                    <h6>Accelerate | Innovate | Compete</h6>
+                </div>
+
+            </div>
+                    <div id="loginbody_LicensingProducts" class="col-lg-8" style="display:none; padding-left:50px">
+                <div class="col-lg-12">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-6">
+                        <div class="col-md-4 LicensingProducts">
+                            <div id="divStandardProducts" class="LicensingProducts LicensingProductsUnSelectLeft" onclick="displayStandardProducts()">
+                                <span style="background-color:#0376B1;color:white">
+                                    Standard
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-4 LicensingProducts">
+                            <div id="divProfessionalProducts" class="LicensingProducts" onclick="displayProfessionalProducts()" style="padding-left:0px">
+                                <span style="background-color:#0292D4;color:white">
+                                    Professional
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-4 LicensingProducts">
+                            <div id="divEnterpriseProducts" class="LicensingProducts LicensingProductsUnSelectRight" onclick="displayEnterpriseProducts()" style="padding-left:0px">
+                                <span style="background-color:#0292D4;color:white">
+                                    Enterprise
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3"></div>
+                </div>
+                <div class="col-lg-12" style="height:500px;width:100%;padding-left:200px; padding-top:20px">
+                    <div id="divStandardProductFeatures" class="LicensingProductfeaturesDiv">
+                        <div>
+                            <div class="LicensingProductfeaturesDivGroup">
+                                <input type="checkbox" class="Fchkbox mirrorchk" id="chkSdVer1" style="position: relative;" data-id="1" data-desc="General Ledger, Cash &amp; Bank, Accounts Reivables, Accounts Payable" checked="" onclick="RegisterCompany.productTypeSelect(this)">
+                                <label class="LicensingProductfeatures1" style="padding-left:5px">Focus 9.1S</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures2">Financial Management</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures3">General Ledger, Cash &amp; Bank, Accounts Reivables, Accounts Payable</label>
+                            </div>
+                        </div>
+                        <br>
+                        <div>
+                            <div class="LicensingProductfeaturesDivGroup">
+                                <input type="checkbox" class="Fchkbox mirrorchk" id="chkSdVer2" style="position: relative;" data-id="2" data-desc="General Ledger, Cash &amp; Bank, Accounts Reivables, Accounts Payable, Inventory Management" onclick="RegisterCompany.productTypeSelect(this)">
+                                <label class="LicensingProductfeatures1" style="padding-left:5px">Focus 9.2S</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures2">Finance + Supply Chain and Inventory</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures3">General Ledger, Cash &amp; Bank, Accounts Reivables, Accounts Payable, Inventory Management</label>
+                            </div>
+                        </div>
+                        <br>
+                        <div>
+                            <div class="LicensingProductfeaturesDivGroup">
+                                <input type="checkbox" class="Fchkbox mirrorchk" id="chkSdVer3" style="position: relative;" data-id="3" data-desc="General Ledger, Cash &amp; Bank, Accounts Recievable, Accounts Payable, Inventory Management, Production Costing" onclick="RegisterCompany.productTypeSelect(this)">
+                                <label class="LicensingProductfeatures1" style="padding-left:5px">Focus 9.3S</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures2">Finance + Supply Chain and Inventory + Production</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures3">General Ledger, Cash &amp; Bank, Accounts Recievable, Accounts Payable, Inventory Management, Production Costing</label>
+                            </div>
+                        </div>
+                        <br>
+                        <div>
+                            <div class="LicensingProductfeaturesDivGroup">
+                                <input type="checkbox" class="Fchkbox mirrorchk" id="chkSdVer4" style="position: relative;" data-id="4" data-desc="Inventory Management" onclick="RegisterCompany.productTypeSelect(this)">
+                                <label class="LicensingProductfeatures1" style="padding-left:5px">Focus 9IS</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures2">Supply Chain and Inventory Management</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures3">Inventory Management</label>
+                            </div>
+                        </div>
+                        <br>
+                        <div>
+                            <div class="LicensingProductfeaturesDivGroup">
+                                <input type="checkbox" class="Fchkbox mirrorchk" id="chkSdVer5" style="position: relative;" data-id="5" data-desc="Fixed Asset Management" onclick="RegisterCompany.productTypeSelect(this)">
+                                <label class="LicensingProductfeatures1" style="padding-left:5px">Focus 9AS</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures2">Fixed Asset Management</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures3">Fixed Asset Management</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="divProfessionalProductFeatures" class="LicensingProductfeaturesDiv" style="display:none">
+                        <div>
+                            <div class="LicensingProductfeaturesDivGroup">
+                                <input type="checkbox" class="Fchkbox mirrorchk" id="chkProfVer1" style="position: relative;" data-id="6" data-desc="General Ledger, Cash &amp; Bank, Accounts Reivables, Accounts Payable" onclick="RegisterCompany.productTypeSelect(this)">
+                                <label class="LicensingProductfeatures1">Focus 9.1P</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures2">Financial Management</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures3">General Ledger, Cash &amp; Bank, Accounts Reivables, Accounts Payable</label>
+                            </div>
+                        </div>
+                        <br>
+                        <div>
+                            <div class="LicensingProductfeaturesDivGroup">
+                                <input type="checkbox" class="Fchkbox mirrorchk" id="chkProfVer2" style="position: relative;" data-id="7" data-desc="General Ledger, Cash &amp; Bank, Accounts Reivables, Accounts Payable, Inventory Management" onclick="RegisterCompany.productTypeSelect(this)">
+                                <label class="LicensingProductfeatures1">Focus 9.2P</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures2">Finance + Supply Chain and Inventory</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures3">General Ledger, Cash &amp; Bank, Accounts Reivables, Accounts Payable, Inventory Management</label>
+                            </div>
+                        </div>
+                        <br>
+                        <div>
+                            <div class="LicensingProductfeaturesDivGroup">
+                                <input type="checkbox" class="Fchkbox mirrorchk" id="chkProfVer3" style="position: relative;" data-id="8" data-desc="General Ledger, Cash &amp; Bank, Accounts Recievable, Accounts Payable, Inventory Management, Production Costing" onclick="RegisterCompany.productTypeSelect(this)">
+                                <label class="LicensingProductfeatures1">Focus 9.3P</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures2">Finance + Supply Chain and Inventory + Production</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures3">General Ledger, Cash &amp; Bank, Accounts Recievable, Accounts Payable, Inventory Management, Production Costing</label>
+                            </div>
+                        </div>
+                        <br>
+                        <div>
+                            <div class="LicensingProductfeaturesDivGroup">
+                                <input type="checkbox" class="Fchkbox mirrorchk" id="chkProfVer4" style="position: relative;" data-id="9" data-desc="Inventory Management" onclick="RegisterCompany.productTypeSelect(this)">
+                                <label class="LicensingProductfeatures1">Focus 9iP</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures2">Supply Chain and Inventory Management</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures3">Inventory Management</label>
+                            </div>
+                        </div>
+                        <br>
+                        <div>
+                            <div class="LicensingProductfeaturesDivGroup">
+                                <input type="checkbox" class="Fchkbox mirrorchk" id="chkProfVer5" style="position: relative;" data-id="10" data-desc="Warehouse Management" onclick="RegisterCompany.productTypeSelect(this)">
+                                <label class="LicensingProductfeatures1">Focus 9WP</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures2">Inventory with Warehosue Management</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures3">Warehouse Management</label>
+                            </div>
+                        </div>
+                        <br>
+                        <div>
+                            <div class="LicensingProductfeaturesDivGroup">
+                                <input type="checkbox" class="Fchkbox mirrorchk" id="chkProfVer6" style="position: relative;" data-id="11" data-desc="Advance manufacturing to manage material, manpower and machine with capacity planning and scheduling" onclick="RegisterCompany.productTypeSelect(this)">
+                                <label class="LicensingProductfeatures1">Focus 9MP</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures2">Manufacturing</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures3">Advance manufacturing to manage material, manpower and machine with capacity planning and scheduling</label>
+                            </div>
+                        </div>
+                        <br>
+                        <div>
+                            <div class="LicensingProductfeaturesDivGroup">
+                                <input type="checkbox" class="Fchkbox mirrorchk" id="chkProfVer7" style="position: relative;" data-id="12" data-desc="Fixed Asset Management" onclick="RegisterCompany.productTypeSelect(this)">
+                                <label class="LicensingProductfeatures1">Focus 9AP</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures2">Fixed Asset Management</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures3">Fixed Asset Management</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="divEnterpriseProductFeatures" class="LicensingProductfeaturesDiv" style="display:none">
+                        <div>
+                            <div class="LicensingProductfeaturesDivGroup">
+                                <input type="checkbox" class="Fchkbox mirrorchk" id="chkEntVer1" style="position: relative;" data-id="13" data-desc="General Ledger, Cash &amp; Bank, Accounts Reivables, Accounts Payable" onclick="RegisterCompany.productTypeSelect(this)">
+                                <label class="LicensingProductfeatures1" style="padding-left:5px">Focus 9.1E</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures2">Financial Management</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures3">General Ledger, Cash &amp; Bank, Accounts Reivables, Accounts Payable</label>
+                            </div>
+                        </div>
+                        <br>
+                        <div>
+                            <div class="LicensingProductfeaturesDivGroup">
+                                <input type="checkbox" class="Fchkbox mirrorchk" id="chkEntVer2" style="position: relative;" data-id="14" data-desc="General Ledger, Cash &amp; Bank, Accounts Reivables, Accounts Payable, Inventory Management" onclick="RegisterCompany.productTypeSelect(this)">
+                                <label class="LicensingProductfeatures1" style="padding-left:5px">Focus 9.2E</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures2">Finance + Supply Chain and Inventory</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures3">General Ledger, Cash &amp; Bank, Accounts Reivables, Accounts Payable, Inventory Management</label>
+                            </div>
+                        </div>
+                        <br>
+                        <div>
+                            <div class="LicensingProductfeaturesDivGroup">
+                                <input type="checkbox" class="Fchkbox mirrorchk" id="chkEntVer3" style="position: relative;" data-id="15" data-desc="General Ledger, Cash &amp; Bank, Accounts Recievable, Accounts Payable, Inventory Management, Production Costing" onclick="RegisterCompany.productTypeSelect(this)">
+                                <label class="LicensingProductfeatures1" style="padding-left:5px">Focus 9.3E</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures2">Finance + Supply Chain and Inventory + Production</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures3">General Ledger, Cash &amp; Bank, Accounts Recievable, Accounts Payable, Inventory Management, Production Costing</label>
+                            </div>
+                        </div>
+                        <br>
+                        <div>
+                            <div class="LicensingProductfeaturesDivGroup">
+                                <input type="checkbox" class="Fchkbox mirrorchk" id="chkEntVer4" style="position: relative;" data-id="16" data-desc="Inventory Management" onclick="RegisterCompany.productTypeSelect(this)">
+                                <label class="LicensingProductfeatures2" style="padding-left:5px">Focus 9IE</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures2">Supply Chain and Inventory Management</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures3">Inventory Management</label>
+                            </div>
+                        </div>
+                        <br>
+                        <div>
+                            <div class="LicensingProductfeaturesDivGroup">
+                                <input type="checkbox" class="Fchkbox mirrorchk" id="chkEntVer5" style="position: relative;" data-id="17" data-desc="Warehouse Management" onclick="RegisterCompany.productTypeSelect(this)">
+
+                                <label class="LicensingProductfeatures1" style="padding-left:5px">Focus 9WE</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures2">Inventory with Warehouse Management </label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures3">Warehouse Management</label>
+                            </div>
+                        </div>
+                        <br>
+                        <div>
+                            <div class="LicensingProductfeaturesDivGroup">
+                                <input type="checkbox" class="Fchkbox mirrorchk" id="chkEntVer6" style="position: relative;" data-id="18" data-desc="Advance Manufacturing to Manage Material, Manpower and Machine with capacity planning and scheduling" onclick="RegisterCompany.productTypeSelect(this)">
+
+                                <label class="LicensingProductfeatures1" style="padding-left:5px">Focus 9ME</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures2">Manufacturing</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures3">Advance Manufacturing to Manage Material, Manpower and Machine with capacity planning and scheduling</label>
+                            </div>
+                        </div>
+                        <br>
+                        <div>
+                            <div class="LicensingProductfeaturesDivGroup">
+                                <input type="checkbox" class="Fchkbox mirrorchk" id="chkEntVer7" style="position: relative;" data-id="19" data-desc="Fixed asset Management" onclick="RegisterCompany.productTypeSelect(this)">
+                                <label class="LicensingProductfeatures1" style="padding-left:5px">Focus 9AE</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures2">Fixed asset Management</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures3">Fixed asset Management</label>
+                            </div>
+                        </div>
+                        <br>
+                        <div>
+                            <div class="LicensingProductfeaturesDivGroup">
+                                <input type="checkbox" class="Fchkbox mirrorchk" id="chkEntVer8" style="position: relative;" data-id="20" data-desc="Billing per Counter" onclick="RegisterCompany.productTypeSelect(this)">
+                                <label class="LicensingProductfeatures1" style="padding-left:5px">Focus 9POSL</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures2">Only POS Lyte Version with POS Billing per Counter</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures3">Billing per Counter</label>
+                            </div>
+                        </div>
+                        <br>
+                        <div>
+                            <div class="LicensingProductfeaturesDivGroup">
+                                <input type="checkbox" class="Fchkbox mirrorchk" id="chkEntVer9" style="position: relative;" data-id="21" data-desc="POS Version with all options" onclick="RegisterCompany.productTypeSelect(this)">
+                                <label class="LicensingProductfeatures1" style="padding-left:5px">Focus 9POSE</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures2">Enterprise POS Version with all options</label>
+                            </div>
+                            <div>
+                                <label class="LicensingProductfeatures3">POS Version with all options</label>
+                            </div>
+                        </div>
+                        <br>
+                    </div>
+                </div>
+            </div>
+        <div class="col-md-6 col-lg-6 col-12 mx-auto" id="loginbody_rightdiv">
+            <div class="loginmain login_body" id="id_login_div">
+                <div class="loginbox">
+                        <h3>LOGIN</h3>
+                    <div class="row" style="margin-top:20px;">
+                        <div id="signDetails">
+                            <div id="iUN" class="col-md-12">
+                                <div class="input-group logintextbox">
+                                    <div class="input-group-append">
+                                        <label class="input-group-textlogin loginicon" for="inputGroupSelect02"><i class="icon-profile" style="font-size:18px !important; margin-right:0px !important; color:#818181; "></i></label>
+                                    </div>
+                                        <input type="text" class="form-control" id="txtUsername" name="txtUsername" placeholder="Enter user name" autocomplete="off" tabindex="1" data-preval="" data-ilmm="1" data-infbased="True" onblur="LOGIN_LMM.fnLoadCompanyList(this); LOGIN.usernameunblrcall('txtUsername', 'errmsgDiv', event);" onkeydown="LOGIN.HideErrorMessage();" data-errormsg="Username cannot  be blank" style="text-align: inherit;" data-outlet="0" data-counter="0">
+
+                                </div>
+                            </div>
+                            <div id="iPwd" class="col-md-12">
+                                <div class="input-group logintextbox">
+                                    <div class="input-group-append">
+                                        <label class="input-group-textlogin loginicon" for="inputGroupSelect02"><i class="icon-lock" style="color: #818181;"></i></label>
+                                    </div>
+                                        <input type="password" class="form-control" id="txtPassword" name="txtPassword" autocomplete="off" placeholder="Enter Password" tabindex="2" data-preval="" data-errormsg="Password cannot  be blank" onkeypress="LOGIN.IsCapsLockOn(event);" onkeydown="LOGIN.HideErrorMessage(event);" style="text-align: inherit;">
+
+                                </div>
+                            </div>
+
+                            <div class="col-md-12" id="ddlcompanyPartialview" style="display:none;">
+
+                                <div class="input-group logintextbox">
+                                    <div class="input-group-append">
+                                        <label class="input-group-textlogin loginicon" for="inputGroupSelect02"><i class="icon-new-company" style="color: #818181;"></i></label>
+                                    </div>
+
+                                    <select id="ddlCompany" class="custom-select" tabindex="3" name="ddlCompany" onblur="LOGIN.ToggleOutletandCounter()" onchange="LOGIN.getCompIdOnCompanyChange(this, event);" style="">
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12" id="divcompanyyearsPartialview" style="display:none">
+                                <div class="input-group logintextbox">
+                                    <div class="input-group-append">
+                                        <label class="input-group-textlogin loginicon" for="inputGroupSelect02"><i class="icon-calendar" color:#818181;=""></i></label>
+                                    </div>
+                                    
+
+    <select id="hdnddlCompanyYearCopy" class="custom-select" style="display:none">
+        <option value="" disabled="" selected="" class="options">Select Year</option>
+
+    </select>
+    <select id="ddlCompanyYear" class="custom-select" tabindex="3" onfocus="LOGIN.changeTestBoxBorderColorToBlue('ddlCompanyYear', 'errmsgDiv');">
+        <option value="" disabled="" selected="" class="options">Select Year</option>
+        
+    </select>
+  
+                                </div>
+                            </div>
+                            <div class="col-md-12" id="divcompanyoutlet" style="display:none">
+                                <div class="input-group logintextbox">
+                                    <div class="input-group-append">
+                                        <label class="input-group-textlogin loginicon" for="inputGroupSelect02"><i class="icon-new-company-2" color:#818181;=""></i></label>
+                                    </div>
+<table id="foptCtrl_outlet_input_container" style="width: 89%; border: none; " cellpadding="0" cellspacing="0"> 
+                                    <tbody>
+                                        <tr><td style="padding:0px;border:none;"><div id="foptCtrl_outlet_search_container"></div></td></tr>
+                                        <tr style="width:100%;">
+                                            <td style="width:100%; padding:0px; border: none;">
+                                                <input id="foptCtrl_outlet_data" class="foptCtrl_outlet_data_class" type="hidden" style="">
+                                                <input id="foptCtrl_outlet" name="foptCtrl_outlet" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="height: 35px;" class="FOptionControl optioncontrol_input form-control" onfocus="OPTIONCONTROL_EVENTS.onFocus(this, event);" onblur="OPTIONCONTROL_EVENTS.leaveFocus(this, event);" oninput="OPTIONCONTROL_EVENTS.input(this, event, '/FocusX/Transactions/TransData/GetOptionControlData')" onkeydown="OPTIONCONTROL_EVENTS.keydown(this, event, '/FocusX/Transactions/TransData/GetOptionControlData');" onkeyup="OPTIONCONTROL_EVENTS.keyup(this, event, '/FocusX/Transactions/TransData/GetOptionControlData');" data-showinactive="False" data-mastertypeid="0" data-grouptype="0" data-filter="" data-extrafilter="" data-url="/FocusX/Transactions/TransData/GetOptionControlData" data-searchuiurl="" data-advancesearchuiurl="" data-customizeuiurl="" data-barcodeproducturl="" data-valuefilterfield="" data-keepunmatcheddata="False" data-exactmatch="1" data-tablename="vPos_GetUserWiseOutlets" data-primaryfield="iMasterId" data-displayfield="sName" data-onleave="LOGIN.setCounter" data-ondataloaded="" data-onmultipleselectedsearch="" data-mandatoryfield="" data-ondatachange="" data-bmandatory="True" data-onfocus="" data-onkeydown="" data-ondatanotfound="" data-userdata="" data-i_searchby="-1" data-i_firstfield="-1" data-i_originalfirstfield="-1" data-isbarcode="False" placeholder="" data-toggle="tooltip" title="" data-userrestriction="True" data-barcodeinputparameter="" data-barcodedataloaded="" data-advancesearchinputparameter="" data-afterpopupdisplayed="" data-controltype="1" data-showallcolumns="True" data-workascombobox="False" data-comboheading="" data-fieldname="" data-multipleselectsearch="False" data-nodropdown="False" data-acctypes="0" data-textselectiontype="False" data-binsinputhandler="" data-bins2="False" data-multilinecolumn="False" data-keydata="0_0_0_0_0" data-roleid="0" data-entry="False" data-onlycustomize="False" data-itemsetoptions="0" data-donotdisplaysetitem="False">
+                                            </td>
+                                            <td id="foptCtrl_outlet_input_image" style="width:20px; cursor: pointer; ; padding:0px;border:none;" onmousedown="return false;">
+                                                <span class="icon-down-arrow optioncontrol_arrow_margin" style="font-size:10px;" onclick="OPTIONCONTROL_EVENTS.dropdownClick('foptCtrl_outlet', event);">
+                                                </span>
+                                            </td>
+                                            <td id="foptCtrl_outlet_input_settings" style="width:20px; cursor: pointer; ; padding:0px;border:none;" onmousedown="return false;">
+                                                <span class="icon-settings optioncontrol_settings_margin" style="font-size:10px;" onclick="OPTIONCONTROL_EVENTS.settingsClick('foptCtrl_outlet', event);">
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 0px;border:none;"><div id="foptCtrl_outlet_container" class="option_container" style="z-index:1; position: absolute; display:none; min-width:100px;max-width:500px; "><div id="foptCtrl_outlet_div_data" class="custom_scrollbar" style="width: 100%;height: 100%; overflow-y: hidden !important;"><table class="fgrid" border="0" id="foptCtrl_outlet_table_data" style="table-layout: fixed; border-collapse: collapse; border: 0px; width: 100 %;" onmousemove="OPTIONCONTROL_EVENTS.onMouseMove(&quot;foptCtrl_outlet_table_data&quot;, event);" onmouseup="OPTIONCONTROL_EVENTS.onMouseUp(&quot;foptCtrl_outlet_table_data&quot;, event);" onmouseenter="OPTIONCONTROL_EVENTS.onMouseEnter(&quot;foptCtrl_outlet_table_data&quot;, event);"><thead id="foptCtrl_outlet_table_head" class="option_thead"></thead><tbody id="foptCtrl_outlet_table_body" class="custom_scrollbar option_tbody" onscroll="OPTIONCONTROL_EVENTS.onBodyScroll(this, event);"></tbody><script type="text/javascript&gt;"> var foptCtrl_outlet_thElm = null; var foptCtrl_outlet_startOffset = 0; </script></table></div></div><script type="text/javascript"> var g_foptCtrl_outlet_data = []; var g_foptCtrl_outlet_metadata = []; </script></td>
+                            </tr>                            
+                            </tbody>
+                            </table>
+                                    
+                                </div>
+                                <input type="hidden" id="id_outletuid" data-outlet="Select Outlet" data-counter="Select Counter" data-errmsg="Select Outlet and Counter for POS User" value="" style="">
+                            </div>
+
+                            <div class="col-md-12" id="divcompanyCounter" style="display:none">
+                                <div class="input-group logintextbox">
+                                    <div class="input-group-append">
+                                        <label class="input-group-textlogin loginicon" for="inputGroupSelect02"><i class="icon-new-company-2" color:#818181;=""></i></label>
+                                    </div>
+<table id="foptCtrl_Counter_input_container" style="width: 89%; border: none; " cellpadding="0" cellspacing="0"> 
+                                    <tbody>
+                                        <tr><td style="padding:0px;border:none;"><div id="foptCtrl_Counter_search_container"></div></td></tr>
+                                        <tr style="width:100%;">
+                                            <td style="width:100%; padding:0px; border: none;">
+                                                <input id="foptCtrl_Counter_data" class="foptCtrl_Counter_data_class" type="hidden" style="">
+                                                <input id="foptCtrl_Counter" name="foptCtrl_Counter" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="height: 34px;" class="FOptionControl optioncontrol_input form-control" onfocus="OPTIONCONTROL_EVENTS.onFocus(this, event);" onblur="OPTIONCONTROL_EVENTS.leaveFocus(this, event);" oninput="OPTIONCONTROL_EVENTS.input(this, event, '/FocusX/Transactions/TransData/GetOptionControlData')" onkeydown="OPTIONCONTROL_EVENTS.keydown(this, event, '/FocusX/Transactions/TransData/GetOptionControlData');" onkeyup="OPTIONCONTROL_EVENTS.keyup(this, event, '/FocusX/Transactions/TransData/GetOptionControlData');" data-showinactive="False" data-mastertypeid="0" data-grouptype="0" data-filter="" data-extrafilter="" data-url="/FocusX/Transactions/TransData/GetOptionControlData" data-searchuiurl="" data-advancesearchuiurl="" data-customizeuiurl="" data-barcodeproducturl="" data-valuefilterfield="" data-keepunmatcheddata="False" data-exactmatch="1" data-tablename="vPos_GetUserWiseCounters" data-primaryfield="iMasterId" data-displayfield="sName" data-onleave="" data-ondataloaded="" data-onmultipleselectedsearch="" data-mandatoryfield="" data-ondatachange="" data-bmandatory="True" data-onfocus="" data-onkeydown="" data-ondatanotfound="" data-userdata="" data-i_searchby="-1" data-i_firstfield="-1" data-i_originalfirstfield="-1" data-isbarcode="False" placeholder="" data-toggle="tooltip" title="" data-userrestriction="True" data-barcodeinputparameter="" data-barcodedataloaded="" data-advancesearchinputparameter="" data-afterpopupdisplayed="" data-controltype="1" data-showallcolumns="True" data-workascombobox="False" data-comboheading="" data-fieldname="" data-multipleselectsearch="False" data-nodropdown="False" data-acctypes="0" data-textselectiontype="False" data-binsinputhandler="" data-bins2="False" data-multilinecolumn="False" data-keydata="0_0_0_0_0" data-roleid="0" data-entry="False" data-onlycustomize="False" data-itemsetoptions="0" data-donotdisplaysetitem="False">
+                                            </td>
+                                            <td id="foptCtrl_Counter_input_image" style="width:20px; cursor: pointer; ; padding:0px;border:none;" onmousedown="return false;">
+                                                <span class="icon-down-arrow optioncontrol_arrow_margin" style="font-size:10px;" onclick="OPTIONCONTROL_EVENTS.dropdownClick('foptCtrl_Counter', event);">
+                                                </span>
+                                            </td>
+                                            <td id="foptCtrl_Counter_input_settings" style="width:20px; cursor: pointer; ; padding:0px;border:none;" onmousedown="return false;">
+                                                <span class="icon-settings optioncontrol_settings_margin" style="font-size:10px;" onclick="OPTIONCONTROL_EVENTS.settingsClick('foptCtrl_Counter', event);">
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 0px;border:none;"><div id="foptCtrl_Counter_container" class="option_container" style="z-index:1; position: absolute; display:none; min-width:100px;max-width:500px; "><div id="foptCtrl_Counter_div_data" class="custom_scrollbar" style="width: 100%;height: 100%; overflow-y: hidden !important;"><table class="fgrid" border="0" id="foptCtrl_Counter_table_data" style="table-layout: fixed; border-collapse: collapse; border: 0px; width: 100 %;" onmousemove="OPTIONCONTROL_EVENTS.onMouseMove(&quot;foptCtrl_Counter_table_data&quot;, event);" onmouseup="OPTIONCONTROL_EVENTS.onMouseUp(&quot;foptCtrl_Counter_table_data&quot;, event);" onmouseenter="OPTIONCONTROL_EVENTS.onMouseEnter(&quot;foptCtrl_Counter_table_data&quot;, event);"><thead id="foptCtrl_Counter_table_head" class="option_thead"></thead><tbody id="foptCtrl_Counter_table_body" class="custom_scrollbar option_tbody" onscroll="OPTIONCONTROL_EVENTS.onBodyScroll(this, event);"></tbody><script type="text/javascript&gt;"> var foptCtrl_Counter_thElm = null; var foptCtrl_Counter_startOffset = 0; </script></table></div></div><script type="text/javascript"> var g_foptCtrl_Counter_data = []; var g_foptCtrl_Counter_metadata = []; </script></td>
+                            </tr>                            
+                            </tbody>
+                            </table>
+                                    
+                                </div>
+                                <input type="hidden" id="id_outletuid" data-outlet="Select Outlet" data-counter="Select Counter" data-errmsg="Select Outlet and Counter for POS User" style="">
+                            </div>
+
+                            <input id="hndIspubliccloud" name="hndIspubliccloud" type="hidden" value="1" style="">
+                                <div id="errmsgDiv" class="errormsg"></div>
+                            <div id="msgCapsLockState" class="errormsg" style="display:none;color: red;margin:10px !important">Caps Lock On</div>
+                            <input type="button" class="Fbutton hidden" style="margin-left: 27%; display: none;" id="snapshot" value="Take Snapshot" onclick="LOGIN.take_snapshot(true)">
+                        </div>
+                        <div id="container" style="display:none;width:80%;margin-left:9%!important">
+                            <div style="width:80%; text-align:center;margin:auto;padding-top:10px;">
+                                <select class="keypadTextbox custom-select" id="ddlCompany1">
+                                    <option disabled="" selected="" value="0">select company</option>
+                                    }
+                                </select>
+                                <br>
+                                <input type="password" style="width: 100%; height: 32px; font-size: 13px; padding-left: 20px; border: 1px solid lightgray;" id="txtDisplayNumValue">
+                            </div>
+                            <table id="keypad" cellpadding="5" cellspacing="3" style="width:80%;">
+                                <tbody><tr>
+                                    <td onclick="LOGIN.addCode('1');">1</td>
+                                    <td onclick="LOGIN.addCode('2');">2</td>
+                                    <td onclick="LOGIN.addCode('3');">3</td>
+                                </tr>
+                                <tr>
+                                    <td onclick="LOGIN.addCode('4');">4</td>
+                                    <td onclick="LOGIN.addCode('5');">5</td>
+                                    <td onclick="LOGIN.addCode('6');">6</td>
+                                </tr>
+                                <tr>
+                                    <td onclick="LOGIN.addCode('7');">7</td>
+                                    <td onclick="LOGIN.addCode('8');">8</td>
+                                    <td onclick="LOGIN.addCode('9');">9</td>
+                                </tr>
+                                <tr>
+                                    <td onclick="LOGIN.clearAll();">CLR</td>
+                                    <td onclick="LOGIN.addCode('0');">0</td>
+                                    <td onclick="LOGIN.credentialCheckForPOSLogin()">OK</td>
+                                </tr>
+                            </tbody></table>
+                                <div id="errmsgDiv1" class="errormsg"></div>
+                        </div>
+                            <div id="msgActiveDirectoryMsg" style="color:steelblue;"></div>
+                                                    <div id="divRemember">
+                                <div class="col-md-12" style="Display:block">
+                                    <div class="row">
+                                        <div class="col-md-6 login_checkbox" id="id_chkrememberme_div">
+                                            <label class="containerr">
+                                                Remember me
+                                                <input type="checkbox" id="chkRememberMe" value="0" tabindex="8" style="">
+                                                <span class="checkmark"></span>
+                                            </label>
+                                        </div>
+                                        <div class="col-md-6">
+                                                <div style="text-align:right;margin-right:8px !important">
+                                                    <a href="#" id="frgtPwd" style="font-size:13px;font-weight:bold;text-decoration:none !important;color:#606060 !important" data-infbased="True" onclick="LOGIN.onForgotPassword(this)" tabindex="10" data-errormsg="Enter Username"> I forgot my password</a>
+                                                </div>
+
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-12 login_checkbox" id="id_chkrememberpwd_div" style="Display:block">
+                                    <label class="containerr">
+                                        Remember my password
+                                        <input type="checkbox" id="chkRememberPwd" tabindex="9" value="1" style="">
+                                        <span class="checkmark"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        <div class="col-md-12">
+                            <div style="text-align:center;" id="id_btn_logins">
+
+                                                                    <button type="button" class="btn-primary signin" id="btnSignin" name="btnSignin" style="padding: 8px 13px 8px 14px !important;width:auto !important" data-infbased="True" onclick="LOGIN.onSignin_Click(this, event)" tabindex="6">
+                                        Sign In
+                                    </button>
+                                                            </div>
+                        </div>
+                            <div class="col-md-12 mx-auto">
+                                <div class="container">
+
+                                    <div class="row">
+                                        <div class="col-md-12">
+
+                                            <ul class="socialMicons">
+                                                <li><a href="#"><i class="icon-l-userlogin socialM1" style="color: #818181;" onclick="LOGIN.showDefaultUserLogin();" title="User Login"></i></a></li>
+                                                <li><a href="#" onclick="LOGIN.FaceRecognition()"><i class="icon-facialrecognition socialM2" style="color: #818181;" data-toggle="tooltip" title="Face Recognition"></i></a></li>
+
+                                                    <li><a id="gmailAuthLink"><i class="icon-l-mail socialM3" style="color: #818181;" data-toggle="tooltip" data-placement="bottom" title="E-Mail"></i></a></li>
+                                                                                                    <li><a id="fbAuthLink"><i data-toggle="tooltip" data-placement="bottom" title="Facebook" class="icon-l-facebook socialM3"></i></a></li>
+
+                                                <li><a href="#" onclick="LOGIN.showPOSUserLogin()"><i class="icon-loginkeypad socialM3" style="color: #818181;" data-toggle="tooltip" data-placement="bottom" title="Pin"></i></a></li>
+                                            </ul>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="OTP_Div" class="col-lg-5 col-md-6 col-sm-6 col-xs-12" style="display:none; margin-top:30%;">
+                <div id="OTP_Div_Int" class="login_body">
+                    <div class="login_textbox">
+                        <div class="labeltext">
+                            <label>OTP</label>
+                        </div>
+                    </div>
+                    <div class="login_textbox">
+                        <div class="fo_textbox">
+                            <input type="text" class="form-control" id="txtOTP" name="txtOTP" placeholder="Enter OTP here" autocomplete="off" onkeypress="LOGIN.onOTPKeyPress()" style="width: 100% !important;">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div id="errmsgDivForOTP" class="errormsg" style="margin-left:15px"></div>
+                        <div class="d-flex justify-content-end">
+
+                            <input type="button" class="FButton-Primary btn-fontPadding FPopupChildren mx-1" style="width: 70px;" value="Submit" onclick="LOGIN.onSubmit_VerifyOTP()">
+                            <input type="button" class="FButton-Primary btn-fontPadding FPopupChildren mx-1" style="width: 70px;" value="Cancel" onclick="LOGIN.onCancel_OTP()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="idLicenseMgmtDiv" class="col-lg-4 col-md-6 col-sm-6 col-xs-12" style="display:none; margin-top:-25px">
+                <div id="LicenseMgmt_body_div" class="login_body login_bodycls">
+                    <div id="SignUp">
+
+                    </div>
+                </div>
+                <div id="LicenseMgmt_body_OTPs" class="login_body login_bodycls">
+                </div>
+                <div id="LicenseMgmt_body_ForgotPassword" class="login_body login_bodycls">
+                </div>
+                <div style="clear: both;"></div>
+            </div>
+            <div class="loginmain login_body" id="id_assignkey_div" style="display:none;">
+                <div class="loginbox">
+                    <h3>ASSIGN KEY</h3>
+                    <div class="row" style="margin-top:20px;">
+                        <div id="id_div_assignKeyDetails">
+                            <div class="col-md-12">
+                                <div class="input-group logintextbox">
+                                    <div class="input-group-append">
+                                        <label class="input-group-textlogin loginicon" for="inputGroupSelect02"><i class="icon-profile" style="font-size:18px !important; margin-right:0px !important; "></i></label>
+                                    </div>
+                                    <input type="text" class="form-control" id="id_txt_accountkey" name="id_txt_accountkey" placeholder="Enter Account Key" autocomplete="off" tabindex="1" data-preval="" onfocus="LOGIN.changeTestBoxBorderColorToBlue('id_txt_accountkey','errmsgDiv');" onblur="LOGIN.usernameunblrcall('id_txt_accountkey', 'errmsgDiv', event); LOGIN_LMM.fnLoadCompanyList(this)" onkeydown="LOGIN.HideErrorMessage();" onkeypress="return COMMON.prototype.validateInputNumber(this, 1, event);" data-errormsg="Account key cannot be blank." style="text-align: inherit;">
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="input-group logintextbox">
+                                    <div class="input-group-append">
+                                        <label class="input-group-textlogin loginicon" for="inputGroupSelect02"><i class="icon-lock"></i></label>
+                                    </div>
+                                    <input type="password" class="form-control" id="id_txt_password" name="id_txt_password" autocomplete="off" placeholder="Enter Password" tabindex="2" data-preval="" data-errormsg="Password cannot  be blank" onfocus="LOGIN.changeTestBoxBorderColorToBlue('id_txt_password','errmsgDiv');" onkeypress="LOGIN.IsCapsLockOn(event);" onkeydown="LOGIN.HideErrorMessage(event);" style="text-align: inherit;">
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div style="text-align:center;" id="id_btn_logins">
+                                    <button type="button" class="btn-secondary cancel" id="id_btn_assignkeycancel" name="id_btn_assignkeycancel" style="border:none !important;padding:8px 15px;margin:10px 0px;font-size:14px;border-radius:3px;" onclick="LOGIN.onAssignkeyCancel_Click(this, event)" tabindex="6">
+                                        Cancel
+                                    </button>
+                                    <button type="button" class="btn-primary signin" id="id_btn_assignkey" name="id_btn_assignkey" onclick="LOGIN.onAssignkey_Click(this, event)" tabindex="6">
+                                        Assign Key
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="clear: both;"></div>
+                            <div id="errmsgDivAssign" class="errormsg"></div>
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div id="id_licenseExtension_div" class="col-lg-5 col-md-6 col-sm-6 col-xs-12" style="display:none; margin-top:30%;">
+                <div class="login_body">
+                    <div class="login_textbox">
+                        <div class="labeltext">
+                            <label id="id_licenseExtension_lbl_1" style="display:none;">Your subscription has expired. Would you like to extend it for 7 more days?</label>
+                            <label id="id_licenseExtension_lbl_2" style="display:none;">This is your last available extension. Would you like to extend the subscription for another 7 days?</label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div id="id_errmsgForLicenseExtension_div" class="errormsg" style="margin-left:15px"></div>
+                        <div class="d-flex justify-content-end">
+                            <input type="button" class="FButton-Primary btn-fontPadding FPopupChildren mx-1" style="width: 70px;" value="Yes" onclick="LOGIN_LMM.onClick_ExtendLicense()">
+                            <input type="button" class="FButton-Primary btn-fontPadding FPopupChildren mx-1" style="width: 70px;" value="No" onclick="LOGIN_LMM.onCancel_ExtendLicense()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="LicenseMgmt_body_Agreement" class="LoginFullBody row" style="width:100%;">
+    </div>
+
+    <div id="loginfooter" class="loginfootertext">
+        <p class="copyright"> Copyright © 2026 Focus Softnet (P) Ltd. All Rights Reserved.</p>
+        
+    </div>
+</div>
+
+
+
+
+<div id="idGlobalError" class="toast-container error-container" style="position:fixed;z-index:1060;"></div>
+<div id="processing" data-backdrop="static" style="position:absolute;top:42%;left:42%;display:none;z-index:2000;direction:ltr !important">
+    
+    <img id="" src="/FocusX/Content/Images/Processing.gif" alt="Processing..." style="width:40%;" draggable="false">
+</div>
+<div id="ReIndexingError_Modal" class="modal fade show" data-backdrop="static">
+    <div class="modal-dialog modal-full-height modal-right modal-dialog-customization" style="margin-bottom:10px">
+        <div class="modal-content">
+            <div class="modal-header modal-header-customization">
+                
+                <h5 class="modal-title modal-title-customization">Focus ➠ Error in Reindex</h5>
+                <span type="button" style="font-size:18px;" data-bs-dismiss="modal">
+                    <i class="icon-close" style="color: #9c9c9c;"></i>
+                </span>
+            </div>
+            <div class="modal-body scrollable" style="height:400px;overflow-y:auto;">
+                <div class="row" id="showReindexMsg">
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                
+                
+                <input type="button" class="FButton-Primary font-5" name="save" value="Save Log" onclick="LOGIN.onSave_ReindexErrormsg()" style="">
+                <button type="button" style="margin-left:6px !important" class="FButton-Secondary font-5" data-dismiss="modal" onclick="LOGIN.onCancel_RedirectToLogin(0);">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal" data-bs-backdrop="static" id="DBConfig_Modal" tabindex="-1" style="right: -35px;top: 10px;">
+    <div class="modal-dialog" style="margin-bottom:10px;  width:50%;max-width:none;margin:auto !important;margin-top:2% !important">
+        <div class="modal-content" style="width:100%; height:100%;">
+            <div class="modal-header theme_background-color" style="z-index:0">
+                <h4 class="modal-title theme_color">DB Configuration</h4>
+                <button type="button" data-bs-dismiss="modal" class="close" style="font-size:18px;">
+                    <i class="icon-close" style="color: #9c9c9c;"></i>
+                </button>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 modal-body" style="margin-top:20px;height:400px;">
+                <div class="row" id="showDBConfig_Modal">
+
+                </div>
+            </div>
+            <div class="modal-footer" style="padding:10px !important">
+                <button type="button" id="btnLogin" class="FButton-Primary" onclick="LOGIN.DBConfigurationSave()">Save</button>
+                <button type="button" class="FButton-Secondary" data-bs-dismiss="modal" style="margin-right:10px">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal" data-bs-backdrop="static" id="Id_RestoreCompany" tabindex="-1" style="right: -35px;top: 10px;">
+    <div class="modal-dialog" style="margin-bottom:10px; height:85%; width:60%;max-width:none;margin:auto !important;margin-top:2% !important">
+        <div class="modal-content" style="width:100%; height:100%;">
+            <div class="modal-header theme_background-color" style="z-index:0">
+
+                
+                <h4 class="modal-title theme_color">Restore Company</h4>
+                <button type="button" class="close" data-bs-dismiss="modal" onclick="LOGIN.Call_Refresh(0)" aria-label="Close" style="color:white;margin-top:-5px;">
+                    <span aria-hidden="true" style="font-size:x-large">×</span>
+                </button>
+            </div>
+            <div class="modal-body scrollable" style="overflow-y:auto; width:100%; height:100%; ">
+                <div class="row" id="Id_RestoreCompany_Model">
+
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal" data-bs-backdrop="static" id="popupSettings" tabindex="-1" style="right: -35px;top: 10px;">
+    <div class="modal-dialog" style="margin-bottom:10px; height:85%; width:60%;max-width:none;margin:auto !important;margin-top:2% !important">
+        <div class="modal-content" style="width:100%; height:100%;">
+            <div class="modal-header theme_background-color" style="z-index:0">
+                <h4 class="modal-title theme_color">Settings</h4>
+                <button type="button" class="close" data-bs-dismiss="modal" onclick="LOGIN.Call_Refresh(0)" aria-label="Close" style="color:white;margin-top:-5px;">
+                    <span aria-hidden="true" style="font-size:x-large">×</span>
+                </button>
+            </div>
+            <div class="col-12 modal-body" style="margin-top:20px;height:400px;">
+                <fieldset class="Fieldset" style="border: 1px solid silver;margin:1%;">
+                    <legend class="labeltext" style="font-size: 14px !important;margin-top: -12px !important;background-color:white;padding:0px 5px 0px 5px;width: 208px;">Update Email for Licence Users</legend>
+                    <div class="row" style="padding: 20px">
+                        <div class="col-xs-12 col-sm-12 col-md-5 col-lg-5" id="" style="margin-left:60px">
+                            <label class="labeltext">
+                                <input type="checkbox" id="chkEmail" class="Fchkbox" style="">&nbsp;
+                                Email Based Login
+                            </label>
+                        </div>
+                        <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6" style="top:0;">
+                            <label class="labeltext">
+                                <input type="checkbox" id="chkCloud" class="Fchkbox" style="">&nbsp;
+                                Cloud Based
+                            </label>
+                        </div>
+                    </div>
+                </fieldset>
+                &nbsp;&nbsp;&nbsp;
+                <fieldset class="Fieldset" style="border: 1px solid silver;margin:1%;">
+                    <legend class="labeltext" style="font-size: 14px !important;margin-top: -12px !important;background-color:white;padding:0px 5px 0px 5px;width: 118px;"> Audit Log Folder</legend>
+                    <div class="row" style="padding:20px">
+                        <div class="col-xs-12 col-sm-12 col-md-2 col-lg-2" style="margin-left: 60px;">
+                            <label class="labeltext">
+                                Audit Log Folder
+                            </label>
+                        </div>
+                        <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6" style="padding-left: 0px;">
+                            <input type="text" class="form-control" id="txtAuditPath" value="C:\focusauditlog" style="">
+                        </div>
+                        <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3" style="padding-left: 0px;">
+                            <input type="button" class="FButton-Primary" name="Create Directory" style="width: 118px;" value="Create Directory" onclick="CREATEUSER.SaveAuditPath(0)">
+                        </div>
+                    </div>
+                </fieldset>
+                &nbsp;
+                <fieldset class="Fieldset" style="border: 1px solid silver;margin:1%;">
+                    <legend class="labeltext" style="font-size: 14px !important;margin-top: -12px !important;background-color:white;padding:0px 5px 0px 5px;width: 118px;"> File Storage</legend>
+                    <div class="row" style="padding: 20px">
+                        <div class="col-xs-12 col-sm-12 col-md-2 col-lg-2" style="margin-left: 60px;">
+                            <label class="labeltext">
+                                Folder Path
+                            </label>
+                        </div>
+                        <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6" style="padding-left: 0px;">
+                            <input type="text" class="form-control" id="txtFileSystemFolderPath" value="" style="">
+                        </div>
+                        <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3" style="padding-left: 0px;">
+                            <input type="button" class="FButton-Primary" name="Create Folder" style="width: 118px;" value="Create Folder" onclick="CREATEUSER.SaveAuditPath(1)">
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+            <div class="modal-footer" style="padding:10px !important">
+                <button type="button" class="FButton-Primary" onclick="CREATEUSER.EnableLMM()">Ok</button>
+                <button type="button" class="FButton-Secondary" data-bs-dismiss="modal" style="margin-right:10px">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="ShowMigrationErrId" data-backdrop="static" tabindex="-1" style="left: 450px;top: 100px;">
+    <div class="modal-dialog" role="document" style="width:40%">
+        <div class="modal-content">
+            <div class="modal-header theme_background-color dragPopuop">
+                <span id="DocumentRoutingId">Warning</span>
+                <button type="button" class="close" onclick="LOGIN.ReloadPageOnError()" aria-label="Close">
+                    <i class="icon-close theme_color" style="color:white"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h6>We are migrating the Audit logs to files in order to improve the performance. This operation will take some time, please bear with us.</h6>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="btnLoginfrommsgOk" class="Fbutton" data-infbased="True" onclick="LOGIN.onSignin_ClickOld(this, event)" tabindex="6">
+                    Ok
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+<div class="modal fade" id="ShowLoginErrId" data-backdrop="static">
+    <div class="modal-dialog" role="document" style="width:40%">
+        <div class="modal-content">
+            <div class="modal-header theme_background-color dragPopuop">
+                <span id="DocumentRoutingId">Warning</span>
+                <button type="button" class="close" onclick="LOGIN.ReloadPageOnError()" aria-label="Close">
+                    <i class="icon-close theme_color" style="color:white"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <b>Browser not responding</b><br>
+                system will Auto refresh the browser, you can relogin after the refresh is completed
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="Fbutton" onclick="LOGIN.ReloadPageOnError()">Ok</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+<div class="modal fade" id="ShowAuthForCreateRestore" data-backdrop="static" data-popupfrom="0" tabindex="-1">
+    <div class="modal-dialog" role="document" style="width:25%;right:15px;top:15px;position:fixed;">
+        <div class="modal-content" style="border:none;">
+            <div class="modal-header theme_background-color" style="padding:10px !important">
+                
+                <span class="modal-title theme_color" id="lblPopupLable">Company Name</span>
+                <button type="button" data-bs-dismiss="modal" class="close" style="font-size:18px;">
+                    <i class="icon-close theme_color"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="margin:0px;padding:0px 0px 0px 20px">
+                <div class="row col-lg-12">
+                    <div class="input-group logintextbox">
+                        <div class="input-group-append">
+                            <label class="input-group-textlogin loginicon" for="inputGroupSelect02"><i class="icon-profile" style="font-size:20px !important; margin-right:0px !important; "></i></label>
+                        </div>
+                        <input type="text" class="form-control" id="txtAdminUsername" name="txtAdminUsername" placeholder="Enter user name" autocomplete="off" tabindex="100" style="text-align: inherit;" data-errormsg="Username cannot  be blank">
+                    </div>
+                </div>
+                <div class="row col-lg-12">
+                    <div class="input-group logintextbox">
+                        <div class="input-group-append">
+                            <label class="input-group-textlogin loginicon" for="inputGroupSelect02"><i class="icon-lock" style="font-size:20px !important; margin-right:0px !important;"></i></label>
+                        </div>
+                        <input type="password" class="form-control" id="txtAdminPassword" name="txtAdminPassword" autocomplete="off" placeholder="Enter Password" tabindex="200" onkeydown="LOGIN.HideErrorMessage(event);" data-errormsg="Password cannot  be blank" style="text-align: inherit;">
+
+                    </div>
+                </div>
+                <div class="row col-lg-12 mt-1" style="text-align:right;margin-right:8px !important;">
+                    <a href="#" id="changePwd" style="font-size:13px;font-weight:bold;text-decoration:none !important;color:#606060 !important" onclick="LOGIN.onShowChangePwdScreen('adminChange',0)" tabindex="10" data-errormsg=""> Change Password</a>
+                </div>
+            </div>
+            <div id="errmsgAdminDiv" class="errormsg"></div>
+            <div class="modal-footer" style="border-top:none;margin-right:5px !important">
+                <button type="button" id="btnLogin" class="FButton-Primary" tabindex="300" onclick="LOGIN.ValidateAdminRights()">Login</button>
+
+                <button type="button" style="margin-left:6px" class="FButton-Secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<div class="modal fade" id="ShowChangePopup" tabindex="-1" aria-labelledby="ShowChangePopupLabel" data-backdrop="static" data-popupfrom="0">
+    <div class="modal-dialog" role="document" style="width:35%; top:5%; left:25%; position:relative; ">
+        <div class="modal-content" style="border:none;">
+            <div class="modal-header modal-header-customization dragPopuop">
+                <span class="modal-title modal-title-customization" id="lblPopupLable">Change Password</span>
+                <button type="button" data-bs-dismiss="modal" class="close" style="font-size:18px;">
+                    <i class="icon-close" style="color: #9c9c9c;"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="border:none;">
+                <div class="row col-lg-12" style="margin-bottom:10px !important">
+                    <div class="col-lg-4">
+                        <label class="Flabel">Old Password</label>
+                    </div>
+                    <div class="col-lg-8">
+                        <input type="password" class="form-control" id="txtOldPassword" value="" placeholder="Old Password" autocomplete="off" style="">
+                    </div>
+                </div>
+                <div class="row col-lg-12" style="margin-bottom:10px !important">
+                    <div class="col-lg-4">
+                        <label class="Flabel">New Password</label>
+                    </div>
+                    <div class="col-lg-8">
+                        <input type="password" class="form-control" id="txtNewPassword" autocomplete="off" placeholder="New Password" data-errormsg="entersomething" style="">
+                    </div>
+                </div>
+                <div class="row col-lg-12">
+                    <div class="col-lg-4">
+                        <label class="Flabel">Confirm password</label>
+                    </div>
+                    <div class="col-lg-8">
+                        <input type="password" class="form-control" id="txtConfirmPassword" autocomplete="off" placeholder="Confirm password" data-errormsg="entersomething" style="">
+                    </div>
+                </div>
+            </div>
+            <div id="errchangepwdmsgDiv" class="errormsg"></div>
+            <div class="modal-footer" style="border-top:none;margin-right:5px !important">
+                <button type="button" id="btnLogin" class="FButton-Primary" onclick="LOGIN.saveChangePwd();">Update</button>
+                <button type="button" style="margin-left:6px" class="FButton-Secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="ShowMesgOnFingerPrint" data-backdrop="static" data-popupfrom="0">
+    <div class="modal-dialog" id="ShowMesgOnFingerPrint_dialog" role="document" style="width:25%; vertical-align: middle;">
+        <div class="modal-content" style="border:none;">
+            <div class="modal-header theme_background-color dragPopuop">
+                <span id="lblPopupLable">Finger Scanner</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <i class="icon-close theme_color" style="color:white"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="border:none;">
+                <div class="col-md-5">
+                    <label style="padding-top:35px;" class="Flabel FSemiBold" id="ShowMesgOnFingerPrint_lable">Please Scan Finger Print</label>
+                </div>
+                <div class="col-md-5">
+                    <img style="width:150px; height:100px" src="/FocusX/Content/Images/FingerPrintScanner.gif">
+                </div>
+
+
+            </div>
+            <div id="errmsgAdminDiv" class="errormsgadmin"></div>
+            <div class="modal-footer" style="border-top:none">
+                
+
+                
+            </div>
+
+        </div>
+
+    </div>
+</div>
+<div id="idLoadGSTINNoValidation" class="modal fade in" role="dialog" data-backdrop="static" style="width:45%; top:100px;">
+</div>
+<div class="modal" data-backdrop="static" id="IdFaceLogin_MultipulCompany" tabindex="-1" style="right: -35px;top: 10px;">
+    <div class="modal-dialog" style="margin-bottom:10px; height:30%; width:30%">
+        <div class="modal-content" style="width:100%; height:100%;">
+            <div class="modal-header theme_background-color">
+                <button type="button" class="close" data-dismiss="modal" onclick="LOGIN.Call_Refresh(0)" aria-label="Close" style="color:white;margin-top:-5px;">
+                    <span aria-hidden="true">×</span>
+                </button>
+                
+                <h4 class="modal-title theme_color">Select Company</h4>
+            </div>
+            <div class="modal-body scrollable" style="overflow-y:auto; ">
+                <div class="col-md-12">
+                    <select id="ddlMulyipleComp" class="Fselect" style="width:75%;">
+                        <option id="0"></option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <input type="button" class="Fbutton font-5" name="save" value="Ok" onclick="LOGIN.SelectionofCompanyForFace()" style="">
+                <button type="button" class="Fbutton font-5" data-dismiss="modal" onclick="">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal" data-backdrop="static" id="IdFaceLogin_MultipulCompany" tabindex="-1" style="right: -35px;top: 10px;">
+    <div class="modal-dialog" style="margin-bottom:10px; height:85%; width:60%">
+        <div class="modal-content" style="width:100%; height:100%;">
+            <div class="modal-header theme_background-color">
+                <button type="button" class="close" data-dismiss="modal" onclick="LOGIN.Call_Refresh(0)" aria-label="Close" style="color:white;margin-top:-5px;">
+                    <span aria-hidden="true">×</span>
+                </button>
+                
+                <h4 class="modal-title theme_color">Select Company</h4>
+            </div>
+            <div class="modal-body scrollable" style="overflow-y:auto; width:100%; height:100%; ">
+                <div class="row">
+                    <select id="ddlMulyipleComp">
+                        <option id="0"></option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <input type="button" class="Fbutton font-5" name="save" value="Ok" onclick="LOGIN.SelectionofCompanyForFace()" style="">
+                <button type="button" class="Fbutton font-5" data-dismiss="modal" onclick="">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="Forgotpwd" data-backdrop="static" data-popupfrom="0">
+    <div class="modal-dialog" role="document" style="width:25%;left:37%;">
+        <div class="modal-content" style="border:none;">
+            <div class="modal-header modal-header-customization dragPopuop">
+                <span class="modal-title modal-title-customization" id="lblPopupLable">Forgot Password</span>
+                <button type="button" data-bs-dismiss="modal" class="close" style="font-size:18px;">
+                    <i class="icon-close" style="color: #9c9c9c;"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="border:none;">
+                <div class="row col-lg-12" style="margin-bottom:10px!important">
+                    <div class="col-lg-12">
+                        <label class="Flabel" id="SecQues" style="font-size:14px;"> </label>
+                    </div>
+                </div>
+                <div class="row col-lg-12">
+                    <div class="col-lg-12">
+                        <input type="text" class="form-control" id="SecAnswer" name="Ans" autocomplete="off" placeholder="Enter Security Answer" style="text-align: inherit;" data-errormsg="">
+                        <label class="Flabel" id="lblErrorMessage" style="color:Red;">  </label>
+                    </div>
+                </div>
+            </div>
+            <div id="SubmitAns" class="errormsg"></div>
+            <div class="modal-footer" style="border-top:none;margin-right:5px !important">
+                <button type="button" id="btnLogin" class="FButton-Primary" onclick="LOGIN.ValidateSecurityAnswer()">Submit</button>
+
+                <button type="button" style="margin-left:6px" class="FButton-Secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<style type="text/css">
+    #foptCtrl_outlet_input_container tbody {
+        border-right: 0 !important;
+    }
+
+    #foptCtrl_Counter_input_container tbody {
+        border-right: 0 !important;
+    }
+
+    #foptCtrl_outlet {
+        width: 110% !important;
+    }
+
+    #foptCtrl_Counter {
+        width: 110% !important;
+    }
+
+    #ShowMesgOnFingerPrint {
+        text-align: center;
+        padding: 0 !important;
+    }
+
+        #ShowMesgOnFingerPrint:before {
+            content: '';
+            display: inline-block;
+            height: 80%;
+            vertical-align: middle;
+            margin-right: -4px;
+        }
+
+    #ShowMesgOnFingerPrint_dialog {
+        display: inline-block;
+        text-align: left;
+        vertical-align: middle;
+    }
+
+    .login_body .errormsg {
+        margin: 5px 0 0 0%;
+        padding: 0px;
+        float: left;
+        width: 70%;
+        color: red;
+        font-size: 13px;
+        text-shadow: 0px 2px 8px rgb(0 0 0 / 50%);
+    }
+</style>
+<style type="text/css">
+    .loginbg {
+        background-image: url(~/Content/Images/loginbg.jpg);
+        background-repeat: no-repeat;
+        width: 100%;
+        background-size: cover;
+        height: 100vh;
+    }
+
+    .loginfootertext {
+        display: flex;
+        justify-content: center;
+        align-items: center
+    }
+
+    .logintopicons {
+        height: 50px;
+        float: right;
+    }
+
+
+
+        .logintopicons li {
+            margin: 15px 5px 0px 5px;
+            padding: 0px;
+            list-style: none;
+            display: inline-block;
+        }
+
+            .logintopicons li a {
+                margin: 0px 0px 0px 0px;
+                padding: 0px;
+                color: #969696;
+                text-decoration: none !important;
+                vertical-align: -webkit-baseline-middle;
+            }
+
+                .logintopicons li a:hover {
+                    background: none !important;
+                    color: #44799b;
+                }
+
+
+    .htop1 {
+        font-size: 18px;
+    }
+
+    .htop2 {
+        font-size: 19px;
+    }
+
+    .htop3 {
+        font-size: 25px;
+    }
+
+    .htop4 {
+        font-size: 22px;
+    }
+
+    .htop {
+        font-size: 23px;
+    }
+
+    .logo {
+        margin: 0 0 20px 0;
+        padding: 0px;
+        text-align: center;
+    }
+
+    .logintopicons {
+        height: 50px;
+        float: right;
+    }
+
+        .logintopicons li {
+            margin: 15px 5px 0px 5px;
+            padding: 0px;
+            list-style: none;
+            display: inline-block;
+        }
+
+            .logintopicons li a {
+                margin: 0px 0px 0px 0px;
+                padding: 0px;
+                color: #969696;
+                text-decoration: none !important;
+                vertical-align: -webkit-baseline-middle;
+            }
+
+                .logintopicons li a:hover {
+                    background: none !important;
+                    color: #44799b;
+                }
+
+    .logo img {
+        width: 260px;
+    }
+
+    .loginmain {
+        position: relative;
+        overflow: hidden;
+    }
+
+        .loginmain:before {
+            background: #fff;
+            border-radius: 8px;
+            width: 67%;
+            margin: 25px 25px 0px 25px;
+            content: ' ';
+            display: block;
+            position: absolute;
+            left: 0;
+            top: 0;
+            background-repeat: no-repeat;
+            background-position: 50% 0;
+            background-size: cover;
+            height: 100vh;
+            opacity: 0.5;
+        }
+
+    .loginbox {
+        position: relative;
+        width: 64%;
+        padding: 0px 20px 60px 20px;
+        left: 35px;
+        top: 40px;
+    }
+
+
+        .loginbox h3 {
+            text-align: center;
+            font-size: 26px;
+            margin: 15px 0 10px 0;
+            color: #606060;
+            font-weight: 600;
+        }
+
+        .loginbox h6 {
+            text-align: center;
+            font-size: 14px;
+            margin: 15px 0 10px 0;
+            color: #606060;
+        }
+
+    .logintextbox {
+        margin: 3px 0 3px 0;
+        padding: 3px !important
+    }
+
+    .signin {
+        border-radius: 3px;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 8px 15px;
+        margin: 10px 0px;
+        background: #007dea !important;
+        font-size: 14px;
+    }
+
+
+        .signin:hover {
+            background: #2a77ca !important;
+        }
+
+    .socialicon {
+        border-radius: 4px;
+        margin-top: 15px;
+        padding: 2px 4px 0 6px;
+        float: left;
+        margin: 0 5px 0 3px;
+    }
+
+        .socialicon a {
+            color: #cecece;
+        }
+
+            .socialicon a:hover {
+                color: #44799b;
+                text-decoration: none;
+            }
+
+
+    .socialM1 {
+        font-size: 25px !important;
+    }
+
+    .socialM2 {
+        font-size: 25px;
+    }
+
+    .socialM3 {
+        font-size: 25px;
+        font-weight: 200 !important;
+    }
+
+    .socialM4 {
+        font-size: 25px;
+    }
+
+
+    .socialMicons {
+        margin: 0px;
+        padding: 0px;
+        text-align: center;
+    }
+
+        .socialMicons li {
+            margin: 15px 5px 0px 5px;
+            padding: 0px;
+            list-style: none;
+            display: inline-block;
+        }
+
+            .socialMicons li a {
+                margin: 0px 0px 0px 0px;
+                padding: 0px;
+                color: #c6c6c6 !important;
+                text-decoration: none !important;
+                vertical-align: -webkit-baseline-middle;
+                cursor: pointer !important
+            }
+
+                .socialMicons li a:hover {
+                    background: none !important;
+                    color: #44799b !important;
+                    text-decoration: none !important;
+                    cursor: pointer !important
+                }
+
+    .passwordC {
+        font-size: 18px;
+        margin-right: 5px;
+        margin-top: 10px !important;
+        position: relative;
+        top: 4px;
+    }
+
+    .logoutC {
+        font-size: 18px;
+        margin-right: 5px;
+        margin-top: 10px !important;
+        position: relative;
+        top: 4px;
+    }
+
+    .logintextbox .form-control { /*color:#9babba !important;*/
+        color: #818587 !IMPORTANT;
+        height: 45px !important;
+        font-size: 13px;
+    }
+
+    .logintextbox .custom-select {
+        height: 45px !important;
+    }
+
+    .loginicon {
+        padding: 0px 10px 13px 6px !important;
+        display: block !important;
+        background: none !important;
+        font-size: 18px !important;
+        height: 45px;
+        border-radius: 5px 0 0 5px !important;
+        color: #90a1b2 !important;
+        border-color: #e4eaef !important;
+    }
+
+    .input-group-textlogin {
+        border: 1px solid rgba(0,0,0,.15);
+        padding: 9px 9px 15px 9px !important;
+        margin-right: -1px;
+    }
+
+    .loginfootertext {
+        display: flex;
+        justify-content: center;
+        align-items: center
+    }
+
+    .copyright {
+        font-size: 13px;
+        color: #909ba9;
+        position: fixed;
+        bottom: 0px !important;
+        text-align: center;
+    }
+
+    .containerr {
+        display: block;
+        position: relative;
+        padding-left: 25px;
+        margin-top: 12px;
+        cursor: pointer;
+        font-size: 13px;
+        color: #6c6c6c
+    }
+
+        .containerr input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+    .checkmark {
+        position: absolute;
+        top: 0px;
+        left: 0;
+        height: 19px;
+        width: 19px;
+        background-color: #d5d5d5;
+        border-radius: 3px !important;
+    }
+
+    .containerr:hover input ~ .checkmark {
+        background-color: #ccc;
+    }
+
+    .containerr input:checked ~ .checkmark {
+        background-color: #44799b;
+    }
+
+    .checkmark:after {
+        content: "";
+        position: absolute;
+        display: none;
+    }
+
+    .containerr input:checked ~ .checkmark:after {
+        display: block;
+    }
+
+    .containerr .checkmark:after {
+        left: 7px;
+        top: 4px;
+        width: 5px;
+        height: 9px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        -webkit-transform: rotate(45deg);
+        -ms-transform: rotate(45deg);
+        transform: rotate(45deg);
+    }
+
+    .containerr .checkmark::after {
+        top: 4px !important;
+        left: 7px !important
+    }
+
+    /*end*/
+
+
+    #keypad {
+        margin: auto;
+        margin-top: 0px;
+        margin-bottom: 15px;
+    }
+
+        #keypad tr td {
+            vertical-align: middle;
+            text-align: center;
+            font-size: 13px;
+            font-weight: bold;
+            width: 90px;
+            height: 45px;
+            cursor: pointer;
+            color: black;
+            border: 1px solid #D2D2D2;
+        }
+
+            #keypad tr td:hover {
+                background-color: #666666;
+                color: #FFF;
+            }
+</style>
+<script>
+
+        var loginErrMsg = {"InvalidDB":"Invalid database","Invalid_password":"Invalid username (or) Password","Invalid_Username_or_password":"Invalid username (or) Password","Username_not_found":"Invalid Username or password","NetworkPolicyFailed":"Login from this IP is not allowed","SqlLoginFailed":"Error Communicating with database server","NoDBConnection":"There is a problem with Database connection","WrongTableDef":"Invalid table definition","Acct_lock_due_to_invalid_attempt":"Account has been locked","AcctBlock_FromDate_ToDate":"Account has been blocked for this date","Restrcited_FromDate_ToDate":"Cannot login on this date","Restrcited_FromTime_ToTime":"Cannot login at this time","Account_disabled":"Account disabled","Noaccess_on_domain":"You do not have permission on this domain","NotAuthorized_to_login_from_comp":"You do not have permission to login from this computer","Cannot_login_this_time":"You cannot login at this time","Cannot_login_this_day":"You cannot login today","Communication_Error":"There is a problem with Communication","User_is_not_mapped_to_any_Login":"User is not mapped to any Login","User_already_logged_with_this_loginname":"User is already logged in from another machine","PasswordExpired":"Password has expired","NoAccess":"You do not have access to this document.","OTPExpired":"OTP Expired","UsersLimitReached":"Users Limit Reached","EODNotDone":"Diffent User has logged in this counter, And EOD is not done.","DayInNotDoneByAnyUser":"Day In is not done by any User in any Counter","LastAttempt":"This is your last chance to try the Password","Enterusername":"Enter user name","PasswordCantBlank":"Password cannot  be blank","EnterValidEmail":"Enter Valid Email ID","EnterEmailId":"Enter Email ID","LoginValidationforLMM1":"No company present for the entered user name."};
+        var sGSTINNo = "";
+        var sHmacOriginalValue = '';
+        var sCompanyName = '';
+        var iFreeTrial = 0;
+        var iCompanyCreated = 0;
+        var iEmailbased = 0;
+        var iLMM = 0;
+        var iPublicCloud = 0;
+        var iOnCloud = -1;
+        var objGSTInfo = null;
+        var ele = null;
+        var iFocusProductId = undefined;
+        var iCustomerId = 0;
+        var sSource = '';
+        var bLiteVersion = false;
+        var sProductTypeIds = '';
+        var bCloseCompany = false;
+        var lstCompanyForProtected=null;
+        var sLicenseModulelLocation = "";
+
+        $("#txtPassword,#txtUsername,#ddlCompany").keyup(function (event) {
+            //debugger
+            if (event.keyCode == 13) {
+                $("#btnSignin").click();
+            }
+        });
+
+    $(document).ready(function () {
+        debugger
+            iCompanyCreated = 0;
+            iEmailbased = 1;
+            iLMM = 0;
+            iPublicCloud = 1;
+            if(iLMM == 1){
+                if(FCommon.UI.isValidObject(document.getElementById('lnkTermsAndConditions'))){
+                    document.getElementById('lnkTermsAndConditions').style.display = 'none';
+                }
+                iFocusProductId = 0;
+                iCustomerId = 0;
+                sSource = "";
+                iFreeTrial = 0;
+                //debugger
+                ele = document.getElementById("id_opencompany_gstinfo");
+                if(FCommon.UI.isValidObject(ele) == true) {
+                    objGSTInfo = FConvert.stringToObject(ele.value);
+                    if(objGSTInfo.lValue > 0) {
+                        if (iFocusProductId == undefined || iFocusProductId == '' || iFocusProductId == 0) {
+                            iFocusProductId = 10001;
+                        }
+                        objGSTInfo = objGSTInfo.data;
+                        ValidationMethods.validateGSTINViaHMACNew(objGSTInfo);
+                        return;
+                    }
+                    else {
+                        objGSTInfo = null;
+                    }
+                }
+                else{
+                    if(bLiteVersion == true){
+                        if (iFocusProductId == undefined || iFocusProductId == '' || iFocusProductId == 0) {
+                            iFocusProductId = 10002;
+                        }
+                    }
+                    else{
+                        if (iFocusProductId == undefined || iFocusProductId == '' || iFocusProductId == 0) {
+                            iFocusProductId = 1;
+                        }
+                    }
+                    if (iLMM == 1 && iFreeTrial == 1) {
+                        document.getElementById('loginbody_rightdiv').style.display = 'none';
+                        iOnCloud = 1;
+                        $('#btnSignUp').click();
+                    }
+                }
+
+                //if(objGSTInfo == null){
+                //    sGSTINNo = urlParams.get('gstin');
+                //    sCompanyName = urlParams.get('legal_name');
+                //    var query = window.location.search.substring(1).split("?");
+                //    if (query != null && query != "") {
+                //        if (query.length > 0) {
+                //            var params = query[0].split("&");
+                //            if (params != null) {
+                //                if (params.length > 0) {
+                //                    for (var i = 0; i < params.length; i++) {
+                //                        if (params[i].toLowerCase().indexOf('code') == 0) {
+                //                            sHmacOriginalValue = params[i].substring(params[i].indexOf('=')+1);
+                //                            break;
+                //                        }
+                //                    }
+                //                }
+                //            }
+                //        }
+                //    }
+
+                //    if(sGSTINNo != '' && sGSTINNo != undefined){
+                //        objGSTInfo.gstin = sGSTINNo;
+                //        objGSTInfo.code = sHmacOriginalValue;
+                //        ValidationMethods.validateGSTINViaHMACNew(objGSTInfo);
+                //    }
+                //    else
+                //    {
+                //        iOnCloud = 1;
+                //        return;
+                //    }
+                //}
+            }
+            else
+            {
+                //LOGIN.setLastLoginCompany();
+                // ── Restore from localStorage (company-wise fallback) ──────────────────
+                if (!iEmailbased) {
+                    var key = 'LOGIN_REMDATA_LastCompId';//LOGIN_REMDATA_LastCompYearId
+                    var YearINdexkey = 'LOGIN_REMDATA_LastCompYearId';//
+                    var companyId = localStorage.getItem(key);
+                    var YearcompanyIndex = localStorage.getItem(YearINdexkey);
+
+                    if (companyId == null) {
+                        document.getElementById("ddlCompany").selectedIndex = 0;
+                        LOGIN.getCompIdOnCompanyChange(document.getElementById("ddlCompany"), this.event);
+                    }
+                    else {
+                        $("#ddlCompany").val(companyId);
+                        if (YearcompanyIndex != undefined) {
+                            LOGIN.getCompIdOnCompanyChange(document.getElementById("ddlCompany"), this.event);
+                            document.getElementById("ddlCompanyYear").selectedIndex = YearcompanyIndex;
+                        }
+                    }
+                    LOGIN.GetRemDetailfromLocalStorage(companyId);
+                }
+                else {
+                    var key = 'LOGIN_REMDATA_LastCompId';
+                    var companyId = localStorage.getItem(key);
+                    LOGIN.GetRemDetailfromLocalStorage_EmailBased(companyId);
+                    $("#ddlCompany").val(companyId);
+                }
+                // ── End localStorage restore ───────────────────────────────────────────
+            }
+            //debugger
+            if( parseInt(0)==1){
+                var ivalue=0;
+                var string="";
+                var name = "fingeraccess=";
+                var decodedCookie = decodeURIComponent(document.cookie);
+                var ca = decodedCookie.split(';');
+                for (var i = 0; i < ca.length; i++) {
+                    var c = ca[i];
+                    while (c.charAt(0) == ' ') {
+                        c = c.substring(1);
+                    }
+                    if (c.indexOf(name) == 0) {
+                        string = c.substring(name.length, c.length);
+                    }
+                }
+                if(string !="" && string >0){
+                    ivalue = string;
+                    LOGIN.GetUsersOnFingerPrint("", ivalue, "");
+                }
+            }
+            LOGIN.showMacAddress()
+            LOGIN.CheckForFaceLoginExist();
+            LOGIN.Start_WebSocket();
+        });
+        $('#ShowMesgOnFingerPrint').on('shown.bs.modal', function () {
+            ////debugger
+            var sCallback = LOGIN.ObjDeviceInfo.sCapture;
+            var resCapture="";
+            resCapture = eval(sCallback)(60, 05);
+            if (resCapture.httpStaus) {
+                // //debugger
+                if (resCapture.data.ErrorCode == "0") {
+                    LOGIN.FingerPrintModelLoad(resCapture.data.IsoTemplate);
+                    //LOGIN.CheckforUsersonFingerPrint(resCapture.data.IsoTemplate, data);
+                }else{$("#ShowMesgOnFingerPrint").modal('hide');}
+            }else{$("#ShowMesgOnFingerPrint").modal('hide');}
+        });
+        $("#txtAdminUsername,#txtAdminPassword").keyup(function(event){
+            if (event.keyCode == 13) {
+                LOGIN.ValidateAdminRights();
+            }
+        });
+</script>
+
+
+
+<div class="modal fade" id="ShowAuthForDeleteCompany" data-backdrop="static" data-popupfrom="0" tabindex="-1">
+    <div class="modal-dialog" role="document" style="width:25%;right:15px;top:15px;position:fixed;">
+        <div class="modal-content" style="border:none;">
+            <div class="modal-header theme_background-color" style="padding:10px !important">
+                <span class="modal-title theme_color" id="lblPopupLable">Company Name</span>
+                <button type="button" data-bs-dismiss="modal" class="close" style="font-size:18px;">
+                    <i class="icon-close theme_color"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="margin:0px;padding:0px 0px 0px 20px">
+                <div class="row col-lg-12">
+                    <div class="input-group logintextbox">
+                        <div class="input-group-append">
+                            <label class="input-group-textlogin loginicon" for="inputGroupSelect02"><i class="icon-profile" style="font-size:20px !important; margin-right:0px !important; "></i></label>
+                        </div>
+                        <input type="text" class="form-control" id="txtAdminUsername" name="txtAdminUsername" placeholder="Enter user name" autocomplete="off" tabindex="100" style="text-align: inherit;" data-errormsg="Username cannot  be blank">
+                    </div>
+                </div>
+                <div class="row col-lg-12">
+                    <div class="input-group logintextbox">
+                        <div class="input-group-append">
+                            <label class="input-group-textlogin loginicon" for="inputGroupSelect02"><i class="icon-lock" style="font-size:20px !important; margin-right:0px !important;"></i></label>
+                        </div>
+                        <input type="password" class="form-control" id="txtAdminPassword" name="txtAdminPassword" autocomplete="off" placeholder="Enter Password" tabindex="200" onkeydown="LOGIN.HideErrorMessage(event);" data-errormsg="Password cannot  be blank" style="text-align: inherit;">
+
+                    </div>
+                </div>
+                <div class="row col-lg-12 mt-1" style="text-align:right;margin-right:8px !important;">
+                    <a href="#" id="changePwd" style="font-size:13px;font-weight:bold;text-decoration:none !important;color:#606060 !important" onclick="LOGIN.onShowChangePwdScreen('adminChange',0)" tabindex="10" data-errormsg=""> Change Password</a>
+                </div>
+            </div>
+            <div id="errmsgAdminDiv" class="errormsg" style="display:none"></div>
+            <div class="modal-footer" style="border-top:none;margin-right:5px !important">
+                <button type="button" id="btnLogin" class="FButton-Primary" tabindex="300" onclick="FILTERMENU.ValidateAdminRights(1)">Login</button>
+
+                <button type="button" style="margin-left:6px" class="FButton-Secondary" onclick="FILTERMENU.ValidateAdminRights(0)" data-bs-dismiss="modal">Cancel</button>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<div id="divPrintDialog1"></div>
+<div id="divPrintDialog2"></div>
+<div id="divPrintDialog3"></div>
+<div id="divPrintDialog4"></div>
+<div id="divPrintDialog5"></div>
+<div id="divMessageInfo"></div></section>
+
+
+
+<div class="modal fade" id="ShowAuthForDeleteCompany" data-backdrop="static" data-popupfrom="0" tabindex="-1">
+    <div class="modal-dialog" role="document" style="width:25%;right:15px;top:15px;position:fixed;">
+        <div class="modal-content" style="border:none;">
+            <div class="modal-header theme_background-color" style="padding:10px !important">
+                <span class="modal-title theme_color" id="lblPopupLable">Company Name</span>
+                <button type="button" data-bs-dismiss="modal" class="close" style="font-size:18px;">
+                    <i class="icon-close theme_color"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="margin:0px;padding:0px 0px 0px 20px">
+                <div class="row col-lg-12">
+                    <div class="input-group logintextbox">
+                        <div class="input-group-append">
+                            <label class="input-group-textlogin loginicon" for="inputGroupSelect02"><i class="icon-profile" style="font-size:20px !important; margin-right:0px !important; "></i></label>
+                        </div>
+                        <input type="text" class="form-control" id="txtAdminUsername" name="txtAdminUsername" placeholder="Enter user name" autocomplete="off" tabindex="100" style="text-align: inherit;" data-errormsg="Username cannot  be blank">
+                    </div>
+                </div>
+                <div class="row col-lg-12">
+                    <div class="input-group logintextbox">
+                        <div class="input-group-append">
+                            <label class="input-group-textlogin loginicon" for="inputGroupSelect02"><i class="icon-lock" style="font-size:20px !important; margin-right:0px !important;"></i></label>
+                        </div>
+                        <input type="password" class="form-control" id="txtAdminPassword" name="txtAdminPassword" autocomplete="off" placeholder="Enter Password" tabindex="200" onkeydown="LOGIN.HideErrorMessage(event);" data-errormsg="Password cannot  be blank" style="text-align: inherit;">
+
+                    </div>
+                </div>
+                <div class="row col-lg-12 mt-1" style="text-align:right;margin-right:8px !important;">
+                    <a href="#" id="changePwd" style="font-size:13px;font-weight:bold;text-decoration:none !important;color:#606060 !important" onclick="LOGIN.onShowChangePwdScreen('adminChange',0)" tabindex="10" data-errormsg=""> Change Password</a>
+                </div>
+            </div>
+            <div id="errmsgAdminDiv" class="errormsg" style="display:none"></div>
+            <div class="modal-footer" style="border-top:none;margin-right:5px !important">
+                <button type="button" id="btnLogin" class="FButton-Primary" tabindex="300" onclick="FILTERMENU.ValidateAdminRights(1)">Login</button>
+
+                <button type="button" style="margin-left:6px" class="FButton-Secondary" onclick="FILTERMENU.ValidateAdminRights(0)" data-bs-dismiss="modal">Cancel</button>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<div id="divPrintDialog1"></div>
+<div id="divPrintDialog2"></div>
+<div id="divPrintDialog3"></div>
+<div id="divPrintDialog4"></div>
+<div id="divPrintDialog5"></div>
+<div id="divMessageInfo"></div><div id="dvBotChat" class="bot-chat-left-container"><div id="dvBotIconContainer"><div onclick="clBotChat.setVisible(false)" align="right"><span class="crmbot crmbot-close bot-chat-hide-icon"></span></div><div onclick="clBotChat.openBot()" class="bot-chat-dv-icon bot-tooltip"><span class="crmbot crmbot-chating bot-chat-freeze-icon"></span><span class="bot-tooltip-text bot-tooltip-right"><b>We're Online! </b><br> Chat with us now.</span></div><div onclick="clBotChat.openBot()" align="right" style="display: none;"><span class="crmbot crmbot-down-arrow bot-chat-freeze-icon"></span></div></div><div id="dvBotChatContainer" class="bot-chat-conversation" haschat="false" style="display: none;"></div></div></body></html>

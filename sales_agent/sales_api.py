@@ -94,6 +94,37 @@ def _ensure_schema():
                 name        TEXT PRIMARY KEY,
                 is_salesman INTEGER NOT NULL DEFAULT 1
             );
+            CREATE TABLE IF NOT EXISTS customers_master (
+                name          TEXT PRIMARY KEY,
+                code          TEXT,
+                segment       TEXT,
+                area          TEXT,
+                contact       TEXT,
+                chain_store   TEXT,
+                address       TEXT,
+                postal_code   TEXT,
+                mobile        TEXT,
+                whatsapp      TEXT,
+                roc_no        TEXT,
+                modified_date TEXT
+            );
+            CREATE TABLE IF NOT EXISTS products_master (
+                name             TEXT PRIMARY KEY,
+                code             TEXT,
+                supplier         TEXT,
+                brand            TEXT,
+                category         TEXT,
+                sub_category     TEXT,
+                sub_category2    TEXT,
+                base_unit        TEXT,
+                group_name       TEXT,
+                item_type        TEXT,
+                qty_per_ctn      REAL,
+                selling_rate     REAL,
+                min_sale_price   REAL,
+                buying_price_ref REAL,
+                modified_date    TEXT
+            );
             CREATE TABLE IF NOT EXISTS group_targets (
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
                 group_id    INTEGER NOT NULL,
@@ -118,7 +149,7 @@ def _ensure_schema():
             """)
             conn.execute("""
                 INSERT OR IGNORE INTO agent_settings
-                    (agent, key, value, description, category)
+                    (agent, key, value, label, category)
                 VALUES ('sales_report', 'whatsapp_groups', '[]',
                         'WhatsApp groups (JSON list)', 'whatsapp')
             """)
@@ -509,6 +540,495 @@ async def sales_report_pdf(body: dict):
                         media_type="application/pdf")
 
 
+# ── Rank report ──────────────────────────────────────────────────
+
+@router.post("/api/sales/rank-report")
+async def sales_rank_report(body: dict):
+    _ensure_schema()
+    gid = int(body.get("group_id") or 0)
+    dfrom = (body.get("date_from") or "").strip()
+    dto = (body.get("date_to") or "").strip()
+    if not gid or not dfrom or not dto:
+        raise HTTPException(400, "group_id, date_from, date_to required")
+    cmp_ = (body.get("compare") or "").strip()
+    with get_db() as conn:
+        try:
+            return sales_module.build_rank_report(
+                conn, gid, dfrom, dto, compare=cmp_,
+                custom_from=(body.get("b_from") or "").strip() or None,
+                custom_to=(body.get("b_to") or "").strip() or None)
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+
+
+@router.post("/api/sales/rank-report/pdf")
+async def sales_rank_report_pdf(body: dict):
+    _ensure_schema()
+    gid = int(body.get("group_id") or 0)
+    dfrom = (body.get("date_from") or "").strip()
+    dto = (body.get("date_to") or "").strip()
+    if not gid or not dfrom or not dto:
+        raise HTTPException(400, "group_id, date_from, date_to required")
+    cmp_ = (body.get("compare") or "").strip()
+    with get_db() as conn:
+        try:
+            rep = sales_module.build_rank_report(
+                conn, gid, dfrom, dto, compare=cmp_,
+                custom_from=(body.get("b_from") or "").strip() or None,
+                custom_to=(body.get("b_to") or "").strip() or None)
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+    out_dir = _THIS_DIR / "downloads"
+    out_dir.mkdir(exist_ok=True)
+    safe = "".join(ch if ch.isalnum() else "_" for ch in rep["group"])[:24]
+    out = out_dir / f"RankReport_{safe}_{dfrom}_to_{dto}.pdf"
+    sales_module.rank_report_pdf(rep, str(out))
+    await _log(f"📄 Rank report PDF: {rep['group']} {dfrom}→{dto}")
+    return FileResponse(str(out), filename=out.name,
+                        media_type="application/pdf")
+
+
+# ── Daily sales report ───────────────────────────────────────────
+
+def _daily_report_from(body: dict):
+    dfrom = (body.get("date_from") or "").strip()
+    dto = (body.get("date_to") or "").strip()
+    salesman = (body.get("salesman") or "").strip() or None
+    if not dfrom or not dto:
+        raise HTTPException(400, "date_from and date_to required")
+    cmp_ = (body.get("compare") or "").strip()
+    with get_db() as conn:
+        try:
+            rep = sales_module.build_daily_report(
+                conn, dfrom, dto, salesman, compare=cmp_,
+                custom_from=(body.get("b_from") or "").strip() or None,
+                custom_to=(body.get("b_to") or "").strip() or None)
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+    if not rep["days"]:
+        raise HTTPException(400, "No sales data in that range"
+                                 + (f" for {salesman}" if salesman else ""))
+    return rep, dfrom, dto
+
+
+@router.post("/api/sales/daily-report")
+async def sales_daily_report(body: dict):
+    _ensure_schema()
+    rep, _, _ = _daily_report_from(body)
+    return rep
+
+
+@router.post("/api/sales/daily-report/pdf")
+async def sales_daily_report_pdf(body: dict):
+    _ensure_schema()
+    rep, dfrom, dto = _daily_report_from(body)
+    out_dir = _THIS_DIR / "downloads"
+    out_dir.mkdir(exist_ok=True)
+    safe = "".join(ch if ch.isalnum() else "_" for ch in rep["scope"])[:24]
+    out = out_dir / f"DailySales_{safe}_{dfrom}_to_{dto}.pdf"
+    sales_module.daily_report_pdf(rep, str(out))
+    await _log(f"📄 Daily sales PDF: {rep['scope']} {dfrom}→{dto}")
+    return FileResponse(str(out), filename=out.name,
+                        media_type="application/pdf")
+
+
+@router.post("/api/sales/daily-report/xlsx")
+async def sales_daily_report_xlsx(body: dict):
+    _ensure_schema()
+    rep, dfrom, dto = _daily_report_from(body)
+    out_dir = _THIS_DIR / "downloads"
+    out_dir.mkdir(exist_ok=True)
+    safe = "".join(ch if ch.isalnum() else "_" for ch in rep["scope"])[:24]
+    out = out_dir / f"DailySales_{safe}_{dfrom}_to_{dto}.xlsx"
+    sales_module.daily_report_xlsx(rep, str(out))
+    await _log(f"📊 Daily sales Excel: {rep['scope']} {dfrom}→{dto}")
+    return FileResponse(
+        str(out), filename=out.name,
+        media_type="application/vnd.openxmlformats-officedocument"
+                   ".spreadsheetml.sheet")
+
+
+# ── Master data uploads ──────────────────────────────────────────
+
+@router.post("/api/sales/masters/customers/upload")
+async def masters_customers_upload(file: UploadFile = File(...)):
+    _ensure_schema()
+    data = await file.read()
+    try:
+        rows, stats = sales_module.parse_customers_master(data)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    with get_db() as conn:
+        sales_module.upsert_customers_master(conn, rows)
+    await _log(f"📇 Customers master uploaded: {stats['customers']} customers "
+               f"({stats['segments']} segments, {stats['areas']} areas)")
+    return stats
+
+
+@router.post("/api/sales/masters/items/upload")
+async def masters_items_upload(file: UploadFile = File(...)):
+    _ensure_schema()
+    data = await file.read()
+    try:
+        rows, stats = sales_module.parse_products_master(data)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    with get_db() as conn:
+        sales_module.upsert_products_master(conn, rows)
+    await _log(f"📦 Items master uploaded: {stats['items']} items "
+               f"({stats['brands']} brands)")
+    return stats
+
+
+@router.get("/api/sales/masters/customers")
+async def masters_customers_browse(q: str = "", segment: str = "",
+                                   area: str = "", limit: int = 100,
+                                   offset: int = 0):
+    _ensure_schema()
+    limit = max(1, min(int(limit), 500))
+    offset = max(0, int(offset))
+    where, params = [], []
+    if q.strip():
+        where.append("(name LIKE ? OR code LIKE ? OR contact LIKE ? "
+                     "OR mobile LIKE ? OR address LIKE ?)")
+        like = f"%{q.strip()}%"
+        params += [like] * 5
+    if segment.strip():
+        where.append("segment = ?")
+        params.append(segment.strip())
+    if area.strip():
+        where.append("area = ?")
+        params.append(area.strip())
+    wsql = ("WHERE " + " AND ".join(where)) if where else ""
+    with get_db() as conn:
+        total = conn.execute(
+            f"SELECT COUNT(*) FROM customers_master {wsql}",
+            params).fetchone()[0]
+        rows = conn.execute(
+            f"SELECT name, code, segment, area, contact, chain_store, "
+            f"mobile, postal_code, address FROM customers_master {wsql} "
+            f"ORDER BY name LIMIT ? OFFSET ?",
+            params + [limit, offset]).fetchall()
+        segments = [r[0] for r in conn.execute(
+            "SELECT DISTINCT segment FROM customers_master "
+            "WHERE segment != '' ORDER BY segment").fetchall()]
+        areas = [r[0] for r in conn.execute(
+            "SELECT DISTINCT area FROM customers_master "
+            "WHERE area != '' ORDER BY area").fetchall()]
+    return {"total": total, "offset": offset, "limit": limit,
+            "rows": [list(r) for r in rows],
+            "segments": segments, "areas": areas}
+
+
+@router.get("/api/sales/masters/items")
+async def masters_items_browse(q: str = "", brand: str = "",
+                               category: str = "", limit: int = 100,
+                               offset: int = 0):
+    _ensure_schema()
+    limit = max(1, min(int(limit), 500))
+    offset = max(0, int(offset))
+    where, params = [], []
+    if q.strip():
+        where.append("(name LIKE ? OR code LIKE ? OR supplier LIKE ?)")
+        like = f"%{q.strip()}%"
+        params += [like] * 3
+    if brand.strip():
+        where.append("brand = ?")
+        params.append(brand.strip())
+    if category.strip():
+        where.append("category = ?")
+        params.append(category.strip())
+    wsql = ("WHERE " + " AND ".join(where)) if where else ""
+    with get_db() as conn:
+        total = conn.execute(
+            f"SELECT COUNT(*) FROM products_master {wsql}",
+            params).fetchone()[0]
+        rows = conn.execute(
+            f"SELECT name, code, brand, category, base_unit, qty_per_ctn, "
+            f"selling_rate, min_sale_price, buying_price_ref, supplier, "
+            f"item_type FROM products_master {wsql} "
+            f"ORDER BY name LIMIT ? OFFSET ?",
+            params + [limit, offset]).fetchall()
+        brands = [r[0] for r in conn.execute(
+            "SELECT DISTINCT brand FROM products_master "
+            "WHERE brand != '' ORDER BY brand").fetchall()]
+        categories = [r[0] for r in conn.execute(
+            "SELECT DISTINCT category FROM products_master "
+            "WHERE category != '' ORDER BY category").fetchall()]
+    return {"total": total, "offset": offset, "limit": limit,
+            "rows": [list(r) for r in rows],
+            "brands": brands, "categories": categories}
+
+
+@router.get("/api/sales/masters/summary")
+async def masters_summary():
+    _ensure_schema()
+    with get_db() as conn:
+        cust = conn.execute(
+            "SELECT COUNT(*) FROM customers_master").fetchone()[0]
+        segs = conn.execute(
+            "SELECT COUNT(DISTINCT segment) FROM customers_master "
+            "WHERE segment != ''").fetchone()[0]
+        items = conn.execute(
+            "SELECT COUNT(*) FROM products_master").fetchone()[0]
+        brands = conn.execute(
+            "SELECT COUNT(DISTINCT brand) FROM products_master "
+            "WHERE brand != ''").fetchone()[0]
+    return {"customers": cust, "segments": segs,
+            "items": items, "brands": brands}
+
+
+@router.post("/api/sales/price-check")
+async def sales_price_check(body: dict):
+    _ensure_schema()
+    thr = float(body.get("threshold_pct") or 2.0)
+    with get_db() as conn:
+        has = conn.execute(
+            "SELECT COUNT(*) FROM products_master").fetchone()[0]
+        if not has:
+            raise HTTPException(400, "Upload the items master first")
+        rep = sales_module.build_price_check(conn, thr)
+    return rep
+
+
+# ── Customer performance (monthly) ───────────────────────────────
+
+def _customer_perf_from(body: dict):
+    month = (body.get("month") or "").strip()
+    if not month or len(month) != 7:
+        raise HTTPException(400, "month required as YYYY-MM")
+    hist = int(body.get("months_history") or 3)
+    hist = max(1, min(hist, 12))
+    salesman = (body.get("salesman") or "").strip() or None
+    with get_db() as conn:
+        rep = sales_module.build_customer_performance(conn, month, hist,
+                                                      salesman)
+    if not rep["customers"]:
+        raise HTTPException(400, "No sales data around that month")
+    return rep
+
+
+@router.post("/api/sales/customer-performance")
+async def sales_customer_performance(body: dict):
+    _ensure_schema()
+    return _customer_perf_from(body)
+
+
+@router.post("/api/sales/customer-performance/pdf")
+async def sales_customer_performance_pdf(body: dict):
+    _ensure_schema()
+    rep = _customer_perf_from(body)
+    out_dir = _THIS_DIR / "downloads"
+    out_dir.mkdir(exist_ok=True)
+    safe = "".join(ch if ch.isalnum() else "_" for ch in rep["scope"])[:24]
+    out = out_dir / f"CustomerPerformance_{safe}_{rep['month']}.pdf"
+    sales_module.customer_performance_pdf(rep, str(out))
+    await _log(f"📄 Customer performance PDF: {rep['scope']} {rep['month']}")
+    return FileResponse(str(out), filename=out.name,
+                        media_type="application/pdf")
+
+
+@router.post("/api/sales/customer-performance/xlsx")
+async def sales_customer_performance_xlsx(body: dict):
+    _ensure_schema()
+    rep = _customer_perf_from(body)
+    out_dir = _THIS_DIR / "downloads"
+    out_dir.mkdir(exist_ok=True)
+    safe = "".join(ch if ch.isalnum() else "_" for ch in rep["scope"])[:24]
+    out = out_dir / f"CustomerPerformance_{safe}_{rep['month']}.xlsx"
+    sales_module.customer_performance_xlsx(rep, str(out))
+    await _log(f"📊 Customer performance Excel: {rep['scope']} {rep['month']}")
+    return FileResponse(
+        str(out), filename=out.name,
+        media_type="application/vnd.openxmlformats-officedocument"
+                   ".spreadsheetml.sheet")
+
+
+# ── Customer comparison ──────────────────────────────────────────
+
+@router.get("/api/sales/customers")
+async def sales_customers(q: str = ""):
+    _ensure_schema()
+    like = f"%{q}%"
+    with get_db() as conn:
+        rows = conn.execute(
+            "SELECT DISTINCT customer FROM sales_data "
+            "WHERE customer LIKE ? ORDER BY customer LIMIT 40",
+            (like,)).fetchall()
+    return [r[0] for r in rows]
+
+
+def _customer_compare_from(body: dict):
+    dfrom = (body.get("date_from") or "").strip()
+    dto = (body.get("date_to") or "").strip()
+    if not dfrom or not dto:
+        raise HTTPException(400, "date_from and date_to required")
+    salesman = (body.get("salesman") or "").strip() or None
+    cmp_ = (body.get("compare") or "period").strip()
+    with get_db() as conn:
+        try:
+            rep = sales_module.build_customer_compare(
+                conn, dfrom, dto, salesman, compare=cmp_,
+                custom_from=(body.get("b_from") or "").strip() or None,
+                custom_to=(body.get("b_to") or "").strip() or None)
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+    if not rep["customers"]:
+        raise HTTPException(400, "No sales in either range")
+    return rep, dfrom, dto
+
+
+@router.post("/api/sales/customer-compare")
+async def sales_customer_compare(body: dict):
+    _ensure_schema()
+    rep, _, _ = _customer_compare_from(body)
+    return rep
+
+
+@router.post("/api/sales/customer-compare/pdf")
+async def sales_customer_compare_pdf(body: dict):
+    _ensure_schema()
+    rep, dfrom, dto = _customer_compare_from(body)
+    out_dir = _THIS_DIR / "downloads"
+    out_dir.mkdir(exist_ok=True)
+    safe = "".join(ch if ch.isalnum() else "_" for ch in rep["scope"])[:24]
+    out = out_dir / f"CustomerCompare_{safe}_{dfrom}_to_{dto}.pdf"
+    sales_module.customer_compare_pdf(rep, str(out))
+    await _log(f"📄 Customer comparison PDF: {rep['scope']} {dfrom}→{dto}")
+    return FileResponse(str(out), filename=out.name,
+                        media_type="application/pdf")
+
+
+@router.post("/api/sales/customer-compare/xlsx")
+async def sales_customer_compare_xlsx(body: dict):
+    _ensure_schema()
+    rep, dfrom, dto = _customer_compare_from(body)
+    out_dir = _THIS_DIR / "downloads"
+    out_dir.mkdir(exist_ok=True)
+    safe = "".join(ch if ch.isalnum() else "_" for ch in rep["scope"])[:24]
+    out = out_dir / f"CustomerCompare_{safe}_{dfrom}_to_{dto}.xlsx"
+    sales_module.customer_compare_xlsx(rep, str(out))
+    await _log(f"📊 Customer comparison Excel: {rep['scope']} {dfrom}→{dto}")
+    return FileResponse(
+        str(out), filename=out.name,
+        media_type="application/vnd.openxmlformats-officedocument"
+                   ".spreadsheetml.sheet")
+
+
+# ── Trend report ─────────────────────────────────────────────────
+
+def _trend_from(body: dict):
+    dfrom = (body.get("date_from") or "").strip()
+    dto = (body.get("date_to") or "").strip()
+    if not dfrom or not dto:
+        raise HTTPException(400, "date_from and date_to required")
+    gran = (body.get("granularity") or "month").strip()
+    if gran not in ("month", "week"):
+        raise HTTPException(400, "granularity must be month or week")
+    salesman = (body.get("salesman") or "").strip() or None
+    customer = (body.get("customer") or "").strip() or None
+    with get_db() as conn:
+        rep = sales_module.build_trend(conn, dfrom, dto, gran,
+                                       salesman, customer)
+    if not rep["buckets"]:
+        raise HTTPException(400, "No sales data in that range")
+    return rep, dfrom, dto
+
+
+@router.post("/api/sales/trend")
+async def sales_trend(body: dict):
+    _ensure_schema()
+    rep, _, _ = _trend_from(body)
+    return rep
+
+
+@router.post("/api/sales/trend/pdf")
+async def sales_trend_pdf(body: dict):
+    _ensure_schema()
+    rep, dfrom, dto = _trend_from(body)
+    out_dir = _THIS_DIR / "downloads"
+    out_dir.mkdir(exist_ok=True)
+    safe = "".join(ch if ch.isalnum() else "_" for ch in rep["scope"])[:24]
+    out = out_dir / f"Trend_{rep['granularity']}_{safe}_{dfrom}_to_{dto}.pdf"
+    sales_module.trend_pdf(rep, str(out))
+    await _log(f"📄 Trend PDF: {rep['scope']} ({rep['granularity']}) "
+               f"{dfrom}→{dto}")
+    return FileResponse(str(out), filename=out.name,
+                        media_type="application/pdf")
+
+
+@router.post("/api/sales/trend/xlsx")
+async def sales_trend_xlsx(body: dict):
+    _ensure_schema()
+    rep, dfrom, dto = _trend_from(body)
+    out_dir = _THIS_DIR / "downloads"
+    out_dir.mkdir(exist_ok=True)
+    safe = "".join(ch if ch.isalnum() else "_" for ch in rep["scope"])[:24]
+    out = out_dir / f"Trend_{rep['granularity']}_{safe}_{dfrom}_to_{dto}.xlsx"
+    sales_module.trend_xlsx(rep, str(out))
+    await _log(f"📊 Trend Excel: {rep['scope']} ({rep['granularity']}) "
+               f"{dfrom}→{dto}")
+    return FileResponse(
+        str(out), filename=out.name,
+        media_type="application/vnd.openxmlformats-officedocument"
+                   ".spreadsheetml.sheet")
+
+
+def _company_report_from(body: dict):
+    dfrom = (body.get("date_from") or "").strip()
+    dto = (body.get("date_to") or "").strip()
+    salesman = (body.get("salesman") or "").strip() or None
+    products_only = salesman == "__PRODUCTS__"
+    if products_only:
+        salesman = None
+    group_id = int(body.get("group_id") or 0) or None
+    if not dfrom or not dto:
+        raise HTTPException(400, "date_from and date_to required")
+    with get_db() as conn:
+        try:
+            rep = sales_module.build_company_report(
+                conn, dfrom, dto, salesman,
+                products_only=products_only, group_id=group_id)
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+    if not rep["salesmen"]:
+        raise HTTPException(400, "No sales data in that range"
+                                 + (f" for {salesman}" if salesman else ""))
+    return rep, dfrom, dto
+
+
+@router.post("/api/sales/company-report/pdf")
+async def sales_company_report_pdf(body: dict):
+    _ensure_schema()
+    rep, dfrom, dto = _company_report_from(body)
+    show_money = bool(body.get("show_money", True))
+    out_dir = _THIS_DIR / "downloads"
+    out_dir.mkdir(exist_ok=True)
+    safe = "".join(ch if ch.isalnum() else "_" for ch in rep["scope"])[:24]
+    out = out_dir / f"CompanySales_{safe}_{dfrom}_to_{dto}.pdf"
+    sales_module.company_report_pdf(rep, str(out), show_money=show_money)
+    await _log(f"📄 Company sales PDF: {rep['scope']} {dfrom}→{dto}")
+    return FileResponse(str(out), filename=out.name,
+                        media_type="application/pdf")
+
+
+@router.post("/api/sales/company-report/xlsx")
+async def sales_company_report_xlsx(body: dict):
+    _ensure_schema()
+    rep, dfrom, dto = _company_report_from(body)
+    show_money = bool(body.get("show_money", True))
+    out_dir = _THIS_DIR / "downloads"
+    out_dir.mkdir(exist_ok=True)
+    safe = "".join(ch if ch.isalnum() else "_" for ch in rep["scope"])[:24]
+    out = out_dir / f"CompanySales_{safe}_{dfrom}_to_{dto}.xlsx"
+    sales_module.company_report_xlsx(rep, str(out), show_money=show_money)
+    await _log(f"📊 Company sales Excel: {rep['scope']} {dfrom}→{dto}")
+    return FileResponse(
+        str(out), filename=out.name,
+        media_type="application/vnd.openxmlformats-officedocument"
+                   ".spreadsheetml.sheet")
+
+
 @router.post("/api/sales/report/whatsapp")
 async def sales_report_whatsapp(body: dict):
     _ensure_schema()
@@ -525,24 +1045,44 @@ async def sales_report_whatsapp(body: dict):
     tf.close()
     await _log(f"📲 Sending report to WhatsApp: {rep['group']} "
                f"{rep['date_from']}→{rep['date_to']}")
-    proc = await asyncio.create_subprocess_exec(
-        sys.executable, "sales_send.py",
-        cwd=str(_THIS_DIR),
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.STDOUT,
-        env={**os.environ,
-             "SALES_REPORT_JSON": tf.name,
-             "SALES_WA_GROUPS": wa_groups,
-             "PYTHONIOENCODING": "utf-8"})
-    out, _ = await proc.communicate()
-    for line in (out or b"").decode("utf-8", "replace").splitlines():
-        if line.strip():
-            await _log(line.rstrip())
+
+    # Same proven pattern as the low-price agent: plain subprocess with
+    # stdout to a FILE (asyncio subprocess is unsupported on Windows
+    # uvicorn, and piping breaks Playwright).
+    import subprocess
+    log_path = _THIS_DIR / "sales_send.log"
+    env = {**os.environ,
+           "SALES_REPORT_JSON": tf.name,
+           "SALES_WA_GROUPS": wa_groups,
+           "PYTHONIOENCODING": "utf-8"}
+
+    def _run() -> int:
+        with open(log_path, "w", encoding="utf-8", errors="replace") as lf:
+            return subprocess.call(
+                [sys.executable, "sales_send.py"],
+                cwd=str(_THIS_DIR), stdout=lf,
+                stderr=subprocess.STDOUT, env=env)
+
     try:
-        os.unlink(tf.name)
+        rc = await asyncio.to_thread(_run)
+    except Exception as e:
+        await _log(f"❌ Could not start sales_send.py: {e}")
+        raise HTTPException(500, f"Could not start the sender: {e}")
+    finally:
+        try:
+            os.unlink(tf.name)
+        except Exception:
+            pass
+
+    try:
+        for line in log_path.read_text(encoding="utf-8",
+                                       errors="replace").splitlines():
+            if line.strip():
+                await _log(line.rstrip())
     except Exception:
         pass
-    ok = proc.returncode == 0
+
+    ok = rc == 0
     await _log("✅ WhatsApp send finished" if ok
-               else f"❌ WhatsApp send failed (exit {proc.returncode})")
+               else f"❌ WhatsApp send failed (exit {rc}) — see lines above")
     return {"ok": ok}

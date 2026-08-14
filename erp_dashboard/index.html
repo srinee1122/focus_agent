@@ -261,8 +261,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
   <nav>
     <button class="active" onclick="showPage('agents',this)">⚡ Agents</button>
     <button onclick="showPage('logs',this)">📋 Live Logs</button>
-    <button onclick="showPage('pricebook',this)">💰 Price Book</button>
-    <button onclick="showPage('sales',this)">📈 Sales Report</button>
+    <button onclick="showPage('sales',this)">🗄️ Master Data</button>
     <button onclick="showPage('salesmon',this)">🎯 Sales Monitoring</button>
   </nav>
   <div id="user-chip" style="display:none;padding:14px 16px;border-top:1px solid var(--border);
@@ -343,17 +342,28 @@ tr:hover td{background:rgba(255,255,255,.02)}
     <!-- ── Live Logs ── -->
     <div id="page-sales" class="page">
 
+      <div style="display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px">
+        <button class="btn btn-sm md-tab btn-primary" id="mdtab-btn-sales" onclick="mdShowTab('sales')">📈 Sales Data</button>
+        <button class="btn btn-sm md-tab btn-ghost" id="mdtab-btn-customers" onclick="mdShowTab('customers')">📇 Customers</button>
+        <button class="btn btn-sm md-tab btn-ghost" id="mdtab-btn-items" onclick="mdShowTab('items')">📦 Items</button>
+        <button class="btn btn-sm md-tab btn-ghost" id="mdtab-btn-pricebook" onclick="mdShowTab('pricebook')">💰 Price Book</button>
+      </div>
+
+      <div id="mdtab-sales">
       <div class="section-header">
         <div>
           <h3>Sales Data</h3>
           <p style="font-size:12px;color:var(--muted);margin-top:2px" id="sales-summary">Loading…</p>
         </div>
         <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-ghost btn-sm" id="sync-db-btn" onclick="runDaybookSync()">🔄 Sync from Focus</button>
           <button class="btn btn-primary btn-sm" onclick="document.getElementById('sales-upload-input').click()">⬆ Upload Sales Day Book</button>
           <input type="file" id="sales-upload-input" accept=".xlsx,.xls" style="display:none" onchange="salesUpload(this)">
         </div>
       </div>
       <div id="sales-upload-msg" style="display:none;font-size:12px;padding:8px 12px;border-radius:8px;margin-bottom:10px"></div>
+
+
 
       <div class="section-header" style="margin-top:6px">
         <div><h3>Data Browser</h3>
@@ -390,82 +400,88 @@ tr:hover td{background:rgba(255,255,255,.02)}
           <tbody id="sr-body"><tr><td colspan="13" style="text-align:center;color:var(--muted);padding:18px">Loading…</td></tr></tbody>
         </table>
       </div>
+      </div><!-- /mdtab-sales -->
 
+      <div id="mdtab-customers" style="display:none">
+        <div class="section-header">
+          <div><h3>Customers Master</h3>
+            <p style="font-size:12px;color:var(--muted);margin-top:2px" id="mc-summary">Upload the Focus Account "Master info" export.</p></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="file" id="ms-cust-file" accept=".xlsx,.xls" style="display:none" onchange="uploadMaster('customers', this)">
+            <button class="btn btn-primary btn-sm" onclick="document.getElementById('ms-cust-file').click()">⬆ Upload Customers Master</button>
+          </div>
+        </div>
+        <div id="mc-msg" style="display:none;font-size:12px;padding:8px 12px;border-radius:8px;margin-bottom:10px"></div>
+        <div class="section-header" style="margin-top:6px">
+          <div><p style="font-size:12px;color:var(--muted)" id="mc-count">–</p></div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select id="mc-segment" onchange="mcSearchNow()" style="min-width:130px"><option value="">All segments</option></select>
+            <select id="mc-area" onchange="mcSearchNow()" style="min-width:130px"><option value="">All areas</option></select>
+            <input id="mc-q" placeholder="Search name / code / contact / mobile…" style="width:250px" oninput="mcSearchDebounced()">
+            <button class="btn btn-ghost btn-sm" id="mc-prev" onclick="mcPage(-1)">←</button>
+            <span id="mc-page" style="font-size:12px;color:var(--muted)">1</span>
+            <button class="btn btn-ghost btn-sm" id="mc-next" onclick="mcPage(1)">→</button>
+          </div>
+        </div>
+        <div class="table-wrap" style="max-height:560px;overflow:auto">
+          <table style="font-size:11.5px">
+            <thead style="position:sticky;top:0;z-index:2"><tr>
+              <th>Name</th><th>Code</th><th>Segment</th><th>Area</th>
+              <th>Contact</th><th>Mobile</th><th>Chain</th><th>Postal</th>
+            </tr></thead>
+            <tbody id="mc-body"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:18px">No customers master uploaded yet</td></tr></tbody>
+          </table>
+        </div>
+      </div><!-- /mdtab-customers -->
 
-    </div>
+      <div id="mdtab-items" style="display:none">
+        <div class="section-header">
+          <div><h3>Items Master</h3>
+            <p style="font-size:12px;color:var(--muted);margin-top:2px" id="mi-summary">Upload the Focus Item "Master info" export. Prices here are reference only — the Price Book stays the source of truth.</p></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="file" id="ms-item-file" accept=".xlsx,.xls" style="display:none" onchange="uploadMaster('items', this)">
+            <button class="btn btn-primary btn-sm" onclick="document.getElementById('ms-item-file').click()">⬆ Upload Items Master</button>
+          </div>
+        </div>
+        <div id="mi-msg" style="display:none;font-size:12px;padding:8px 12px;border-radius:8px;margin-bottom:10px"></div>
+        <div class="section-header" style="margin-top:6px">
+          <div><p style="font-size:12px;color:var(--muted)" id="mi-count">–</p></div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select id="mi-brand" onchange="miSearchNow()" style="min-width:130px"><option value="">All brands</option></select>
+            <select id="mi-category" onchange="miSearchNow()" style="min-width:130px"><option value="">All categories</option></select>
+            <input id="mi-q" placeholder="Search name / code / supplier…" style="width:230px" oninput="miSearchDebounced()">
+            <button class="btn btn-ghost btn-sm" id="mi-prev" onclick="miPage(-1)">←</button>
+            <span id="mi-page" style="font-size:12px;color:var(--muted)">1</span>
+            <button class="btn btn-ghost btn-sm" id="mi-next" onclick="miPage(1)">→</button>
+          </div>
+        </div>
+        <div class="table-wrap" style="max-height:560px;overflow:auto">
+          <table style="font-size:11.5px">
+            <thead style="position:sticky;top:0;z-index:2"><tr>
+              <th>Name</th><th>Code</th><th>Brand</th><th>Category</th><th>Unit</th>
+              <th style="text-align:right">Qty/CTN</th><th style="text-align:right">Sell</th>
+              <th style="text-align:right">MinSale</th><th style="text-align:right">Buy (ref)</th><th>Supplier</th>
+            </tr></thead>
+            <tbody id="mi-body"><tr><td colspan="10" style="text-align:center;color:var(--muted);padding:18px">No items master uploaded yet</td></tr></tbody>
+          </table>
+        </div>
+      </div><!-- /mdtab-items -->
 
-    <div id="page-salesmon" class="page">
-
+      <div id="mdtab-pricebook" style="display:none">
       <div class="section-header">
-        <div>
-          <h3>Salesmen Setup</h3>
-          <p style="font-size:12px;color:var(--muted);margin-top:2px">Define who the real field salesmen are — everyone else is grouped as DIRECT SALES in reports.</p>
+        <div><h3>Price Check — vs Focus Items Master</h3>
+          <p style="font-size:12px;color:var(--muted);margin-top:2px">Flags items whose Price Book buying price differs from the Focus reference price. Price Book stays the source of truth — updates only happen when you choose.</p></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <label style="font-size:12px;color:var(--muted)">Threshold ±</label>
+          <input id="pk-thr" type="number" value="2" min="0.1" step="0.5" style="width:64px">%
+          <button class="btn btn-primary btn-sm" onclick="runPriceCheck()">🔍 Run Check</button>
+          <button class="btn btn-ghost btn-sm" onclick="downloadPriceCheck('xlsx')">⬇ Excel</button>
+          <button class="btn btn-ghost btn-sm" onclick="downloadPriceCheck('pdf')">⬇ PDF</button>
+          <span id="pk-busy" style="display:none;font-size:12px;color:var(--muted)">Working…</span>
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="openSalesmenModal()">👥 Manage Salesmen</button>
       </div>
+      <div id="pk-view" style="margin-bottom:16px"></div>
 
-      <div class="section-header" style="margin-top:6px">
-        <div><h3>Product Groups</h3>
-          <p style="font-size:12px;color:var(--muted);margin-top:2px">Name a set of products (e.g. Card A) and set optional targets per item / salesman.</p>
-        </div>
-        <button class="btn btn-primary btn-sm" onclick="openSalesGroupModal(null)">+ Create Group</button>
-      </div>
-      <div style="max-width:560px;margin-bottom:14px">
-        <div class="table-wrap"><table>
-          <thead><tr><th>Group</th><th style="width:120px"></th></tr></thead>
-          <tbody id="sg-list"><tr><td colspan="2" style="color:var(--muted);text-align:center;padding:14px">No groups yet</td></tr></tbody>
-        </table></div>
-        <p style="font-size:11.5px;color:var(--muted);margin-top:6px">Click a group to edit its items and targets. Targets are optional.</p>
-      </div>
-      <div class="section-header" style="margin-top:6px">
-        <div><h3>Generate Report</h3>
-          <p style="font-size:12px;color:var(--muted);margin-top:2px">Salesman-wise quantities for a group and date range.</p></div>
-      </div>
-      <div class="add-form visible" style="margin-bottom:12px">
-        <div><label>Group</label><select id="rep-group" style="min-width:170px"></select></div>
-        <div><label>From</label><input id="rep-from" type="date"></div>
-        <div><label>To</label><input id="rep-to" type="date"></div>
-        <button class="btn btn-primary btn-sm" onclick="genSalesReport('view')">👁 View</button>
-        <button class="btn btn-ghost btn-sm" onclick="genSalesReport('pdf')">⬇ PDF</button>
-        <button class="btn btn-ghost btn-sm" onclick="genSalesReport('whatsapp')">📲 WhatsApp</button>
-        <span id="rep-busy" style="display:none;font-size:12px;color:var(--muted)">Working…</span>
-      </div>
-      <div id="rep-view"></div>
-
-      <div class="section-header" style="margin-top:18px">
-        <div><h3>Company Sales Report</h3>
-          <p style="font-size:12px;color:var(--muted);margin-top:2px">Overall company sales for a date range — full, or one salesman. Downloads as PDF.</p></div>
-      </div>
-      <div class="add-form visible" style="margin-bottom:12px">
-        <div><label>Salesman</label><select id="cr-sman" style="min-width:200px"><option value="">Full company (by salesman)</option><option value="__PRODUCTS__">All products — no salesman split</option></select></div>
-        <div><label>From</label><input id="cr-from" type="date"></div>
-        <div><label>To</label><input id="cr-to" type="date"></div>
-        <button class="btn btn-primary btn-sm" onclick="downloadCompanyReport()">⬇ Download PDF</button>
-        <span id="cr-busy" style="display:none;font-size:12px;color:var(--muted)">Generating…</span>
-      </div>
-
-    </div>
-
-
-    <div id="page-logs" class="page">
-      <div class="log-panel" style="height:calc(100vh - 140px)">
-        <div class="log-toolbar">
-          <select id="log-filter" onchange="renderLogs()">
-            <option value="">All agents</option>
-            <option value="low_price">Low Price Agent</option>
-            <option value="data_sync">Data Sync Agent</option>
-          </select>
-          <input id="log-search" placeholder="🔍 Search logs…" oninput="renderLogs()"
-            style="flex:1">
-          <label><input type="checkbox" id="log-auto" checked>Auto-scroll</label>
-          <button class="btn btn-ghost btn-sm" onclick="clearLogs()">Clear</button>
-        </div>
-        <div class="log-output" id="log-output"><div class="log-empty">No logs yet.</div></div>
-      </div>
-    </div>
-
-    <!-- ── Price Book ── -->
-    <div id="page-pricebook" class="page">
       <div class="section-header" style="cursor:pointer" onclick="togglePtSection()">
         <div>
           <h3>Purchase Types <span id="pt-arrow" style="font-size:11px;color:var(--muted)">▾</span></h3>
@@ -534,10 +550,13 @@ tr:hover td{background:rgba(255,255,255,.02)}
       </div>
 
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <input id="pb-search" placeholder="🔍 Search items…" oninput="renderPbTable()"
+        <input id="pb-search" placeholder="🔍 Search items…" oninput="pbPage=0;renderPbTable()"
           style="flex:1;min-width:200px;background:var(--surface);border:1px solid var(--border);
                  color:var(--text);border-radius:6px;padding:7px 12px;font-size:13px;font-family:var(--font)">
         <button class="btn btn-ghost btn-sm" id="pb-sort-btn" onclick="togglePbSort()">Name A→Z</button>
+        <button class="btn btn-ghost btn-sm" onclick="pbPage--;renderPbTable()">←</button>
+        <span id="pb-page-info" style="font-size:12px;color:var(--muted)">1</span>
+        <button class="btn btn-ghost btn-sm" onclick="pbPage++;renderPbTable()">→</button>
       </div>
 
       <div id="pb-bulk-bar" style="display:none;background:var(--surface2);border:1px solid var(--accent2);
@@ -579,7 +598,202 @@ tr:hover td{background:rgba(255,255,255,.02)}
           <tbody id="pb-body"><tr><td colspan="11" style="text-align:center;color:var(--muted);padding:24px">Loading…</td></tr></tbody>
         </table>
       </div>
+    
+      </div><!-- /mdtab-pricebook -->
+
+
     </div>
+
+    <div id="page-salesmon" class="page">
+
+      <div class="section-header">
+        <div>
+          <h3>Salesmen Setup</h3>
+          <p style="font-size:12px;color:var(--muted);margin-top:2px">Define who the real field salesmen are — everyone else is grouped as DIRECT SALES in reports.</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="openSalesmenModal()">👥 Manage Salesmen</button>
+      </div>
+
+      <div class="section-header" style="margin-top:6px">
+        <div><h3>Product Groups</h3>
+          <p style="font-size:12px;color:var(--muted);margin-top:2px">Name a set of products (e.g. Card A) and set optional targets per item / salesman.</p>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openSalesGroupModal(null)">+ Create Group</button>
+      </div>
+      <div style="max-width:560px;margin-bottom:14px">
+        <div class="table-wrap"><table>
+          <thead><tr><th>Group</th><th style="width:120px"></th></tr></thead>
+          <tbody id="sg-list"><tr><td colspan="2" style="color:var(--muted);text-align:center;padding:14px">No groups yet</td></tr></tbody>
+        </table></div>
+        <p style="font-size:11.5px;color:var(--muted);margin-top:6px">Click a group to edit its items and targets. Targets are optional.</p>
+      </div>
+      <div class="section-header" style="margin-top:6px">
+        <div><h3>Generate Report</h3>
+          <p style="font-size:12px;color:var(--muted);margin-top:2px">Salesman-wise quantities for a group and date range.</p></div>
+        <button class="btn btn-ghost btn-sm" onclick="openWaGroupsModal()">📲 WhatsApp Groups <span id="wa-count" style="color:var(--muted)"></span></button>
+      </div>
+      <div class="add-form visible" style="margin-bottom:12px">
+        <div><label>Group</label><select id="rep-group" style="min-width:170px"></select></div>
+        <div><label>From</label><input id="rep-from" type="date"></div>
+        <div><label>To</label><input id="rep-to" type="date"></div>
+        <button class="btn btn-primary btn-sm" onclick="genSalesReport('view')">👁 View</button>
+        <button class="btn btn-ghost btn-sm" onclick="genSalesReport('pdf')">⬇ PDF</button>
+        <button class="btn btn-ghost btn-sm" onclick="genSalesReport('whatsapp')">📲 WhatsApp</button>
+        <span id="rep-busy" style="display:none;font-size:12px;color:var(--muted)">Working…</span>
+      </div>
+      <div id="rep-view"></div>
+
+      <div class="section-header" style="margin-top:18px">
+        <div><h3>Company Sales Report</h3>
+          <p style="font-size:12px;color:var(--muted);margin-top:2px">Overall company sales for a date range — full, or one salesman. Downloads as PDF.</p></div>
+      </div>
+      <div class="add-form visible" style="margin-bottom:12px">
+        <div><label>Products</label><select id="cr-group" style="min-width:160px"><option value="">All products</option></select></div>
+        <div><label>Salesman</label><select id="cr-sman" style="min-width:200px"><option value="">Full company (by salesman)</option><option value="__PRODUCTS__">Company — no salesman split</option></select></div>
+        <div><label>From</label><input id="cr-from" type="date"></div>
+        <div><label>To</label><input id="cr-to" type="date"></div>
+        <label style="font-size:12px;display:flex;align-items:center;gap:5px;color:var(--muted);cursor:pointer;align-self:center">
+          <input type="checkbox" id="cr-money" checked> Show $ values</label>
+        <button class="btn btn-primary btn-sm" onclick="downloadCompanyReport('pdf')">⬇ PDF</button>
+        <button class="btn btn-ghost btn-sm" onclick="downloadCompanyReport('xlsx')">⬇ Excel</button>
+        <span id="cr-busy" style="display:none;font-size:12px;color:var(--muted)">Generating…</span>
+      </div>
+
+      <div class="section-header" style="margin-top:18px">
+        <div><h3>Rank Report</h3>
+          <p style="font-size:12px;color:var(--muted);margin-top:2px">Salesman leaderboard + product ranking for a group, with movement vs the previous period.</p></div>
+      </div>
+      <div class="add-form visible" style="margin-bottom:12px">
+        <div><label>Group</label><select id="rk-group" style="min-width:170px"></select></div>
+        <div><label>From</label><input id="rk-from" type="date"></div>
+        <div><label>To</label><input id="rk-to" type="date"></div>
+        <div><label>Compare</label><select id="rk-compare" onchange="toggleCustom('rk')">
+          <option value="">No comparison</option>
+          <option value="period">Previous period</option>
+          <option value="week">Previous week</option>
+          <option value="month">Previous month</option>
+          <option value="custom">Custom range…</option>
+        </select></div>
+        <div id="rk-custom" style="display:none;gap:8px"><label>Range B</label>
+          <div style="display:flex;gap:6px"><input id="rk-bfrom" type="date"><input id="rk-bto" type="date"></div></div>
+        <button class="btn btn-primary btn-sm" onclick="genRankReport('view')">👁 View</button>
+        <button class="btn btn-ghost btn-sm" onclick="genRankReport('pdf')">⬇ PDF</button>
+        <span id="rk-busy" style="display:none;font-size:12px;color:var(--muted)">Working…</span>
+      </div>
+      <div id="rk-view"></div>
+
+      <div class="section-header" style="margin-top:18px">
+        <div><h3>Daily Sales by Value</h3>
+          <p style="font-size:12px;color:var(--muted);margin-top:2px">Day-by-day sales value for the company or one salesman.</p></div>
+      </div>
+      <div class="add-form visible" style="margin-bottom:12px">
+        <div><label>Salesman</label><select id="dy-sman" style="min-width:190px"><option value="">Full company</option></select></div>
+        <div><label>From</label><input id="dy-from" type="date"></div>
+        <div><label>To</label><input id="dy-to" type="date"></div>
+        <div><label>Compare</label><select id="dy-compare" onchange="toggleCustom('dy')">
+          <option value="">No comparison</option>
+          <option value="period">Previous period</option>
+          <option value="week">Previous week</option>
+          <option value="month">Previous month</option>
+          <option value="custom">Custom range…</option>
+        </select></div>
+        <div id="dy-custom" style="display:none;gap:8px"><label>Range B</label>
+          <div style="display:flex;gap:6px"><input id="dy-bfrom" type="date"><input id="dy-bto" type="date"></div></div>
+        <button class="btn btn-primary btn-sm" onclick="genDailyReport('view')">👁 View</button>
+        <button class="btn btn-ghost btn-sm" onclick="genDailyReport('pdf')">⬇ PDF</button>
+        <button class="btn btn-ghost btn-sm" onclick="genDailyReport('xlsx')">⬇ Excel</button>
+        <span id="dy-busy" style="display:none;font-size:12px;color:var(--muted)">Working…</span>
+      </div>
+      <div id="dy-view"></div>
+
+      <div class="section-header" style="margin-top:18px">
+        <div><h3>Customer Performance (monthly)</h3>
+          <p style="font-size:12px;color:var(--muted);margin-top:2px">Each customer: past months, last month, this month so far, difference by value — and who has not ordered yet.</p></div>
+      </div>
+      <div class="add-form visible" style="margin-bottom:12px">
+        <div><label>Month</label><input id="cp-month" type="month"></div>
+        <div><label>History</label><select id="cp-hist">
+          <option value="2">2 months</option>
+          <option value="3" selected>3 months</option>
+          <option value="4">4 months</option>
+          <option value="6">6 months</option>
+        </select></div>
+        <div><label>Salesman</label><select id="cp-sman" style="min-width:170px"><option value="">Full company</option></select></div>
+        <div><label>Show</label><select id="cp-filter" onchange="if(window._cpRep)renderCustomerPerf(window._cpRep)">
+          <option value="all">All customers</option>
+          <option value="not_ordered">Not ordered only</option>
+          <option value="dropped">Declining only</option>
+          <option value="grown">Growing only</option>
+        </select></div>
+        <button class="btn btn-primary btn-sm" onclick="genCustomerPerf('view')">👁 View</button>
+        <button class="btn btn-ghost btn-sm" onclick="genCustomerPerf('pdf')">⬇ PDF</button>
+        <button class="btn btn-ghost btn-sm" onclick="genCustomerPerf('xlsx')">⬇ Excel</button>
+        <span id="cp-busy" style="display:none;font-size:12px;color:var(--muted)">Working…</span>
+      </div>
+      <div id="cp-view"></div>
+
+      <div class="section-header" style="margin-top:18px">
+        <div><h3>Customer Sales Comparison</h3>
+          <p style="font-size:12px;color:var(--muted);margin-top:2px">Every customer's sales in range A vs range B — spot growth, decline, new and lost customers.</p></div>
+      </div>
+      <div class="add-form visible" style="margin-bottom:12px">
+        <div><label>Salesman</label><select id="cc-sman" style="min-width:170px"><option value="">Full company</option></select></div>
+        <div><label>Range A</label><div style="display:flex;gap:6px"><input id="cc-from" type="date"><input id="cc-to" type="date"></div></div>
+        <div><label>Compare</label><select id="cc-compare" onchange="toggleCustom('cc')">
+          <option value="period">Previous period</option>
+          <option value="week">Previous week</option>
+          <option value="month">Previous month</option>
+          <option value="custom">Custom range…</option>
+        </select></div>
+        <div id="cc-custom" style="display:none"><label>Range B</label>
+          <div style="display:flex;gap:6px"><input id="cc-bfrom" type="date"><input id="cc-bto" type="date"></div></div>
+        <button class="btn btn-primary btn-sm" onclick="genCustomerCompare('view')">👁 View</button>
+        <button class="btn btn-ghost btn-sm" onclick="genCustomerCompare('pdf')">⬇ PDF</button>
+        <button class="btn btn-ghost btn-sm" onclick="genCustomerCompare('xlsx')">⬇ Excel</button>
+        <span id="cc-busy" style="display:none;font-size:12px;color:var(--muted)">Working…</span>
+      </div>
+      <div id="cc-view"></div>
+
+      <div class="section-header" style="margin-top:18px">
+        <div><h3>Sales Trend</h3>
+          <p style="font-size:12px;color:var(--muted);margin-top:2px">Month-wise or week-wise totals over time — company, salesman, or a single customer.</p></div>
+      </div>
+      <div class="add-form visible" style="margin-bottom:12px">
+        <div><label>By</label><select id="tr-gran"><option value="month">Month</option><option value="week">Week</option></select></div>
+        <div><label>Salesman</label><select id="tr-sman" style="min-width:160px"><option value="">Full company</option></select></div>
+        <div><label>Customer (optional)</label><input id="tr-cust" list="sales-customer-list" placeholder="All customers" style="min-width:200px" oninput="salesCustomerSearch(this.value)">
+          <datalist id="sales-customer-list"></datalist></div>
+        <div><label>From</label><input id="tr-from" type="date"></div>
+        <div><label>To</label><input id="tr-to" type="date"></div>
+        <button class="btn btn-primary btn-sm" onclick="genTrend('view')">👁 View</button>
+        <button class="btn btn-ghost btn-sm" onclick="genTrend('pdf')">⬇ PDF</button>
+        <button class="btn btn-ghost btn-sm" onclick="genTrend('xlsx')">⬇ Excel</button>
+        <span id="tr-busy" style="display:none;font-size:12px;color:var(--muted)">Working…</span>
+      </div>
+      <div id="tr-view"></div>
+
+    </div>
+
+
+    <div id="page-logs" class="page">
+      <div class="log-panel" style="height:calc(100vh - 140px)">
+        <div class="log-toolbar">
+          <select id="log-filter" onchange="renderLogs()">
+            <option value="">All agents</option>
+            <option value="low_price">Low Price Agent</option>
+            <option value="data_sync">Data Sync Agent</option>
+          </select>
+          <input id="log-search" placeholder="🔍 Search logs…" oninput="renderLogs()"
+            style="flex:1">
+          <label><input type="checkbox" id="log-auto" checked>Auto-scroll</label>
+          <button class="btn btn-ghost btn-sm" onclick="clearLogs()">Clear</button>
+        </div>
+        <div class="log-output" id="log-output"><div class="log-empty">No logs yet.</div></div>
+      </div>
+    </div>
+
+    <!-- ── Price Book ── -->
+    
 
   </div>
 </main>
@@ -702,12 +916,12 @@ function showPage(name,btn){
     'agent-detail':['Agent',''],
     logs:['Live Logs','Real-time output from all running agents'],
     pricebook:['Price Book','Purchase types and product assignments'],
-    sales:['Sales Report','Upload and store the Focus sales day book data'],
+    sales:['Master Data','Upload and store the sales day book, customers master and items master'],
     salesmon:['Targeted Sales Man Sales Monitoring','Product groups, targets and salesman-wise reports'],
   };
   document.getElementById('page-title').textContent=titles[name]?titles[name][0]:name;
   document.getElementById('page-sub').textContent=titles[name]?titles[name][1]:'';
-  if(name==='pricebook'){loadPurchaseTypes();loadPb();}
+
   if(name==='sales'){loadSalesPage();}
   if(name==='salesmon'){loadSalesMonPage();}
   if(name==='logs') renderLogs();
@@ -1086,14 +1300,21 @@ async function loadPb(){
   var items=await fetch('/api/pricebook').then(function(r){return r.json();});
   pbItems=items;renderPbTable();
 }
+var pbPage=0, PB_PAGE_SIZE=100;
 function renderPbTable(){
   var search=(document.getElementById('pb-search')||{value:''}).value.toLowerCase();
   var filtered=pbItems.filter(function(item){return !search||item.item_name.toLowerCase().indexOf(search)!==-1||(item.item_code||'').toLowerCase().indexOf(search)!==-1;});
   filtered.sort(function(a,b){var c=a.item_name.localeCompare(b.item_name);return pbSortAsc?c:-c;});
   var tbody=document.getElementById('pb-body');
+  var pages=Math.max(1, Math.ceil(filtered.length/PB_PAGE_SIZE));
+  if(pbPage>=pages) pbPage=pages-1;
+  if(pbPage<0) pbPage=0;
+  var info=document.getElementById('pb-page-info');
+  if(info) info.textContent=(pbPage+1)+' / '+pages+' · '+filtered.length.toLocaleString()+' items';
   if(!filtered.length){tbody.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:32px">'+(pbItems.length?'No items match.':'No assignments yet.')+'</td></tr>';return;}
   var fmt=function(v){return v!=null&&v!==''&&v!==undefined?parseFloat(v).toFixed(2):'—';};
-  tbody.innerHTML=filtered.map(function(item){
+  var pageItems=filtered.slice(pbPage*PB_PAGE_SIZE,(pbPage+1)*PB_PAGE_SIZE);
+  tbody.innerHTML=pageItems.map(function(item){
     var upd=item.updated_at?new Date(item.updated_at).toLocaleDateString('en-SG'):'';
     var defaultPt=pts.find(function(p){return p.is_default;})||pts[0];
     var pt=item.purchase_type_id?pts.find(function(c){return c.id===item.purchase_type_id;}):defaultPt;
@@ -1116,7 +1337,7 @@ function renderPbTable(){
       '</td></tr>';
   }).join('');
 }
-function togglePbSort(){pbSortAsc=!pbSortAsc;var btn=document.getElementById('pb-sort-btn');if(btn)btn.textContent=pbSortAsc?'Name A→Z':'Name Z→A';renderPbTable();}
+function togglePbSort(){pbSortAsc=!pbSortAsc;pbPage=0;var btn=document.getElementById('pb-sort-btn');if(btn)btn.textContent=pbSortAsc?'Name A→Z':'Name Z→A';renderPbTable();}
 function _catOptions(selectedId){return pts.map(function(c){var sel=(c.id===selectedId)?' selected':'';return '<option value="'+c.id+'"'+sel+'>'+esc(c.name)+(c.is_default?' (default)':'')+'</option>';}).join('');}
 function inlineEditPb(id){
   var item=pbItems.find(function(i){return i.id===id;});if(!item)return;
@@ -1357,6 +1578,234 @@ async function loadSalesPage(){
   srSearchNow();
 }
 
+/* ── Price check ── */
+async function runPriceCheck(){
+  var thr = document.getElementById('pk-thr').value || 2;
+  var busy = document.getElementById('pk-busy'); busy.style.display='inline';
+  try{
+    var res = await fetch('/api/sales/price-check', {method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({threshold_pct:thr})});
+    var d = await res.json();
+    if(!res.ok) throw new Error(d.detail||'Failed');
+    renderPriceCheck(d);
+  }catch(e){ alert('❌ '+e.message); }
+  busy.style.display='none';
+}
+
+async function downloadPriceCheck(fmt){
+  var thr = document.getElementById('pk-thr').value || 2;
+  var busy = document.getElementById('pk-busy'); busy.style.display='inline';
+  try{
+    var res = await fetch('/api/sales/price-check/'+fmt, {method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({threshold_pct:thr})});
+    if(!res.ok){ var d=await res.json(); throw new Error(d.detail||'Failed'); }
+    var blob = await res.blob();
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'PriceCheck.'+fmt;
+    a.click(); URL.revokeObjectURL(a.href);
+  }catch(e){ alert('❌ '+e.message); }
+  busy.style.display='none';
+}
+
+function renderPriceCheck(rep){
+  var h = '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;margin-bottom:8px">' +
+    '<div><b>'+rep.compared.toLocaleString()+'</b> <span style="color:var(--muted)">items compared</span></div>' +
+    '<div><b style="color:'+(rep.flagged.length?'#d64545':'#1e8449')+'">'+rep.flagged.length+'</b> <span style="color:var(--muted)">differ beyond ±'+rep.threshold_pct+'%</span></div>' +
+    (rep.pricebook_items_not_in_master ? '<div><b>'+rep.pricebook_items_not_in_master+'</b> <span style="color:var(--muted)">pricebook items not in master</span></div>' : '') +
+    '</div>';
+  if(!rep.flagged.length){
+    h += '<p style="font-size:12.5px;color:#7fd7a4">✅ All compared prices agree within the threshold.</p>';
+    document.getElementById('pk-view').innerHTML = h; return;
+  }
+  h += '<div class="table-wrap" style="max-height:420px;overflow:auto"><table style="font-size:11.5px">' +
+    '<thead style="position:sticky;top:0;z-index:2"><tr><th>Item</th><th>Brand</th>' +
+    '<th style="text-align:right">Pricebook $</th><th style="text-align:right">Focus ref $</th>' +
+    '<th style="text-align:center">Diff</th><th>PB updated</th><th style="width:150px"></th></tr></thead><tbody>';
+  rep.flagged.forEach(function(r,i){
+    var col = r.diff_pct>=0 ? '#1e8449' : '#d64545';
+    h += '<tr id="pk-row-'+r.pb_id+'"><td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+r.item+'">'+r.item+'</td>' +
+      '<td style="font-size:11px;color:var(--muted)">'+(r.brand||'')+'</td>' +
+      '<td style="text-align:right"><b>$'+r.pricebook.toLocaleString(undefined,{maximumFractionDigits:4})+'</b></td>' +
+      '<td style="text-align:right">$'+r.focus_ref.toLocaleString(undefined,{maximumFractionDigits:4})+'</td>' +
+      '<td style="text-align:center;color:'+col+';font-weight:700">'+(r.diff_pct>=0?'+':'')+r.diff_pct+'%</td>' +
+      '<td style="font-size:11px;color:var(--muted)">'+(r.pb_updated||'')+'</td>' +
+      '<td style="white-space:nowrap"><input id="pk-price-'+r.pb_id+'" type="number" step="0.0001" value="'+r.pricebook+'" ' +
+        'style="width:88px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:4px 7px;font-size:12px"> ' +
+      '<button class="btn btn-primary btn-sm" onclick="savePkPrice('+r.pb_id+', this)">💾 Save</button></td></tr>';
+  });
+  h += '</tbody></table></div>' +
+    '<p style="font-size:11px;color:var(--muted);margin-top:6px">Enter the correct buying price and 💾 Save to update the Price Book (landing costs recalculate immediately). If the Price Book is right and Focus is wrong, correct it in Focus instead — the flag clears on the next items-master upload.</p>';
+  document.getElementById('pk-view').innerHTML = h;
+}
+
+async function savePkPrice(pbId, btn){
+  var inp = document.getElementById('pk-price-'+pbId);
+  var newPrice = parseFloat(inp.value);
+  if(!newPrice || newPrice <= 0) return alert('Enter a valid price');
+  if(!pbItems || !pbItems.length){ await loadPb(); }
+  var item = pbItems.find(function(i){return i.id===pbId;});
+  if(!item) return alert('Pricebook row not found — reload the page.');
+  if(newPrice === item.buying_price) return alert('Same as the current Price Book price — nothing to update.');
+  if(!confirm('Update "'+item.item_name+'" Price Book buying price from $'+item.buying_price+' to $'+newPrice+'?')) return;
+  var entry = {item_name:item.item_name, item_code:item.item_code, currency:item.currency||'SGD',
+    unit_name:item.unit_name, rate:item.rate, min_sale_price:item.min_sale_price,
+    buying_price:newPrice, purchase_type_id:item.purchase_type_id, notes:item.notes};
+  var res = await fetch('/api/pricebook/'+pbId, {method:'PUT',
+    headers:{'Content-Type':'application/json'}, body:JSON.stringify(entry)});
+  if(!res.ok) return alert('Update failed');
+  var row = document.getElementById('pk-row-'+pbId);
+  if(row){ row.style.opacity='0.45'; btn.textContent='✅ Saved'; btn.disabled=true; inp.disabled=true; }
+  loadPb();
+}
+
+/* ── Data Sync ── */
+async function runDaybookSync(){
+  var btn = document.getElementById('sync-db-btn');
+  if(!confirm('Sync the sales day book from Focus now?\n\nThis opens Focus in a browser window, downloads the last 60 days and imports them. Progress appears in Live Logs (Data Sync agent).')) return;
+  btn.disabled = true; btn.textContent = '🔄 Syncing…';
+  try{
+    var res = await fetch('/api/sync/daybook', {method:'POST',
+      headers:{'Content-Type':'application/json'}, body:'{}'});
+    var d = await res.json();
+    if(!res.ok) throw new Error(d.detail||'Sync failed');
+    if(d.ok){
+      alert('✅ Day book synced from Focus.');
+      loadSalesSummary(); srSearchNow();
+    } else {
+      alert('❌ Sync failed — check Live Logs (Data Sync agent) for the reason.');
+    }
+  }catch(e){ alert('❌ '+e.message); }
+  btn.disabled = false; btn.textContent = '🔄 Sync from Focus';
+}
+
+/* ── Master Data sub-tabs ── */
+function mdShowTab(which){
+  ['sales','customers','items','pricebook'].forEach(function(t){
+    document.getElementById('mdtab-'+t).style.display = (t===which)?'block':'none';
+    var b = document.getElementById('mdtab-btn-'+t);
+    b.className = 'btn btn-sm md-tab ' + (t===which ? 'btn-primary' : 'btn-ghost');
+  });
+  if(which==='customers') mcSearchNow();
+  if(which==='items') miSearchNow();
+  if(which==='pricebook'){ loadPurchaseTypes(); loadPb(); }
+}
+
+/* ── Customers master browser ── */
+var mcState = {offset:0, limit:100, total:0, loadedFilters:false};
+var _mcT = null;
+function mcSearchDebounced(){ clearTimeout(_mcT); _mcT = setTimeout(mcSearchNow, 300); }
+function mcSearchNow(){ mcState.offset = 0; mcFetch(); }
+function mcPage(dir){
+  var o = mcState.offset + dir*mcState.limit;
+  if(o < 0 || o >= mcState.total) return;
+  mcState.offset = o; mcFetch();
+}
+async function mcFetch(){
+  var u = '/api/sales/masters/customers?q='+encodeURIComponent(document.getElementById('mc-q').value.trim())+
+    '&segment='+encodeURIComponent(document.getElementById('mc-segment').value)+
+    '&area='+encodeURIComponent(document.getElementById('mc-area').value)+
+    '&limit='+mcState.limit+'&offset='+mcState.offset;
+  var body = document.getElementById('mc-body');
+  try{
+    var d = await fetch(u).then(function(r){return r.json();});
+    mcState.total = d.total;
+    document.getElementById('mc-count').textContent = d.total.toLocaleString()+' customers';
+    document.getElementById('mc-page').textContent =
+      (Math.floor(mcState.offset/mcState.limit)+1)+' / '+Math.max(1, Math.ceil(d.total/mcState.limit));
+    if(!mcState.loadedFilters && d.segments){
+      document.getElementById('mc-segment').innerHTML = '<option value="">All segments</option>'+
+        d.segments.map(function(s){return '<option>'+s+'</option>';}).join('');
+      document.getElementById('mc-area').innerHTML = '<option value="">All areas</option>'+
+        d.areas.map(function(s){return '<option>'+s+'</option>';}).join('');
+      mcState.loadedFilters = true;
+    }
+    function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+    body.innerHTML = d.rows.length ? d.rows.map(function(r){
+      return '<tr><td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(r[0])+'">'+esc(r[0])+'</td>' +
+        '<td>'+esc(r[1])+'</td><td>'+esc(r[2])+'</td><td>'+esc(r[3])+'</td>' +
+        '<td>'+esc(r[4])+'</td><td style="white-space:nowrap">'+esc(r[6])+'</td>' +
+        '<td>'+esc(r[5])+'</td><td>'+esc(r[7])+'</td></tr>';
+    }).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:18px">No matching customers</td></tr>';
+  }catch(e){
+    body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#d64545;padding:18px">'+e.message+'</td></tr>';
+  }
+}
+
+/* ── Items master browser ── */
+var miState = {offset:0, limit:100, total:0, loadedFilters:false};
+var _miT = null;
+function miSearchDebounced(){ clearTimeout(_miT); _miT = setTimeout(miSearchNow, 300); }
+function miSearchNow(){ miState.offset = 0; miFetch(); }
+function miPage(dir){
+  var o = miState.offset + dir*miState.limit;
+  if(o < 0 || o >= miState.total) return;
+  miState.offset = o; miFetch();
+}
+async function miFetch(){
+  var u = '/api/sales/masters/items?q='+encodeURIComponent(document.getElementById('mi-q').value.trim())+
+    '&brand='+encodeURIComponent(document.getElementById('mi-brand').value)+
+    '&category='+encodeURIComponent(document.getElementById('mi-category').value)+
+    '&limit='+miState.limit+'&offset='+miState.offset;
+  var body = document.getElementById('mi-body');
+  try{
+    var d = await fetch(u).then(function(r){return r.json();});
+    miState.total = d.total;
+    document.getElementById('mi-count').textContent = d.total.toLocaleString()+' items';
+    document.getElementById('mi-page').textContent =
+      (Math.floor(miState.offset/miState.limit)+1)+' / '+Math.max(1, Math.ceil(d.total/miState.limit));
+    if(!miState.loadedFilters && d.brands){
+      document.getElementById('mi-brand').innerHTML = '<option value="">All brands</option>'+
+        d.brands.map(function(s){return '<option>'+s+'</option>';}).join('');
+      document.getElementById('mi-category').innerHTML = '<option value="">All categories</option>'+
+        d.categories.map(function(s){return '<option>'+s+'</option>';}).join('');
+      miState.loadedFilters = true;
+    }
+    function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+    function num(v){ return (v==null||v===0||v==='') ? '' : (Math.round(v*10000)/10000).toLocaleString(); }
+    body.innerHTML = d.rows.length ? d.rows.map(function(r){
+      return '<tr><td style="max-width:270px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(r[0])+'">'+esc(r[0])+'</td>' +
+        '<td style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r[1])+'</td>' +
+        '<td>'+esc(r[2])+'</td><td>'+esc(r[3])+'</td><td>'+esc(r[4])+'</td>' +
+        '<td style="text-align:right">'+num(r[5])+'</td>' +
+        '<td style="text-align:right">'+num(r[6])+'</td>' +
+        '<td style="text-align:right">'+num(r[7])+'</td>' +
+        '<td style="text-align:right">'+num(r[8])+'</td>' +
+        '<td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r[9])+'</td></tr>';
+    }).join('') : '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:18px">No matching items</td></tr>';
+  }catch(e){
+    body.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#d64545;padding:18px">'+e.message+'</td></tr>';
+  }
+}
+
+/* ── Master data uploads ── */
+async function uploadMaster(kind, input){
+  var f = input.files[0];
+  if(!f) return;
+  var msg = document.getElementById(kind==='customers' ? 'mc-msg' : 'mi-msg');
+  msg.style.display='block';
+  msg.style.background='rgba(100,150,255,.08)'; msg.style.color='var(--muted)';
+  msg.textContent = '⏳ Uploading ' + kind + ' master…';
+  var fd = new FormData(); fd.append('file', f);
+  try{
+    var res = await fetch('/api/sales/masters/'+kind+'/upload', {method:'POST', body:fd});
+    var d = await res.json();
+    if(!res.ok) throw new Error(d.detail||'Upload failed');
+    msg.style.background='rgba(30,132,73,.12)'; msg.style.color='#7fd7a4';
+    msg.textContent = kind==='customers'
+      ? '✅ ' + d.customers.toLocaleString()+' customers ('+d.segments+' segments, '+d.areas+' areas, '+d.with_mobile+' with mobile)'
+      : '✅ ' + d.items.toLocaleString()+' items ('+d.brands+' brands, '+d.categories+' categories)';
+    if(kind==='customers'){ mcState.loadedFilters=false; mcSearchNow(); }
+    else { miState.loadedFilters=false; miSearchNow(); }
+  }catch(e){
+    msg.style.background='rgba(214,69,69,.12)'; msg.style.color='#f09a9a';
+    msg.textContent = '❌ ' + e.message;
+  }
+  input.value='';
+}
+
 /* ── Sales data browser ── */
 var srState = {q:'', col:'all', regex:0, offset:0, limit:100, total:0};
 var _srT = null;
@@ -1416,7 +1865,7 @@ async function srFetch(){
 }
 
 async function loadSalesMonPage(){
-  loadSalesGroups(); loadSalesSalesmen();
+  loadSalesGroups(); loadSalesSalesmen(); loadWaGroups();
   var t = new Date(), first = new Date(t.getFullYear(), t.getMonth(), 1);
   var f = first.toISOString().slice(0,10), tt = t.toISOString().slice(0,10);
   if(!document.getElementById('rep-from').value){
@@ -1427,6 +1876,15 @@ async function loadSalesMonPage(){
     document.getElementById('cr-from').value = f;
     document.getElementById('cr-to').value = tt;
   }
+  if(!document.getElementById('cp-month').value){
+    document.getElementById('cp-month').value = tt.slice(0,7);
+  }
+  ['rk','dy','cc','tr'].forEach(function(p){
+    if(!document.getElementById(p+'-from').value){
+      document.getElementById(p+'-from').value = f;
+      document.getElementById(p+'-to').value = tt;
+    }
+  });
 }
 
 async function loadSalesSummary(){
@@ -1475,6 +1933,19 @@ async function loadSalesGroups(){
     return '<option value="'+g.id+'">'+g.name+'</option>';
   }).join('');
   if(prev && gs.some(function(g){return String(g.id)===String(prev);})) sel.value = prev;
+  var crg = document.getElementById('cr-group');
+  if(crg){
+    var p2 = crg.value;
+    crg.innerHTML = '<option value="">All products</option>' + gs.map(function(g){
+      return '<option value="'+g.id+'">Group: '+g.name+'</option>';}).join('');
+    if(p2 && gs.some(function(g){return String(g.id)===String(p2);})) crg.value = p2;
+  }
+  var rkg = document.getElementById('rk-group');
+  if(rkg){
+    var p3 = rkg.value;
+    rkg.innerHTML = sel.innerHTML;
+    if(p3 && gs.some(function(g){return String(g.id)===String(p3);})) rkg.value = p3;
+  }
 }
 
 /* ── Modal ── */
@@ -1610,10 +2081,34 @@ async function loadSalesSalesmen(){
   }
   sel.innerHTML = opts;
   // Company report salesman selector
+  ['cc-sman','tr-sman','cp-sman'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(!el) return;
+    var o = '<option value="">Full company</option>';
+    if(d.configured){
+      d.salesmen.forEach(function(s){ if(s.is_salesman) o += '<option>'+s.name+'</option>'; });
+      o += '<option>DIRECT SALES</option>';
+    } else {
+      d.salesmen.forEach(function(s){ o += '<option>'+s.name+'</option>'; });
+    }
+    var pv = el.value; el.innerHTML = o; if(pv) el.value = pv;
+  });
+  var dy = document.getElementById('dy-sman');
+  if(dy){
+    var od = '<option value="">Full company</option>';
+    if(d.configured){
+      d.salesmen.forEach(function(s){ if(s.is_salesman) od += '<option>'+s.name+'</option>'; });
+      od += '<option>DIRECT SALES</option>';
+    } else {
+      d.salesmen.forEach(function(s){ od += '<option>'+s.name+'</option>'; });
+    }
+    var pd = dy.value; dy.innerHTML = od;
+    if(pd) dy.value = pd;
+  }
   var cr = document.getElementById('cr-sman');
   if(cr){
     var o = '<option value="">Full company (by salesman)</option>' +
-            '<option value="__PRODUCTS__">All products — no salesman split</option>';
+            '<option value="__PRODUCTS__">Company — no salesman split</option>';
     if(d.configured){
       d.salesmen.forEach(function(s){ if(s.is_salesman) o += '<option>'+s.name+'</option>'; });
       o += '<option>DIRECT SALES</option>';
@@ -1625,21 +2120,26 @@ async function loadSalesSalesmen(){
   }
 }
 
-async function downloadCompanyReport(){
+async function downloadCompanyReport(fmt){
+  fmt = fmt || 'pdf';
   var dfrom = document.getElementById('cr-from').value;
   var dto = document.getElementById('cr-to').value;
   var sman = document.getElementById('cr-sman').value;
   if(!dfrom || !dto) return alert('Pick the date range');
   var busy = document.getElementById('cr-busy'); busy.style.display='inline';
   try{
-    var res = await fetch('/api/sales/company-report/pdf', {method:'POST',
+    var res = await fetch('/api/sales/company-report/'+fmt, {method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({date_from:dfrom, date_to:dto, salesman:sman})});
+      body:JSON.stringify({date_from:dfrom, date_to:dto, salesman:sman,
+        group_id:document.getElementById('cr-group').value,
+        show_money:document.getElementById('cr-money').checked})});
     if(!res.ok){ var d=await res.json(); throw new Error(d.detail||'Failed'); }
     var blob = await res.blob();
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'CompanySales_'+(sman==='__PRODUCTS__'?'ALL_PRODUCTS':(sman||'FULL'))+'_'+dfrom+'_to_'+dto+'.pdf';
+    var gsel = document.getElementById('cr-group');
+    var gtag = gsel.value ? '_'+gsel.options[gsel.selectedIndex].text.replace('Group: ','').replace(/[^A-Za-z0-9]+/g,'_') : '';
+    a.download = 'CompanySales_'+(sman==='__PRODUCTS__'?'COMBINED':(sman||'FULL'))+gtag+'_'+dfrom+'_to_'+dto+'.'+fmt;
     a.click(); URL.revokeObjectURL(a.href);
   }catch(e){ alert('❌ '+e.message); }
   busy.style.display='none';
@@ -1695,6 +2195,430 @@ async function addSalesTarget(){
 async function delSalesTarget(id){
   await fetch('/api/sales/targets/'+id, {method:'DELETE'});
   refreshSalesGroupModal();
+}
+
+/* ── WhatsApp groups (sales report agent setting) ── */
+var waGroups = [];
+async function loadWaGroups(){
+  try{
+    var s = await fetch('/api/agents/sales_report/settings').then(function(r){return r.json();});
+    var row = (s||[]).find ? s.find(function(x){return x.key==='whatsapp_groups';}) : null;
+    var val = row ? row.value : '[]';
+    try{ waGroups = JSON.parse(val); }
+    catch(e){
+      var inner = String(val||'').replace(/^\[|\]$/g,'').trim();
+      waGroups = inner ? inner.split(',').map(function(x){return x.trim().replace(/^['"]|['"]$/g,'');}) : [];
+    }
+    if(!Array.isArray(waGroups)) waGroups = [];
+  }catch(e){ waGroups = []; }
+  var cnt = document.getElementById('wa-count');
+  if(cnt) cnt.textContent = waGroups.length ? '('+waGroups.length+')' : '(none set)';
+}
+function waRenderChips(){
+  document.getElementById('wa-chips').innerHTML = waGroups.length ?
+    waGroups.map(function(g,i){
+      return '<span style="background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:3px 10px;font-size:12px">'+
+        g+' <a style="cursor:pointer;color:#d64545" onclick="waGroups.splice('+i+',1);waRenderChips()">✕</a></span>';
+    }).join('') :
+    '<span style="color:var(--muted);font-size:12px">No groups yet — WhatsApp sending is disabled until one is added.</span>';
+}
+async function openWaGroupsModal(){
+  await loadWaGroups();
+  waRenderChips();
+  document.getElementById('wa-new').value='';
+  document.getElementById('wa-modal').style.display='flex';
+}
+function closeWaGroupsModal(){ document.getElementById('wa-modal').style.display='none'; }
+function waAddGroup(){
+  var v = document.getElementById('wa-new').value.trim();
+  if(!v) return;
+  if(waGroups.indexOf(v)===-1) waGroups.push(v);
+  document.getElementById('wa-new').value='';
+  waRenderChips();
+}
+async function saveWaGroups(){
+  var res = await fetch('/api/agents/sales_report/settings/whatsapp_groups', {method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({value: JSON.stringify(waGroups)})});
+  if(!res.ok) return alert('Save failed');
+  closeWaGroupsModal();
+  loadWaGroups();
+}
+
+/* ── Rank report ── */
+async function genRankReport(mode){
+  var gid = document.getElementById('rk-group').value;
+  var dfrom = document.getElementById('rk-from').value;
+  var dto = document.getElementById('rk-to').value;
+  if(!gid) return alert('Select a group');
+  if(!dfrom || !dto) return alert('Pick the date range');
+  var extraRk = customBody('rk'); if(extraRk===null) return;
+  var body = JSON.stringify(Object.assign({group_id:gid, date_from:dfrom, date_to:dto}, extraRk));
+  var busy = document.getElementById('rk-busy'); busy.style.display='inline';
+  try{
+    if(mode==='view'){
+      var res = await fetch('/api/sales/rank-report', {method:'POST',
+        headers:{'Content-Type':'application/json'}, body:body});
+      var d = await res.json();
+      if(!res.ok) throw new Error(d.detail||'Failed');
+      renderRankReport(d);
+    } else {
+      var res = await fetch('/api/sales/rank-report/pdf', {method:'POST',
+        headers:{'Content-Type':'application/json'}, body:body});
+      if(!res.ok){ var d=await res.json(); throw new Error(d.detail||'Failed'); }
+      var blob = await res.blob();
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'RankReport_'+dfrom+'_to_'+dto+'.pdf';
+      a.click(); URL.revokeObjectURL(a.href);
+    }
+  }catch(e){ alert('❌ '+e.message); }
+  busy.style.display='none';
+}
+
+function renderRankReport(rep){
+  var cmp = !!rep.prev_from;
+  function move(r){
+    if(r.change===null || r.change===undefined) return '<span style="color:#1e8449;font-weight:700;font-size:10px">NEW</span>';
+    if(r.change>0) return '<span style="color:#1e8449;font-weight:700">▲'+r.change+'</span>';
+    if(r.change<0) return '<span style="color:#d64545;font-weight:700">▼'+(-r.change)+'</span>';
+    return '<span style="color:var(--muted)">=</span>';
+  }
+  function delta(r){
+    if(r.delta_pct===null || r.delta_pct===undefined) return '<span style="color:var(--muted)">–</span>';
+    var col = r.delta_pct>=0 ? '#1e8449' : '#d64545';
+    return '<span style="color:'+col+';font-weight:700">'+(r.delta_pct>=0?'+':'')+r.delta_pct+'%</span>';
+  }
+  var labels = {period:'previous period', week:'previous week', month:'previous month'};
+  var h = cmp ? '<p style="font-size:11.5px;color:var(--muted);margin-bottom:8px">Compared with '+
+    (labels[rep.compare]||'previous')+': '+rep.prev_from+' → '+rep.prev_to+'</p>' : '';
+  h += '<h3 style="margin-bottom:6px">Salesman leaderboard</h3><div class="table-wrap"><table>' +
+    '<thead><tr><th style="width:36px">#</th><th>Salesman</th><th>CTN</th><th>Pieces</th><th>Share</th>' +
+    (cmp ? '<th>Prev CTN</th><th>Change</th><th>Move</th>' : '') + '</tr></thead><tbody>';
+  rep.salesman_rank.forEach(function(r){
+    var style = r.rank===1 ? ' style="background:rgba(255,215,0,.08)"' : '';
+    h += '<tr'+style+'><td style="text-align:center"><b>'+r.rank+'</b></td>' +
+      '<td><b>'+r.salesman+'</b></td>' +
+      '<td style="text-align:right">'+r.ctn.toLocaleString()+'</td>' +
+      '<td style="text-align:right">'+r.pcs.toLocaleString()+'</td>' +
+      '<td style="text-align:right">'+r.share_pct+'%</td>';
+    if(cmp){
+      h += '<td style="text-align:right">'+(r.prev_ctn!=null?r.prev_ctn.toLocaleString():'–')+'</td>' +
+        '<td style="text-align:center">'+delta(r)+'</td>' +
+        '<td style="text-align:center">'+move(r)+'</td>';
+    }
+    h += '</tr>';
+  });
+  h += '</tbody></table></div>';
+  h += '<h3 style="margin:14px 0 6px">Product ranking</h3><div class="table-wrap"><table>' +
+    '<thead><tr><th style="width:36px">#</th><th>Product</th><th>CTN</th><th>Pieces</th></tr></thead><tbody>';
+  rep.product_rank.forEach(function(r){
+    h += '<tr><td style="text-align:center"><b>'+r.rank+'</b></td>' +
+      '<td style="font-size:12px">'+r.item+'</td>' +
+      '<td style="text-align:right">'+r.ctn.toLocaleString()+'</td>' +
+      '<td style="text-align:right">'+r.pcs.toLocaleString()+'</td></tr>';
+  });
+  h += '</tbody></table></div>';
+  document.getElementById('rk-view').innerHTML = h;
+}
+
+/* ── Daily sales report ── */
+async function genDailyReport(mode){
+  var dfrom = document.getElementById('dy-from').value;
+  var dto = document.getElementById('dy-to').value;
+  var sman = document.getElementById('dy-sman').value;
+  if(!dfrom || !dto) return alert('Pick the date range');
+  var extraDy = customBody('dy'); if(extraDy===null) return;
+  var body = JSON.stringify(Object.assign({date_from:dfrom, date_to:dto, salesman:sman}, extraDy));
+  var busy = document.getElementById('dy-busy'); busy.style.display='inline';
+  try{
+    if(mode==='view'){
+      var res = await fetch('/api/sales/daily-report', {method:'POST',
+        headers:{'Content-Type':'application/json'}, body:body});
+      var d = await res.json();
+      if(!res.ok) throw new Error(d.detail||'Failed');
+      renderDailyReport(d);
+    } else {
+      var res = await fetch('/api/sales/daily-report/'+mode, {method:'POST',
+        headers:{'Content-Type':'application/json'}, body:body});
+      if(!res.ok){ var d=await res.json(); throw new Error(d.detail||'Failed'); }
+      var blob = await res.blob();
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'DailySales_'+(sman||'FULL')+'_'+dfrom+'_to_'+dto+'.'+mode;
+      a.click(); URL.revokeObjectURL(a.href);
+    }
+  }catch(e){ alert('❌ '+e.message); }
+  busy.style.display='none';
+}
+
+function renderDailyReport(rep){
+  var maxg = 0;
+  rep.days.forEach(function(d){ if(d.gross>maxg) maxg=d.gross; });
+  maxg = maxg || 1;
+  var cmp = !!rep.prev_from;
+  function dcell(v){
+    if(v===null || v===undefined) return '<span style="color:var(--muted)">–</span>';
+    var col = v>=0 ? '#1e8449' : '#d64545';
+    return '<span style="color:'+col+';font-weight:700">'+(v>=0?'+':'')+v+'%</span>';
+  }
+  var h = '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;margin-bottom:10px">' +
+    '<div><b>$'+rep.total.gross.toLocaleString()+'</b> <span style="color:var(--muted)">total</span></div>' +
+    '<div><b>$'+rep.avg_per_day.toLocaleString()+'</b> <span style="color:var(--muted)">avg/day</span></div>' +
+    '<div><b>'+rep.total.vouchers.toLocaleString()+'</b> <span style="color:var(--muted)">invoices</span></div>' +
+    (rep.best_day ? '<div><b>'+rep.best_day.date+'</b> <span style="color:var(--muted)">best day ($'+rep.best_day.gross.toLocaleString()+')</span></div>' : '') +
+    (cmp && rep.prev_total!=null ? '<div>'+dcell(rep.total_change_pct)+' <span style="color:var(--muted)">vs prev ($'+rep.prev_total.toLocaleString()+')</span></div>' : '') +
+    '</div>';
+  h += '<div class="table-wrap"><table>' +
+    '<thead><tr><th>Date</th><th style="text-align:right">Sales $</th><th style="width:26%"></th>' +
+    '<th style="text-align:right">CTN</th><th style="text-align:right">Pieces</th><th style="text-align:right">Invoices</th>' +
+    (cmp ? '<th style="text-align:right">Prev $</th><th style="text-align:center">Change</th>' : '') +
+    '</tr></thead><tbody>';
+  rep.days.forEach(function(d){
+    var w = Math.max(2, Math.round(d.gross/maxg*100));
+    h += '<tr><td style="white-space:nowrap">'+d.date+'</td>' +
+      '<td style="text-align:right"><b>$'+d.gross.toLocaleString()+'</b></td>' +
+      '<td><div style="background:#0e7d6b;height:12px;border-radius:3px;width:'+w+'%"></div></td>' +
+      '<td style="text-align:right">'+d.ctn.toLocaleString()+'</td>' +
+      '<td style="text-align:right">'+d.pcs.toLocaleString()+'</td>' +
+      '<td style="text-align:right">'+d.vouchers.toLocaleString()+'</td>';
+    if(cmp){
+      h += '<td style="text-align:right">'+(d.prev_gross!=null?'$'+d.prev_gross.toLocaleString():'–')+'</td>' +
+        '<td style="text-align:center">'+dcell(d.change_pct)+'</td>';
+    }
+    h += '</tr>';
+  });
+  h += '<tr style="background:var(--surface)"><td><b>TOTAL</b></td>' +
+    '<td style="text-align:right"><b>$'+rep.total.gross.toLocaleString()+'</b></td><td></td>' +
+    '<td style="text-align:right"><b>'+rep.total.ctn.toLocaleString()+'</b></td>' +
+    '<td style="text-align:right"><b>'+rep.total.pcs.toLocaleString()+'</b></td>' +
+    '<td style="text-align:right"><b>'+rep.total.vouchers.toLocaleString()+'</b></td>';
+  if(cmp){
+    h += '<td style="text-align:right"><b>'+(rep.prev_total!=null?'$'+rep.prev_total.toLocaleString():'–')+'</b></td>' +
+      '<td style="text-align:center">'+dcell(rep.total_change_pct)+'</td>';
+  }
+  h += '</tr></tbody></table></div>';
+  document.getElementById('dy-view').innerHTML = h;
+}
+
+function toggleCustom(prefix){
+  var v = document.getElementById(prefix+'-compare').value;
+  document.getElementById(prefix+'-custom').style.display = (v==='custom') ? 'block' : 'none';
+}
+
+function customBody(prefix){
+  var out = {compare: document.getElementById(prefix+'-compare').value};
+  if(out.compare==='custom'){
+    out.b_from = document.getElementById(prefix+'-bfrom').value;
+    out.b_to = document.getElementById(prefix+'-bto').value;
+    if(!out.b_from || !out.b_to){ alert('Pick both Range B dates'); return null; }
+  }
+  return out;
+}
+
+/* ── Customer performance ── */
+async function genCustomerPerf(mode){
+  var month = document.getElementById('cp-month').value;
+  if(!month) return alert('Pick a month');
+  var body = JSON.stringify({month:month,
+    months_history:document.getElementById('cp-hist').value,
+    salesman:document.getElementById('cp-sman').value});
+  var busy = document.getElementById('cp-busy'); busy.style.display='inline';
+  try{
+    if(mode==='view'){
+      var res = await fetch('/api/sales/customer-performance', {method:'POST',
+        headers:{'Content-Type':'application/json'}, body:body});
+      var d = await res.json();
+      if(!res.ok) throw new Error(d.detail||'Failed');
+      window._cpRep = d;
+      renderCustomerPerf(d);
+    } else {
+      var res = await fetch('/api/sales/customer-performance/'+mode, {method:'POST',
+        headers:{'Content-Type':'application/json'}, body:body});
+      if(!res.ok){ var d=await res.json(); throw new Error(d.detail||'Failed'); }
+      var blob = await res.blob();
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'CustomerPerformance_'+month+'.'+mode;
+      a.click(); URL.revokeObjectURL(a.href);
+    }
+  }catch(e){ alert('❌ '+e.message); }
+  busy.style.display='none';
+}
+
+function renderCustomerPerf(rep){
+  var filter = document.getElementById('cp-filter').value;
+  var rows = rep.customers.filter(function(r){
+    if(filter==='not_ordered') return r.not_ordered;
+    if(filter==='dropped') return r.diff < 0 && !r.not_ordered;
+    if(filter==='grown') return r.diff > 0;
+    return true;
+  });
+  var sofar = rep.partial ? ' so far ('+rep.days_elapsed+'/'+rep.month_days+' days)' : '';
+  var h = '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;margin-bottom:8px">' +
+    '<div><b>$'+rep.totals.this_month.toLocaleString()+'</b> <span style="color:var(--muted)">'+rep.month+sofar+'</span></div>' +
+    (rep.totals.history.length ? '<div><b>$'+rep.totals.history[rep.totals.history.length-1].toLocaleString()+'</b> <span style="color:var(--muted)">last month (full)</span></div>' : '') +
+    (rep.partial && rep.totals.lm_same_days!=null ? '<div><b>$'+rep.totals.lm_same_days.toLocaleString()+'</b> <span style="color:var(--muted)">LM same '+rep.days_elapsed+' days</span></div>' : '') +
+    '<div><b style="color:#d64545">'+rep.not_ordered_count+'</b> <span style="color:var(--muted)">not ordered</span></div>' +
+    (rep.has_master && rep.never_ordered_count!=null ? '<div><b style="color:var(--muted)">'+rep.never_ordered_count+'</b> <span style="color:var(--muted)">in master, never sold to (window)</span></div>' : '') +
+    '<div><b>'+rows.length.toLocaleString()+'</b> <span style="color:var(--muted)">shown / '+rep.customer_count.toLocaleString()+'</span></div>' +
+    '</div>' +
+    (rep.partial ? '<p style="font-size:11.5px;color:var(--muted);margin-bottom:8px">Diff and Change compare with the same '+rep.days_elapsed+' days of last month (fair pace comparison).</p>' : '');
+  h += '<div class="table-wrap" style="max-height:520px;overflow:auto"><table>' +
+    '<thead style="position:sticky;top:0;z-index:2"><tr><th>Customer</th>' +
+    (rep.has_master ? '<th>Segment</th><th>Area</th>' : '') +
+    rep.hist_keys.map(function(k){return '<th style="text-align:right">'+k+'</th>';}).join('') +
+    '<th style="text-align:right">'+rep.month+(rep.partial?' ▶':'')+'</th>' +
+    (rep.partial ? '<th style="text-align:right">LM same days</th>' : '') +
+    '<th style="text-align:right">Diff</th><th style="text-align:center">Change</th><th></th></tr></thead><tbody>';
+  rows.slice(0, 300).forEach(function(r){
+    var col = r.diff>=0 ? '#1e8449' : '#d64545';
+    h += '<tr><td style="font-size:12px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+r.customer+'">'+r.customer+'</td>' +
+      (rep.has_master ? '<td style="font-size:11px;color:var(--muted)">'+(r.segment||'–')+'</td><td style="font-size:11px;color:var(--muted)">'+(r.area||'–')+'</td>' : '') +
+      r.history.map(function(v){return '<td style="text-align:right">'+(v?'$'+v.toLocaleString():'<span style="color:var(--muted)">–</span>')+'</td>';}).join('') +
+      '<td style="text-align:right"><b>'+(r.this_month?'$'+r.this_month.toLocaleString():'<span style="color:var(--muted)">–</span>')+'</b></td>' +
+      (rep.partial ? '<td style="text-align:right">'+(r.lm_same_days?'$'+r.lm_same_days.toLocaleString():'<span style="color:var(--muted)">–</span>')+'</td>' : '') +
+      '<td style="text-align:right;color:'+col+'">'+(r.diff>=0?'+':'')+'$'+r.diff.toLocaleString()+'</td>' +
+      '<td style="text-align:center">'+pchg(r.change_pct)+'</td>' +
+      '<td style="text-align:center">'+(r.not_ordered?'<span style="font-size:9.5px;color:#d64545;font-weight:700">NOT ORDERED</span>':'')+'</td></tr>';
+  });
+  h += '</tbody></table></div>';
+  if(rows.length>300) h += '<p style="font-size:11.5px;color:var(--muted);margin-top:6px">Showing first 300 — download Excel for the full list.</p>';
+  document.getElementById('cp-view').innerHTML = h;
+}
+
+/* ── Customer comparison ── */
+async function genCustomerCompare(mode){
+  var dfrom = document.getElementById('cc-from').value;
+  var dto = document.getElementById('cc-to').value;
+  if(!dfrom || !dto) return alert('Pick Range A dates');
+  var extra = customBody('cc'); if(extra===null) return;
+  var body = JSON.stringify(Object.assign({date_from:dfrom, date_to:dto,
+    salesman:document.getElementById('cc-sman').value}, extra));
+  var busy = document.getElementById('cc-busy'); busy.style.display='inline';
+  try{
+    if(mode==='view'){
+      var res = await fetch('/api/sales/customer-compare', {method:'POST',
+        headers:{'Content-Type':'application/json'}, body:body});
+      var d = await res.json();
+      if(!res.ok) throw new Error(d.detail||'Failed');
+      renderCustomerCompare(d);
+    } else {
+      var res = await fetch('/api/sales/customer-compare/'+mode, {method:'POST',
+        headers:{'Content-Type':'application/json'}, body:body});
+      if(!res.ok){ var d=await res.json(); throw new Error(d.detail||'Failed'); }
+      var blob = await res.blob();
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'CustomerCompare_'+dfrom+'_to_'+dto+'.'+mode;
+      a.click(); URL.revokeObjectURL(a.href);
+    }
+  }catch(e){ alert('❌ '+e.message); }
+  busy.style.display='none';
+}
+
+function pchg(v){
+  if(v===null || v===undefined) return '<span style="color:var(--muted)">–</span>';
+  var col = v>=0 ? '#1e8449' : '#d64545';
+  return '<span style="color:'+col+';font-weight:700">'+(v>=0?'+':'')+v+'%</span>';
+}
+
+function renderCustomerCompare(rep){
+  var h = '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;margin-bottom:8px">' +
+    '<div><b>$'+rep.total_a.toLocaleString()+'</b> <span style="color:var(--muted)">range A</span></div>' +
+    '<div><b>$'+rep.total_b.toLocaleString()+'</b> <span style="color:var(--muted)">range B</span></div>' +
+    '<div>'+pchg(rep.total_change_pct)+' <span style="color:var(--muted)">change</span></div>' +
+    '<div><b style="color:#1e8449">'+rep.new_count+'</b> <span style="color:var(--muted)">new</span></div>' +
+    '<div><b style="color:#d64545">'+rep.lost_count+'</b> <span style="color:var(--muted)">lost</span></div>' +
+    '<div><b>'+rep.customer_count.toLocaleString()+'</b> <span style="color:var(--muted)">customers'+
+      (rep.truncated?' (showing top 200)':'')+'</span></div>' +
+    '</div>' +
+    '<p style="font-size:11.5px;color:var(--muted);margin-bottom:8px">A: '+rep.date_from+' → '+rep.date_to+
+    ' · B: '+rep.prev_from+' → '+rep.prev_to+'</p>';
+  h += '<div class="table-wrap" style="max-height:480px;overflow:auto"><table>' +
+    '<thead style="position:sticky;top:0;z-index:2"><tr><th>Customer</th>' +
+    '<th style="text-align:right">Sales A</th><th style="text-align:right">Sales B</th>' +
+    '<th style="text-align:right">Diff</th><th style="text-align:center">Change</th><th></th></tr></thead><tbody>';
+  rep.customers.forEach(function(r){
+    var badge = r.status==='NEW' ? '<span style="font-size:9.5px;color:#1e8449;font-weight:700">NEW</span>' :
+                (r.status==='LOST' ? '<span style="font-size:9.5px;color:#d64545;font-weight:700">LOST</span>' : '');
+    h += '<tr><td style="font-size:12px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+r.customer+'">'+r.customer+'</td>' +
+      '<td style="text-align:right"><b>$'+r.gross_a.toLocaleString()+'</b></td>' +
+      '<td style="text-align:right">$'+r.gross_b.toLocaleString()+'</td>' +
+      '<td style="text-align:right">'+(r.diff>=0?'+':'')+'$'+r.diff.toLocaleString()+'</td>' +
+      '<td style="text-align:center">'+pchg(r.change_pct)+'</td>' +
+      '<td style="text-align:center">'+badge+'</td></tr>';
+  });
+  h += '</tbody></table></div>';
+  document.getElementById('cc-view').innerHTML = h;
+}
+
+/* ── Trend ── */
+var _custT = null;
+function salesCustomerSearch(q){
+  clearTimeout(_custT);
+  _custT = setTimeout(async function(){
+    var xs = await fetch('/api/sales/customers?q='+encodeURIComponent(q))
+      .then(function(r){return r.json();});
+    document.getElementById('sales-customer-list').innerHTML =
+      xs.map(function(x){return '<option value="'+x.replace(/"/g,'&quot;')+'">';}).join('');
+  }, 250);
+}
+
+async function genTrend(mode){
+  var dfrom = document.getElementById('tr-from').value;
+  var dto = document.getElementById('tr-to').value;
+  if(!dfrom || !dto) return alert('Pick the date range');
+  var body = JSON.stringify({date_from:dfrom, date_to:dto,
+    granularity:document.getElementById('tr-gran').value,
+    salesman:document.getElementById('tr-sman').value,
+    customer:document.getElementById('tr-cust').value.trim()});
+  var busy = document.getElementById('tr-busy'); busy.style.display='inline';
+  try{
+    if(mode==='view'){
+      var res = await fetch('/api/sales/trend', {method:'POST',
+        headers:{'Content-Type':'application/json'}, body:body});
+      var d = await res.json();
+      if(!res.ok) throw new Error(d.detail||'Failed');
+      renderTrend(d);
+    } else {
+      var res = await fetch('/api/sales/trend/'+mode, {method:'POST',
+        headers:{'Content-Type':'application/json'}, body:body});
+      if(!res.ok){ var d=await res.json(); throw new Error(d.detail||'Failed'); }
+      var blob = await res.blob();
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'Trend_'+document.getElementById('tr-gran').value+'_'+dfrom+'_to_'+dto+'.'+mode;
+      a.click(); URL.revokeObjectURL(a.href);
+    }
+  }catch(e){ alert('❌ '+e.message); }
+  busy.style.display='none';
+}
+
+function renderTrend(rep){
+  var maxg = 0;
+  rep.buckets.forEach(function(b){ if(b.gross>maxg) maxg=b.gross; });
+  maxg = maxg || 1;
+  var h = '<p style="font-size:12px;color:var(--muted);margin-bottom:8px"><b style="color:var(--text)">'+
+    rep.scope+'</b> · total <b style="color:var(--text)">$'+rep.total.toLocaleString()+'</b> · '+
+    (rep.granularity==='month'?'monthly':'weekly')+' buckets</p>';
+  h += '<div class="table-wrap"><table>' +
+    '<thead><tr><th>'+(rep.granularity==='month'?'Month':'Week')+'</th>' +
+    '<th style="text-align:right">Sales $</th><th style="width:32%"></th>' +
+    '<th style="text-align:center">Change</th><th style="text-align:right">CTN</th>' +
+    '<th style="text-align:right">Invoices</th><th style="text-align:right">Days</th></tr></thead><tbody>';
+  rep.buckets.forEach(function(b){
+    var w = Math.max(2, Math.round(b.gross/maxg*100));
+    h += '<tr><td><b>'+b.bucket+'</b></td>' +
+      '<td style="text-align:right"><b>$'+b.gross.toLocaleString()+'</b></td>' +
+      '<td><div style="background:#0e7d6b;height:12px;border-radius:3px;width:'+w+'%"></div></td>' +
+      '<td style="text-align:center">'+pchg(b.change_pct)+'</td>' +
+      '<td style="text-align:right">'+b.ctn.toLocaleString()+'</td>' +
+      '<td style="text-align:right">'+b.vouchers.toLocaleString()+'</td>' +
+      '<td style="text-align:right">'+b.active_days+'</td></tr>';
+  });
+  h += '</tbody></table></div>';
+  document.getElementById('tr-view').innerHTML = h;
 }
 
 function refreshReportIfShown(){
@@ -1798,6 +2722,36 @@ function renderSalesReport(rep){
   document.getElementById('rep-view').innerHTML = h;
 }
 </script>
+
+<!-- ── WhatsApp groups modal (sales report) ───────────────────────────────── -->
+<div id="wa-modal" style="display:none;position:fixed;inset:0;z-index:1000;
+     background:rgba(0,0,0,.6);align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;
+       width:440px;max-width:95vw;display:flex;flex-direction:column;max-height:78vh">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <strong style="font-size:14px">📲 WhatsApp Groups</strong>
+        <p style="font-size:11px;color:var(--muted);margin-top:3px">
+          The 📲 WhatsApp button sends the group report image to these groups.<br>
+          Names must match the WhatsApp group names <b>exactly</b>.</p>
+      </div>
+      <button onclick="closeWaGroupsModal()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer">✕</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:14px 20px">
+      <div id="wa-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px">
+        <input id="wa-new" placeholder="Exact WhatsApp group name…" style="flex:1;background:var(--surface2);
+          border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px 12px;font-size:13px"
+          onkeydown="if(event.key==='Enter')waAddGroup()">
+        <button class="btn btn-primary btn-sm" onclick="waAddGroup()">+ Add</button>
+      </div>
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="closeWaGroupsModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveWaGroups()">✓ Save &amp; Close</button>
+    </div>
+  </div>
+</div>
 
 <!-- ── Salesmen config modal ──────────────────────────────────────────────── -->
 <div id="sm-modal" style="display:none;position:fixed;inset:0;z-index:1000;

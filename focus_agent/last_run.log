@@ -1,6 +1,6 @@
 
 ==================================================
-🤖 Focus ERP Agent — 12 Aug 2026 11:11 AM
+🤖 Focus ERP Agent — 14 Aug 2026 01:32 PM
 ==================================================
 ✅ Credentials loaded from cloud for: srini@sriambikas.com
 
@@ -16,25 +16,106 @@
 ✅ Phase 1 complete.
 
 🎯 Send Specific mode: skipping grid scan, targeting 1 SO(s):
-   → 75
+   → 43743
 
 🔍 Phase 3: Opening each price-issue voucher to read line items.
 
-   📋 Opening voucher 75...
+   📋 Opening voucher 43743...
       ⏱ Page ready: SO grid loaded
       ✓ Found #txtSearch on main page
-      🔎 Searched grid for 75
+      🔎 Searched grid for 43743
       ⏱ Page ready: voucher opened
-      ✓ Voucher verified on page: '75'
+      ✓ Voucher verified on page: '43743'
       🔬 instances=1
       🔬 inst[0] rows=8 visible=true
       🔬 scopeLevel=0 dataTrs=8 firstCells=20
       Columns : ['Warehouse', 'Item', 'Description', 'Unit', 'Quantity', 'Last Selling Price', 'Rate', 'Gross', 'Discount%', 'Discount Amt', 'Rate in Base Qty', 'Cost Price', 'Cost Restriction', 'Customer Name', 'Snumber', 'Pricebook Buying Price', 'Qty per CTN', 'Stock Balance (Pcs)', 'Stock Balance (CTN)']
-      Row[0]  : CR='1.00' Rate='4.10' Buy='0.00' Desc='WB.GREEN TEA (KAHWA ORG) 62.5G'
-      ℹ️  No low-price items in this voucher.
+      Row[0]  : CR='0.00' Rate='26.00' Buy='23.30' Desc='LP PONNI RICE 25KG'
+      · LP PONNI RICE 25KG                     rate/pc=  26.00  landing=  24.47  diff=  +1.53  [ok]
+      · UNITY BASMATHI RICE 25KG               rate/pc=  46.00  landing=  38.68  diff=  +7.32  [ok]
+      · BRU COFFEE ORG PKT- 200gm X40          rate/pc=   5.30  landing=   4.78  diff=  +0.52  [ok]
+      ✅ 3 low-price item(s) found.
       ⏱ Page ready: back to list
 
-✅ Phase 3 complete. 0 voucher(s) flagged.
+✅ Phase 3 complete. 1 voucher(s) flagged.
 
 
-ℹ️  No price issues found today. Nothing to send.
+📋 1 order(s) flagged. Preview:
+
+── MESSAGE ──────────────────────────────────────
+🚨 *LOW PRICE ALERT*  |  14 Aug 2026, 01:33 PM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 *SO : 43743*
+🏢 A/CASH (JEEVA)
+👤 Salesman: NIKARTHIKA
+
+  *LP PONNI RICE 25KG*
+  📦 Unit             : PCS
+  🔢 Qty Ordered      : 3 PCS
+  🏷️ Purchase Cost/pc : $23.30
+  🚚 Landing Cost/pc  : $24.47  _(+5.0%)_
+  📅 Prev. Price/pc   : $26.00
+  💸 Rate/pc          : $26.00
+  📊 Diff (Rate−Land) : +$1.53
+  📈 Margin           : +5.9%  🟢 OK
+
+  *UNITY BASMATHI RICE 25KG*
+  📦 Unit             : BAG
+  🔢 Qty Ordered      : 1 BAG
+  🏷️ Purchase Cost/pc : $36.84
+  🚚 Landing Cost/pc  : $38.68  _(+5.0%)_
+  📅 Prev. Price/pc   : $46.00
+  💸 Rate/pc          : $46.00
+  📊 Diff (Rate−Land) : +$7.32
+  📈 Margin           : +15.9%  ✅ HEALTHY
+
+  *BRU COFFEE ORG PKT- 200gm X40*
+  📦 Unit             : PCS
+  🔢 Qty Ordered      : 20 PCS
+  🏷️ Purchase Cost/pc : $4.55
+  🚚 Landing Cost/pc  : $4.78  _(+5.0%)_
+  📅 Prev. Price/pc   : $5.30
+  💸 Rate/pc          : $5.30
+  📊 Diff (Rate−Land) : +$0.52
+  📈 Margin           : +9.8%  🟢 OK
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+_Reply to take action — ShopAide Agent 🤖_
+─────────────────────────────────────────────────
+
+
+📊 Saving Excel backup...
+   📊 Excel saved: downloads\LowPrice_Alert_2026-08-14.xlsx
+
+📲 Sending 1 message(s) to group: 'Test Low Price'...
+   🔧 AGENT_SEND_TEXT=false
+   🔧 AGENT_SEND_IMAGE=true
+   🔧 AGENT_WA_GROUPS=[Test Low Price]
+   ⚠️  Fixed malformed JSON: [Test Low Price] → ['Test Low Price']
+   ✅ Groups from dashboard: ['Test Low Price']
+   🎯 Send-only mode: keeping 1/1 SO(s) matching 43743
+   🎯 Send Specific mode — bypassing sent history check
+   🔧 skip_sent_sos=False
+   📋 WhatsApp groups from config: ['Test Low Price']
+   🔀 Send text: False | Send image: True
+   📸 Generating alert images...
+   📸 Image saved: downloads\alert_SO__43743_133308.jpg
+   Opening WhatsApp Web...
+   Waiting for WhatsApp to load (scan QR if first run)...
+
+   📢 Sending to: 'Test Low Price'
+   🔍 Searching: 'Test Low Price' (attempt 1)...
+   ✅ Group opened and verified: 'Test Low Price'
+      📤 Sending image for SO : 43743...
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent\downloads\alert_SO__43743_133308_photo.jpg
+      🔍 Waiting for file chooser...
+      ✅ File set via chooser
+      ⏳ Waiting for image delivery...
+      ⚠️  Could not confirm image delivery — check WhatsApp manually
+   ✅ Done sending to 'Test Low Price'.
+
+✅ All WhatsApp messages sent and confirmed.
+   WhatsApp browser closed.
+   📝 Recorded 3 sent item(s) across 1 SO(s).
+
+🎉 Done at 01:35 PM

@@ -1,0 +1,33 @@
+C:\Users\srini\AppData\Roaming\Python\Python313\site-packages\openpyxl\styles\stylesheet.py:237: UserWarning: Workbook contains no default style, apply openpyxl's default
+  warn("Workbook contains no default style, apply openpyxl's default")
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▶  DATA SYNC — daybook  —  14 Aug 2026 04:11:10 PM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Focus agent dir: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent
+   Dashboard DB:    C:\Users\srini\OneDrive\Desktop\focus_agent\erp_dashboard\dashboard.db
+✅ Credentials loaded from cloud for: srini@sriambikas.com
+🌐 Opening Focus ERP...
+   Page loaded.
+🔐 Logging in...
+   Logged in successfully.
+
+═══ DAYBOOK ═══
+📅 Window: 15/06/2026 → 14/08/2026 (60 days)
+📂 Navigating to Sales day book...
+      Page ready: Focus home
+   ▸ Financials
+   ▸ Reports
+   ▸ Sales Register
+      Page ready: Sales Register page
+   ▸ Sales day book
+      Page ready: Sales day book
+🗓  Setting date range...
+   Start 15/06/2026 · End 14/08/2026
+🧾 Selecting Default Layout...
+⬇  Exporting to Excel...
+   ☑ Export confirmed (playwright click: Yes)
+   Downloaded: daybook_20260615_20260814.xlsx (3369 KB)
+   ✖ Dismissed popup: Export Report Data
+📥 Imported: 58531 rows (2026-06-15 → 2026-08-14, 2357 items, 17 salesmen)
+   DB: 58531 rows written · 58496 prior rows replaced
+✅ Day book sync complete.

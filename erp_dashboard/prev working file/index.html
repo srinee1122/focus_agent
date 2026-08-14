@@ -440,7 +440,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
             <p style="font-size:12px;color:var(--muted);margin-top:2px" id="mi-summary">Upload the Focus Item "Master info" export. Prices here are reference only — the Price Book stays the source of truth.</p></div>
           <div style="display:flex;gap:8px;align-items:center">
             <input type="file" id="ms-item-file" accept=".xlsx,.xls" style="display:none" onchange="uploadMaster('items', this)">
-            <button class="btn btn-ghost btn-sm" id="sync-mi-btn" onclick="runItemsSync()">🔄 Sync from Focus</button>
             <button class="btn btn-primary btn-sm" onclick="document.getElementById('ms-item-file').click()">⬆ Upload Items Master</button>
           </div>
         </div>
@@ -475,7 +474,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <label style="font-size:12px;color:var(--muted)">Threshold ±</label>
           <input id="pk-thr" type="number" value="2" min="0.1" step="0.5" style="width:64px">%
-          <button class="btn btn-ghost btn-sm" id="sync-pb-btn" onclick="runPricebookSync()">🔄 Sync from Focus</button>
           <button class="btn btn-primary btn-sm" onclick="runPriceCheck()">🔍 Run Check</button>
           <button class="btn btn-ghost btn-sm" onclick="downloadPriceCheck('xlsx')">⬇ Excel</button>
           <button class="btn btn-ghost btn-sm" onclick="downloadPriceCheck('pdf')">⬇ PDF</button>
@@ -1679,37 +1677,6 @@ async function runDaybookSync(){
     } else {
       alert('❌ Sync failed — check Live Logs (Data Sync agent) for the reason.');
     }
-  }catch(e){ alert('❌ '+e.message); }
-  btn.disabled = false; btn.textContent = '🔄 Sync from Focus';
-}
-
-async function runPricebookSync(){
-  var btn = document.getElementById('sync-pb-btn');
-  if(!confirm('Open Focus and sync the Seller Price Book?\n\nCurrent stage: verifies navigation to the Seller Price Book view (screenshot saved). Export/update steps come next.')) return;
-  btn.disabled = true; btn.textContent = '🔄 Syncing…';
-  try{
-    var res = await fetch('/api/sync/pricebook', {method:'POST',
-      headers:{'Content-Type':'application/json'}, body:'{}'});
-    var d = await res.json();
-    if(!res.ok) throw new Error(d.detail||'Sync failed');
-    alert(d.ok ? '✅ Seller Price Book view opened — check Live Logs.' :
-      '❌ Sync failed — check Live Logs (Data Sync agent).');
-  }catch(e){ alert('❌ '+e.message); }
-  btn.disabled = false; btn.textContent = '🔄 Sync from Focus';
-}
-
-async function runItemsSync(){
-  var btn = document.getElementById('sync-mi-btn');
-  if(!confirm('Open Focus and sync the Items master?\n\nCurrent stage: verifies navigation to the Master Info view (screenshots saved). Export steps come next.')) return;
-  btn.disabled = true; btn.textContent = '🔄 Syncing…';
-  try{
-    var res = await fetch('/api/sync/items', {method:'POST',
-      headers:{'Content-Type':'application/json'}, body:'{}'});
-    var d = await res.json();
-    if(!res.ok) throw new Error(d.detail||'Sync failed');
-    alert(d.ok ? '✅ Master Info view opened — check Live Logs.' :
-      '❌ Sync failed — check Live Logs (Data Sync agent).');
-    if(d.ok) miSearchNow();
   }catch(e){ alert('❌ '+e.message); }
   btn.disabled = false; btn.textContent = '🔄 Sync from Focus';
 }

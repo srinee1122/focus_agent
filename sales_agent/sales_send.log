@@ -1,0 +1,20 @@
+   ⚠️ Fixed malformed JSON: [Test Sales Report] → ['Test Sales Report']
+📊 Report: CARD-A 2026-07-31 → 2026-08-12
+📋 Groups: ['Test Sales Report']
+   📸 Report image: downloads\sales_report_CARD_A_150709.jpg (414 KB)
+   Opening WhatsApp Web...
+   Waiting for WhatsApp to load (scan QR if first run)...
+
+   📢 Sending to: 'Test Sales Report'
+   🔍 Searching: 'Test Sales Report' (attempt 1)...
+   ✅ Group opened and verified: 'Test Sales Report'
+      📤 Sending image for sales_report_CARD_A_150709...
+      🖼️  Converted to JPEG: C:\Users\srini\OneDrive\Desktop\focus_agent\sales_agent\downloads\sales_report_CARD_A_150709_photo.jpg
+      🔍 Waiting for file chooser...
+      ✅ File set via chooser
+      ⏳ Waiting for image delivery...
+      ⚠️  Could not confirm image delivery — check WhatsApp manually
+   ⚠️ Could not confirm delivery to 'Test Sales Report' — screenshot saved, not counted as sent.
+
+❌ NO groups received the report.
+   WhatsApp browser closed.
