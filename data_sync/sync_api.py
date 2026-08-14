@@ -32,7 +32,8 @@ def _dash():
 router = APIRouter()
 
 _schema_ready = False
-_sync_running = {"daybook": False, "pricebook": False, "items": False}
+_sync_running = {"daybook": False, "pricebook": False, "items": False,
+                 "accounts": False}
 
 
 def _ensure_schema():
@@ -133,7 +134,84 @@ async def sync_pricebook(request: Request, body: dict = {}):
     ok = rc == 0
     await _log("✅ Price book sync finished" if ok
                else f"❌ Price book sync failed (exit {rc}) — see above")
-    return {"ok": ok}
+    summary = ""
+    if ok:
+        try:
+            with get_db() as conn:
+                row = conn.execute(
+                    "SELECT value FROM agent_settings WHERE "
+                    "agent='data_sync' AND key='last_pricebook'").fetchone()
+            summary = row[0] if row else ""
+        except Exception:
+            pass
+    return {"ok": ok, "summary": summary}
+
+
+@router.post("/api/sync/accounts")
+async def sync_accounts(request: Request, body: dict = {}):
+    _ensure_schema()
+    if _sync_running["accounts"]:
+        raise HTTPException(409, "A customers master sync is already "
+                                 "running")
+    auth_header = request.headers.get("authorization", "")
+    user_token = (auth_header.replace("Bearer ", "")
+                  if auth_header.startswith("Bearer ") else "")
+
+    await _log("━" * 46)
+    await _log("▶ CUSTOMERS MASTER SYNC")
+
+    import subprocess
+    log_path = _THIS_DIR / "sync_run.log"
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8",
+           "AGENT_AUTH_TOKEN": user_token,
+           "DASHBOARD_URL": str(request.base_url)}
+    try:
+        m = _dash()
+        env["AGENT_DIR"] = str(m.AGENT_DIR)
+        from database import DB_PATH
+        env["DASHBOARD_DB"] = str(DB_PATH.resolve())
+    except Exception:
+        pass
+
+    def _run() -> int:
+        with open(log_path, "w", encoding="utf-8", errors="replace") as lf:
+            return subprocess.call(
+                [sys.executable, "sync_runner.py", "--what", "accounts"],
+                cwd=str(_THIS_DIR), stdout=lf,
+                stderr=subprocess.STDOUT, env=env)
+
+    _sync_running["accounts"] = True
+    try:
+        rc = await asyncio.to_thread(_run)
+    except Exception as e:
+        await _log(f"❌ Could not start sync_runner.py: {e}")
+        raise HTTPException(500, f"Could not start the sync runner: {e}")
+    finally:
+        _sync_running["accounts"] = False
+
+    try:
+        for line in log_path.read_text(encoding="utf-8",
+                                       errors="replace").splitlines():
+            if line.strip():
+                await _log(line.rstrip())
+    except Exception:
+        pass
+
+    ok = rc == 0
+    await _log("✅ Customers master sync finished" if ok
+               else f"❌ Customers master sync failed (exit {rc}) — "
+                    f"see above")
+    summary = ""
+    if ok:
+        try:
+            with get_db() as conn:
+                row = conn.execute(
+                    "SELECT value FROM agent_settings WHERE "
+                    "agent='data_sync' AND key='last_accounts'").fetchone()
+            summary = row[0] if row else ""
+        except Exception:
+            pass
+    return {"ok": ok, "summary": summary}
 
 
 @router.post("/api/sync/items")
@@ -188,7 +266,17 @@ async def sync_items(request: Request, body: dict = {}):
     ok = rc == 0
     await _log("✅ Items master sync finished" if ok
                else f"❌ Items master sync failed (exit {rc}) — see above")
-    return {"ok": ok}
+    summary = ""
+    if ok:
+        try:
+            with get_db() as conn:
+                row = conn.execute(
+                    "SELECT value FROM agent_settings WHERE "
+                    "agent='data_sync' AND key='last_items'").fetchone()
+            summary = row[0] if row else ""
+        except Exception:
+            pass
+    return {"ok": ok, "summary": summary}
 
 
 @router.post("/api/sync/daybook")

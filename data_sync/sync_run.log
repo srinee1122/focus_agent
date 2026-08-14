@@ -1,5 +1,5 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-▶  DATA SYNC — items  —  14 Aug 2026 05:49:40 PM
+▶  DATA SYNC — accounts  —  14 Aug 2026 06:31:03 PM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    Focus agent dir: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent
    Dashboard DB:    C:\Users\srini\OneDrive\Desktop\focus_agent\erp_dashboard\dashboard.db
@@ -9,22 +9,22 @@
 🔐 Logging in...
    Logged in successfully.
 
-═══ ITEMS ═══
+═══ ACCOUNTS ═══
 🔎 Opening Master Info via menu search...
       Page ready: Focus home
    ▸ Master Info
       Page ready: Master Info view
 ✅ Master Info view opened.
-🗂  Selecting master type: Item
-      Page ready: Item master
+🗂  Selecting master type: Account
+      Page ready: Account master
 ☑️  Selecting all masters...
    All masters selected.
 ⬇  Exporting to Excel...
    SignalR hub state: 1 (1 = connected; export needs this push channel)
    ☑ Export confirmed (playwright click: Yes)
-   ☑ Export confirmed (js-click: Yes)
+   ☑ Export confirmed (playwright click: Yes)
    ⬇ Download started — waiting for it to finish...
-   ✅ Download complete: items_20260814.xlsx (384 KB)
-📥 Updating the Items master (same path as manual upload)...
-   ✅ Items: 4512 · Brands: 298
-✅ Items master sync complete.
+   ✅ Download complete: accounts_20260814.xlsx (289 KB)
+📥 Updating the Customers master (same path as manual upload)...
+   ✅ Customers: 1448 · Segments: 12 · Areas: 87 (non-customer accounts skipped: 1219)
+✅ Customers master sync complete.

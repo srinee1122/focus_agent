@@ -408,6 +408,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
             <p style="font-size:12px;color:var(--muted);margin-top:2px" id="mc-summary">Upload the Focus Account "Master info" export.</p></div>
           <div style="display:flex;gap:8px;align-items:center">
             <input type="file" id="ms-cust-file" accept=".xlsx,.xls" style="display:none" onchange="uploadMaster('customers', this)">
+            <button class="btn btn-ghost btn-sm" id="sync-mc-btn" onclick="runAccountsSync()">🔄 Sync from Focus</button>
             <button class="btn btn-primary btn-sm" onclick="document.getElementById('ms-cust-file').click()">⬆ Upload Customers Master</button>
           </div>
         </div>
@@ -1685,31 +1686,48 @@ async function runDaybookSync(){
 
 async function runPricebookSync(){
   var btn = document.getElementById('sync-pb-btn');
-  if(!confirm('Open Focus and sync the Seller Price Book?\n\nCurrent stage: verifies navigation to the Seller Price Book view (screenshot saved). Export/update steps come next.')) return;
+  if(!confirm('Open Focus and sync the Seller Price Book?\n\nDownloads SriAmbikasSellingPriceBook and updates the Price Book — same as a manual upload (purchase types preserved).')) return;
   btn.disabled = true; btn.textContent = '🔄 Syncing…';
   try{
     var res = await fetch('/api/sync/pricebook', {method:'POST',
       headers:{'Content-Type':'application/json'}, body:'{}'});
     var d = await res.json();
     if(!res.ok) throw new Error(d.detail||'Sync failed');
-    alert(d.ok ? '✅ Seller Price Book view opened — check Live Logs.' :
+    alert(d.ok ? ('✅ Price Book synced — ' + (d.summary || 'see Live Logs for details.')) : 
       '❌ Sync failed — check Live Logs (Data Sync agent).');
+    if(d.ok){ loadPb(); }
   }catch(e){ alert('❌ '+e.message); }
   btn.disabled = false; btn.textContent = '🔄 Sync from Focus';
 }
 
 async function runItemsSync(){
   var btn = document.getElementById('sync-mi-btn');
-  if(!confirm('Open Focus and sync the Items master?\n\nCurrent stage: verifies navigation to the Master Info view (screenshots saved). Export steps come next.')) return;
+  if(!confirm('Open Focus and sync the Items master?\n\nDownloads the full item list from Master Info (the server build can take a few minutes) and updates the Items master — same as a manual upload.')) return;
   btn.disabled = true; btn.textContent = '🔄 Syncing…';
   try{
     var res = await fetch('/api/sync/items', {method:'POST',
       headers:{'Content-Type':'application/json'}, body:'{}'});
     var d = await res.json();
     if(!res.ok) throw new Error(d.detail||'Sync failed');
-    alert(d.ok ? '✅ Master Info view opened — check Live Logs.' :
+    alert(d.ok ? ('✅ Items master synced — ' + (d.summary || 'see Live Logs for details.')) :
       '❌ Sync failed — check Live Logs (Data Sync agent).');
     if(d.ok) miSearchNow();
+  }catch(e){ alert('❌ '+e.message); }
+  btn.disabled = false; btn.textContent = '🔄 Sync from Focus';
+}
+
+async function runAccountsSync(){
+  var btn = document.getElementById('sync-mc-btn');
+  if(!confirm('Open Focus and sync the Customers master?\n\nDownloads the full account list from Master Info (the server build can take a few minutes) and updates the Customers master — same as a manual upload. Non-customer accounts are skipped automatically.')) return;
+  btn.disabled = true; btn.textContent = '🔄 Syncing…';
+  try{
+    var res = await fetch('/api/sync/accounts', {method:'POST',
+      headers:{'Content-Type':'application/json'}, body:'{}'});
+    var d = await res.json();
+    if(!res.ok) throw new Error(d.detail||'Sync failed');
+    alert(d.ok ? ('✅ Customers master synced — ' + (d.summary || 'see Live Logs for details.')) :
+      '❌ Sync failed — check Live Logs (Data Sync agent).');
+    if(d.ok) mcSearchNow();
   }catch(e){ alert('❌ '+e.message); }
   btn.disabled = false; btn.textContent = '🔄 Sync from Focus';
 }

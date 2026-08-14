@@ -27,6 +27,7 @@ import focus_common
 import fetch_daybook
 import fetch_pricebook
 import fetch_items
+import fetch_accounts
 
 
 def _mark_last_sync(what: str, summary: str):
@@ -58,8 +59,8 @@ async def run_sync(what: str, days: int, import_file: str = None) -> int:
         print("✅ Day book sync complete.")
         return 0
 
-    targets = (["daybook", "pricebook", "items"] if what == "all"
-               else [what])
+    targets = (["daybook", "pricebook", "items", "accounts"]
+               if what == "all" else [what])
     failures = 0
     async with focus_common.focus_session(tag=what) as (page, debug_dir):
         for t in targets:
@@ -74,11 +75,26 @@ async def run_sync(what: str, days: int, import_file: str = None) -> int:
                     print("✅ Day book sync complete.")
                 elif t == "pricebook":
                     result = await fetch_pricebook.run(page, debug_dir)
-                    _mark_last_sync("pricebook", str(result)[:120])
+                    _mark_last_sync(
+                        "pricebook",
+                        f"{result.get('updated', 0)} updated, "
+                        f"{result.get('added', 0)} added, "
+                        f"{result.get('unmatched', 0)} not in export")
                     print("✅ Price book sync complete.")
+                elif t == "accounts":
+                    result = await fetch_accounts.run(page, debug_dir)
+                    _mark_last_sync(
+                        "accounts",
+                        f"{result.get('customers', 0)} customers, "
+                        f"{result.get('segments', 0)} segments, "
+                        f"{result.get('areas', 0)} areas updated")
+                    print("✅ Customers master sync complete.")
                 elif t == "items":
                     result = await fetch_items.run(page, debug_dir)
-                    _mark_last_sync("items", str(result)[:120])
+                    _mark_last_sync(
+                        "items",
+                        f"{result.get('items', 0)} items, "
+                        f"{result.get('brands', 0)} brands updated")
                     print("✅ Items master sync complete.")
             except NotImplementedError as e:
                 print(f"⏸ {t}: {e}")
@@ -102,7 +118,8 @@ async def run_sync(what: str, days: int, import_file: str = None) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description="Focus Data Sync runner")
     ap.add_argument("--what", default="daybook",
-                    choices=["daybook", "pricebook", "items", "all"])
+                    choices=["daybook", "pricebook", "items", "accounts",
+                             "all"])
     ap.add_argument("--days", type=int, default=60,
                     help="Day book window: today-N .. today")
     ap.add_argument("--import-file", default=None,

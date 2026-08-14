@@ -1,5 +1,10 @@
 """
-fetch_items.py — Item master fetcher for the Data Sync agent.
+fetch_accounts.py — Customers (Account) master fetcher.
+
+OWN COPY of the Master Info machinery (menu search, combobox, select
+all, monitored async export) — deliberately duplicated from
+fetch_items.py so a change or failure in either fetcher can never
+affect the other.
 
 Navigation: menu search (same proven approach as the price book) —
 search "Master Info" and open that view.
@@ -657,12 +662,14 @@ def upload_to_dashboard(xlsx_path: Path, endpoint: str) -> dict:
         return json.loads(resp.read())
 
 
-async def run(page, debug_dir: Path, **kwargs) -> dict:
+async def _open_and_select(page, debug_dir: Path, which: str):
+    """Open Master Info and select the master type, with one full retry
+    (view flakiness observed during Focus server instability)."""
     for attempt in (1, 2):
         try:
             await open_view(page, debug_dir)
-            await select_master(page, debug_dir, "Item")
-            break
+            await select_master(page, debug_dir, which)
+            return
         except Exception:
             if attempt == 2:
                 raise
@@ -675,12 +682,25 @@ async def run(page, debug_dir: Path, **kwargs) -> dict:
                 await asyncio.sleep(3)
             except Exception:
                 pass
-    await select_all_masters(page, debug_dir)
-    xlsx = await export_excel(page, debug_dir, "items")
 
-    print("📥 Updating the Items master (same path as manual upload)...")
-    stats = upload_to_dashboard(xlsx, "api/sales/masters/items/upload")
-    print(f"   ✅ Items: {stats.get('items', 0)} · "
-          f"Brands: {stats.get('brands', 0)}")
-    return {"items": stats.get("items", 0),
-            "brands": stats.get("brands", 0)}
+
+async def run(page, debug_dir: Path, **kwargs) -> dict:
+    """Customers master: SAME page and machinery, 'Account' selected —
+    the select-all checkbox and async export behave identically
+    (data-text 'Unselect All Account' confirmed it governs both)."""
+    await _open_and_select(page, debug_dir, "Account")
+    await select_all_masters(page, debug_dir)
+    xlsx = await export_excel(page, debug_dir, "accounts")
+
+    print("📥 Updating the Customers master (same path as manual "
+          "upload)...")
+    stats = upload_to_dashboard(xlsx,
+                                "api/sales/masters/customers/upload")
+    print(f"   ✅ Customers: {stats.get('customers', 0)} · "
+          f"Segments: {stats.get('segments', 0)} · "
+          f"Areas: {stats.get('areas', 0)} "
+          f"(non-customer accounts skipped: "
+          f"{stats.get('non_customer_accounts', 0)})")
+    return {"customers": stats.get("customers", 0),
+            "segments": stats.get("segments", 0),
+            "areas": stats.get("areas", 0)}
