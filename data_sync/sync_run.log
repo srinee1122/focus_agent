@@ -1,7 +1,5 @@
-C:\Users\srini\AppData\Roaming\Python\Python313\site-packages\openpyxl\styles\stylesheet.py:237: UserWarning: Workbook contains no default style, apply openpyxl's default
-  warn("Workbook contains no default style, apply openpyxl's default")
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-▶  DATA SYNC — daybook  —  14 Aug 2026 04:11:10 PM
+▶  DATA SYNC — items  —  14 Aug 2026 05:49:40 PM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    Focus agent dir: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent
    Dashboard DB:    C:\Users\srini\OneDrive\Desktop\focus_agent\erp_dashboard\dashboard.db
@@ -11,23 +9,22 @@ C:\Users\srini\AppData\Roaming\Python\Python313\site-packages\openpyxl\styles\st
 🔐 Logging in...
    Logged in successfully.
 
-═══ DAYBOOK ═══
-📅 Window: 15/06/2026 → 14/08/2026 (60 days)
-📂 Navigating to Sales day book...
+═══ ITEMS ═══
+🔎 Opening Master Info via menu search...
       Page ready: Focus home
-   ▸ Financials
-   ▸ Reports
-   ▸ Sales Register
-      Page ready: Sales Register page
-   ▸ Sales day book
-      Page ready: Sales day book
-🗓  Setting date range...
-   Start 15/06/2026 · End 14/08/2026
-🧾 Selecting Default Layout...
+   ▸ Master Info
+      Page ready: Master Info view
+✅ Master Info view opened.
+🗂  Selecting master type: Item
+      Page ready: Item master
+☑️  Selecting all masters...
+   All masters selected.
 ⬇  Exporting to Excel...
+   SignalR hub state: 1 (1 = connected; export needs this push channel)
    ☑ Export confirmed (playwright click: Yes)
-   Downloaded: daybook_20260615_20260814.xlsx (3369 KB)
-   ✖ Dismissed popup: Export Report Data
-📥 Imported: 58531 rows (2026-06-15 → 2026-08-14, 2357 items, 17 salesmen)
-   DB: 58531 rows written · 58496 prior rows replaced
-✅ Day book sync complete.
+   ☑ Export confirmed (js-click: Yes)
+   ⬇ Download started — waiting for it to finish...
+   ✅ Download complete: items_20260814.xlsx (384 KB)
+📥 Updating the Items master (same path as manual upload)...
+   ✅ Items: 4512 · Brands: 298
+✅ Items master sync complete.
