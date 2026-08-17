@@ -835,6 +835,16 @@ try:
 except Exception as _sales_err:
     print(f"[Dashboard] Sales Report agent NOT loaded: {_sales_err}")
 
+# ── Data Sync agent (self-contained in data_sync/) ───────────────────
+# Same isolation: any problem here only removes /api/sync/* routes.
+try:
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from data_sync.sync_api import router as _sync_router
+    app.include_router(_sync_router)
+    print("[Dashboard] Data Sync agent loaded.")
+except Exception as _sync_err:
+    print(f"[Dashboard] Data Sync agent NOT loaded: {_sync_err}")
+
 
 @app.get("/")
 def serve():

@@ -262,6 +262,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
     <button class="active" onclick="showPage('agents',this)">⚡ Agents</button>
     <button onclick="showPage('logs',this)">📋 Live Logs</button>
     <button onclick="showPage('sales',this)">🗄️ Master Data</button>
+    <button onclick="showPage('runsheet',this)">🚚 Runsheet</button>
     <button onclick="showPage('salesmon',this)">🎯 Sales Monitoring</button>
   </nav>
   <div id="user-chip" style="display:none;padding:14px 16px;border-top:1px solid var(--border);
@@ -799,6 +800,83 @@ tr:hover td{background:rgba(255,255,255,.02)}
     
 
   </div>
+
+    <div id="page-runsheet" class="page">
+      <div class="section-header">
+        <div><h3>🚚 Runsheet Builder</h3>
+          <p style="font-size:12px;color:var(--muted);margin-top:2px">Type invoice numbers — found ones auto-fill the <b>round columns</b> only. <b>Other ctn is always entered by hand</b>: multiple products get packed into shared cartons, so the true carton count exists only at packing time. Every cell stays editable.</p></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="rsLoadTemplate()">↺ Last setup</button>
+          <button class="btn btn-ghost btn-sm" onclick="rsToggleCols()">⚙️ Round Columns</button>
+          <button class="btn btn-ghost btn-sm" onclick="rsToggleHistory()">🕘 History</button>
+        </div>
+      </div>
+
+      <div id="rs-cols-panel" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <b style="font-size:13px">Frequent round-item columns</b>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="rsAddCol()">＋ Add column</button>
+            <button class="btn btn-primary btn-sm" onclick="rsSaveCols()">💾 Save columns</button>
+          </div>
+        </div>
+        <p style="font-size:11.5px;color:var(--muted);margin-bottom:8px">Map each column code to the exact item name from the Items master — invoice pieces are matched by that name, and pcs/ctn comes from the master automatically. Max 10 columns.</p>
+        <div class="table-wrap"><table style="font-size:12px"><thead><tr><th style="width:110px">Code (header)</th><th style="width:110px">Pack label</th><th>Item name (from Items master)</th><th style="width:80px">Pcs/Ctn</th><th style="width:70px">Entry unit</th><th style="width:50px"></th></tr></thead><tbody id="rs-cols-body"></tbody></table></div>
+        <datalist id="rs-items-dl"></datalist>
+      </div>
+
+      <div id="rs-history" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px">
+        <b style="font-size:13px">Recent runsheets</b>
+        <div id="rs-history-body" style="margin-top:8px;font-size:12.5px"></div>
+      </div>
+
+      <!-- run details strip -->
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px" id="rs-meta">
+        <label class="rs-lbl">SHEET NO<input id="rs-sheet" placeholder="SAL032015"></label>
+        <label class="rs-lbl">AREA / ROUTE<input id="rs-area" placeholder="CIRCUIT ROAD"></label>
+        <label class="rs-lbl">DELIVERY MAN<input id="rs-delman"></label>
+        <label class="rs-lbl">VEHICLE NO<input id="rs-veh"></label>
+        <label class="rs-lbl">RUN DATE<input type="date" id="rs-date"></label>
+        <label class="rs-lbl">DELIVERY DATE<input type="date" id="rs-deldate"></label>
+      </div>
+
+      <!-- invoice adder -->
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+        <input id="rs-inv-input" placeholder="Type invoice no. and press Enter — e.g. 486845"
+          onkeydown="if(event.key==='Enter'){rsAddInvoice();return false;}"
+          style="flex:1;min-width:260px;background:var(--surface);border:2px solid var(--accent2);color:var(--text);border-radius:8px;padding:10px 14px;font-size:14px">
+        <button class="btn btn-primary" onclick="rsAddInvoice()">＋ Add invoice</button>
+        <span id="rs-add-status" style="font-size:12px;color:var(--muted)"></span>
+      </div>
+
+      <!-- the grid -->
+      <div class="table-wrap" style="overflow:auto">
+        <table style="font-size:12px;min-width:900px" id="rs-grid">
+          <thead style="position:sticky;top:0;z-index:2" id="rs-grid-head"></thead>
+          <tbody id="rs-grid-body"></tbody>
+        </table>
+      </div>
+
+      <!-- all-round -->
+      <div style="margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <b style="font-size:12.5px">All-round (bulk bag) products</b>
+          <input id="rs-ar-input" list="rs-ar-dl" placeholder="Type a product name…"
+            onkeydown="if(event.key==='Enter'){rsAddAr();return false;}"
+            style="flex:1;min-width:240px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:12.5px">
+          <datalist id="rs-ar-dl"></datalist>
+          <button class="btn btn-ghost btn-sm" onclick="rsAddAr()">＋ Add</button>
+        </div>
+        <div id="rs-ar-wrap" style="margin-top:10px;overflow:auto"></div>
+      </div>
+
+      <!-- action bar -->
+      <div style="display:flex;gap:16px;align-items:center;margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px">
+        <div id="rs-live" style="display:flex;gap:18px;font-size:12.5px;flex:1"></div>
+        <button class="btn btn-ghost btn-sm" onclick="rsClear()">Clear all</button>
+        <button class="btn btn-primary" onclick="rsBuild()" style="padding:10px 22px">🖨 Build &amp; Print</button>
+      </div>
+    </div>
 </main>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -920,6 +998,7 @@ function showPage(name,btn){
     logs:['Live Logs','Real-time output from all running agents'],
     pricebook:['Price Book','Purchase types and product assignments'],
     sales:['Master Data','Upload and store the sales day book, customers master and items master'],
+    runsheet:['Runsheet','One-page delivery sheets for drivers'],
     salesmon:['Targeted Sales Man Sales Monitoring','Product groups, targets and salesman-wise reports'],
   };
   document.getElementById('page-title').textContent=titles[name]?titles[name][0]:name;
@@ -928,6 +1007,7 @@ function showPage(name,btn){
   if(name==='sales'){loadSalesPage();}
   if(name==='salesmon'){loadSalesMonPage();}
   if(name==='logs') renderLogs();
+  if(name==='runsheet') rsInit();
 }
 
 // ── WebSocket ────────────────────────────────────────────────────────────────
@@ -1730,6 +1810,350 @@ async function runAccountsSync(){
     if(d.ok) mcSearchNow();
   }catch(e){ alert('❌ '+e.message); }
   btn.disabled = false; btn.textContent = '🔄 Sync from Focus';
+}
+
+/* ── Runsheet builder (grid UX) ── */
+var rsRows = [], rsAr = [], rsCols = [], rsColsLoaded = false, rsInited = false;
+
+function rsInit(){
+  if(rsInited) { return; }
+  rsInited = true;
+  var today = new Date().toISOString().slice(0,10);
+  document.getElementById('rs-date').value = today;
+  document.getElementById('rs-deldate').value = today;
+  document.querySelectorAll('#rs-meta input').forEach(function(i){
+    i.style.cssText += 'width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:12.5px;margin-top:4px';
+  });
+  document.querySelectorAll('.rs-lbl').forEach(function(l){
+    l.style.cssText += 'font-size:10px;letter-spacing:0.06em;color:var(--muted);display:flex;flex-direction:column';
+  });
+  rsLoadColsThen(rsRenderGrid);
+}
+async function rsLoadColsThen(cb){
+  if(rsColsLoaded){ cb && cb(); return; }
+  try{ rsCols = await fetch('/api/runsheet/columns').then(function(r){return r.json();}); rsColsLoaded = true; }
+  catch(e){ rsCols = []; }
+  cb && cb();
+}
+
+/* ---- add invoices ---- */
+async function rsAddInvoice(){
+  var inp = document.getElementById('rs-inv-input');
+  var q = inp.value.trim();
+  if(!q) return;
+  if(rsRows.length >= 20) return alert('Max 20 invoices per sheet — split the run.');
+  if(rsRows.some(function(r){ return r.inv === q || r.inv.endsWith(q); }))
+    if(!confirm('That invoice looks already added — add again?')) return;
+  var st = document.getElementById('rs-add-status');
+  st.textContent = 'Looking up ' + q + '…';
+  var d = null;
+  try{ d = await fetch('/api/runsheet/lookup?invoice='+encodeURIComponent(q)).then(function(r){return r.json();}); }
+  catch(e){ d = {found:false, cols: rsCols}; }
+  if(d.cols && d.cols.length){ rsCols = d.cols; rsColsLoaded = true; }
+  if(d.found){
+    var disp = d.pcs.map(function(p,j){
+      var cc = rsCols[j]||{}; if(!p) return 0;
+      return (cc.unit==='ctn') ? +((p/(cc.qty>1?cc.qty:1)).toFixed(1)) : p;
+    });
+    rsRows.push({src:'book', inv:d.inv, so:d.so, cust:d.cust, by:d.by,
+      pcs:disp, other:'', items:d.items||[]});
+    st.innerHTML = '<span style="color:#7fd7a4">✓ '+d.inv+' — '+(d.cust||'').slice(0,34)+'</span>';
+    rsAutoFillArForRow(rsRows.length-1);
+  } else {
+    rsRows.push({src:'manual', inv:q, so:'', cust:'', by:'',
+      pcs: rsCols.map(function(){return 0;}), other:0, items:[]});
+    st.innerHTML = '<span style="color:#e8a13a">✎ '+q+' not in day book — fill the row manually</span>';
+  }
+  inp.value=''; inp.focus();
+  rsRenderGrid(); rsRenderAr();
+}
+
+/* ---- grid render ---- */
+function rsNum(v){ var n = parseFloat(v); return isNaN(n)||n<0 ? 0 : Math.round(n); }
+function rsUnitVal(v){ var n = parseFloat(v); return isNaN(n)||n<0 ? 0 : n; }
+function rsCtnOf(v, qty, unit){
+  v = rsUnitVal(v); if(!v) return 0;
+  return unit==='ctn' ? Math.ceil(v) : Math.ceil(v/(qty>1?qty:1));
+}
+function rsToPcs(v, qty, unit){
+  v = rsUnitVal(v); if(!v) return 0;
+  return unit==='ctn' ? Math.round(v*(qty||1)) : Math.round(v);
+}
+function rsRowTotal(r){
+  var t = rsNum(r.other);
+  rsCols.forEach(function(cc,j){ t += rsCtnOf(r.pcs[j], cc.qty, cc.unit||'pcs'); });
+  var ri = rsRows.indexOf(r);
+  rsAr.forEach(function(a){ t += rsCtnOf(a.byInv[ri], a.qty, a.unit||'pcs'); });
+  return t;
+}
+function rsToggleColUnit(j){
+  var cc = rsCols[j];
+  var from = cc.unit||'pcs', to = from==='pcs' ? 'ctn' : 'pcs';
+  cc.unit = to;
+  rsRows.forEach(function(r){
+    var v = rsUnitVal(r.pcs[j]); if(!v) return;
+    r.pcs[j] = to==='ctn' ? +( (v/(cc.qty>1?cc.qty:1)).toFixed(1) )
+                          : Math.round(v*(cc.qty||1));
+  });
+  rsRenderGrid();
+  fetch('/api/runsheet/columns',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({cols: rsCols})});
+}
+function rsRenderGrid(){
+  var head = '<tr><th style="width:30px"></th><th style="width:80px">Invoice</th><th style="width:70px">S.Order</th>'+
+    '<th style="min-width:180px">Customer</th><th style="width:90px">Taken by</th>';
+  rsCols.forEach(function(cc,j){ var u=(cc.unit||'pcs'); head += '<th style="width:56px;text-align:center;cursor:pointer" title="'+(cc.item_name||'not mapped')+' — click badge to switch unit" onclick="rsToggleColUnit('+j+')">'+cc.code+'<div style="font-weight:400;font-size:9px;color:var(--muted)">'+(cc.pack||('x'+cc.qty))+'</div><span style="display:inline-block;font-size:8px;font-weight:700;padding:0 4px;border-radius:3px;margin-top:2px;'+(u==='ctn'?'background:var(--text);color:var(--bg)':'border:1px solid var(--border);color:var(--muted)')+'">'+u.toUpperCase()+'</span></th>'; });
+  head += '<th style="width:56px;text-align:center">Other<div style="font-weight:400;font-size:9px;color:var(--muted)">ctn</div></th>'+
+    '<th style="width:56px;text-align:center">Total<div style="font-weight:400;font-size:9px;color:var(--muted)">pkgs</div></th><th style="width:86px"></th></tr>';
+  document.getElementById('rs-grid-head').innerHTML = head;
+
+  var body = document.getElementById('rs-grid-body');
+  if(!rsRows.length){
+    body.innerHTML = '<tr><td colspan="'+(8+rsCols.length)+'" style="text-align:center;color:var(--muted);padding:34px">No invoices yet — type a number above and press Enter.</td></tr>';
+    rsLive(); return;
+  }
+  function tin(i,f,val,w,center){
+    return '<input value="'+String(val==null?'':val).replace(/"/g,'&quot;')+'" '+
+      'oninput="rsRows['+i+'].'+f+'=this.value" onchange="rsRenderLiveOnly()" '+
+      'style="width:'+w+';background:transparent;border:1px solid transparent;color:var(--text);border-radius:4px;padding:3px 5px;font-size:12px;'+(center?'text-align:center;':'')+'" '+
+      'onfocus="this.style.borderColor=\'var(--accent2)\';this.style.background=\'var(--surface2)\'" '+
+      'onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">';
+  }
+  body.innerHTML = rsRows.map(function(r,i){
+    var mark = r.src==='book' ? 'border-left:3px solid #2f9e63' : 'border-left:3px solid #e8a13a';
+    var h = '<tr style="'+mark+'"><td style="color:var(--muted)">'+(i+1)+'</td>'+
+      '<td>'+tin(i,'inv',r.inv,'70px')+'</td>'+
+      '<td>'+tin(i,'so',r.so,'60px')+'</td>'+
+      '<td>'+tin(i,'cust',r.cust,'100%')+'</td>'+
+      '<td>'+tin(i,'by',r.by,'80px')+'</td>';
+    rsCols.forEach(function(cc,j){
+      h += '<td style="text-align:center"><input value="'+(r.pcs[j]||'')+'" placeholder="·" '+
+        'oninput="rsRows['+i+'].pcs['+j+']=this.value" onchange="rsRenderLiveOnly()" '+
+        'style="width:42px;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 2px;font-size:12px"></td>';
+    });
+    h += '<td style="text-align:center"><input value="'+(r.other||'')+'" placeholder="·" oninput="rsRows['+i+'].other=this.value" onchange="rsRenderLiveOnly()" style="width:44px;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 2px;font-size:12px"></td>';
+    h += '<td style="text-align:center;font-weight:700" id="rs-rt-'+i+'">'+rsRowTotal(r)+'</td>';
+    h += '<td style="white-space:nowrap">'+
+      '<button class="btn btn-ghost btn-sm" title="Move up" onclick="rsMove('+i+',-1)">↑</button>'+
+      '<button class="btn btn-ghost btn-sm" title="Move down" onclick="rsMove('+i+',1)">↓</button>'+
+      '<button class="btn btn-ghost btn-sm" title="Remove" onclick="rsRemove('+i+')">✕</button></td></tr>';
+    return h;
+  }).join('');
+  rsLive();
+}
+function rsRenderLiveOnly(){
+  rsRows.forEach(function(r,i){
+    var el = document.getElementById('rs-rt-'+i);
+    if(el) el.textContent = rsRowTotal(r);
+  });
+  rsLive();
+}
+function rsMove(i,dir){
+  var j = i+dir; if(j<0||j>=rsRows.length) return;
+  var t = rsRows[i]; rsRows[i]=rsRows[j]; rsRows[j]=t;
+  rsAr.forEach(function(a){ var bi=a.byInv; var vi=bi[i], vj=bi[j];
+    if(vi!=null) bi[j]=vi; else delete bi[j];
+    if(vj!=null) bi[i]=vj; else delete bi[i]; });
+  rsRenderGrid(); rsRenderAr();
+}
+function rsRemove(i){
+  rsRows.splice(i,1);
+  rsAr.forEach(function(a){
+    var nb={}; Object.keys(a.byInv).forEach(function(k){
+      k=parseInt(k); var v=a.byInv[k];
+      if(k<i) nb[k]=v; else if(k>i) nb[k-1]=v; });
+    a.byInv=nb; });
+  rsRenderGrid(); rsRenderAr();
+}
+function rsClear(){
+  if(rsRows.length && !confirm('Clear the whole runsheet?')) return;
+  rsRows=[]; rsAr=[]; rsRenderGrid(); rsRenderAr();
+}
+function rsLive(){
+  var pkgs=0, book=0, man=0;
+  rsRows.forEach(function(r){ pkgs+=rsRowTotal(r); if(r.src==='book') book++; else man++; });
+  document.getElementById('rs-live').innerHTML =
+    '<span><b>'+rsRows.length+'</b> invoices'+(rsRows.length>20?' <span style="color:#d64545">(max 20!)</span>':'')+'</span>'+
+    '<span style="color:#7fd7a4"><b>'+book+'</b> from day book</span>'+
+    (man?'<span style="color:#e8a13a"><b>'+man+'</b> manual</span>':'')+
+    '<span><b>'+rsAr.length+'</b> all-round products</span>'+
+    '<span style="margin-left:auto">TOTAL PACKAGES <b style="font-size:15px">'+pkgs+'</b></span>';
+}
+
+/* ---- all-round ---- */
+function rsArDatalist(){
+  var names={};
+  rsRows.forEach(function(r){ (r.items||[]).forEach(function(it){ names[it.item]=(names[it.item]||0)+it.pcs; }); });
+  document.getElementById('rs-ar-dl').innerHTML = Object.keys(names).sort(function(a,b){return names[b]-names[a];})
+    .map(function(n){ return '<option value="'+n.replace(/"/g,'&quot;')+'">'+names[n]+' pcs</option>'; }).join('');
+}
+function rsAddAr(){
+  var v = document.getElementById('rs-ar-input').value.trim();
+  if(!v) return;
+  if(rsAr.some(function(a){return a.name===v;})) return alert('Already added');
+  var a = {name:v, qty:1, unit:'pcs', byInv:{}};
+  rsRows.forEach(function(r,i){
+    (r.items||[]).forEach(function(it){
+      if(it.item===v){ a.byInv[i]=(a.byInv[i]||0)+it.pcs; if(it.per>1) a.qty=it.per; }
+    });
+  });
+  rsAr.push(a);
+  document.getElementById('rs-ar-input').value='';
+  rsRenderAr(); rsRenderLiveOnly();
+}
+function rsRenderAr(){
+  rsArDatalist();
+  var w = document.getElementById('rs-ar-wrap');
+  if(!rsAr.length){ w.innerHTML='<span style="font-size:11.5px;color:var(--muted)">None — add the bulk-bag products for this run; quantities auto-fill for day-book invoices and are editable per stop.</span>'; return; }
+  var h = '<table style="font-size:11.5px"><thead><tr><th style="min-width:200px">Product</th><th style="width:64px">Pcs/Ctn</th>';
+  rsRows.forEach(function(r,i){ h += '<th style="width:52px;text-align:center" title="'+(r.cust||'')+'">'+(i+1)+'<div style="font-weight:400;font-size:9px;color:var(--muted)">'+(r.inv||'')+'</div></th>'; });
+  h += '<th style="width:70px;text-align:center">Pcs = Ctn</th><th style="width:40px"></th></tr></thead><tbody>';
+  rsAr.forEach(function(a,ai){
+    var tot=0;
+    var au = a.unit||'pcs';
+    h += '<tr><td>'+a.name+' <span onclick="rsToggleArUnit('+ai+')" style="cursor:pointer;display:inline-block;font-size:8.5px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px;'+(au==='ctn'?'background:var(--text);color:var(--bg)':'border:1px solid var(--border);color:var(--muted)')+'" title="Click to switch pcs/ctn">'+au.toUpperCase()+'</span></td>'+
+      '<td><input type="number" min="1" value="'+a.qty+'" oninput="rsAr['+ai+'].qty=this.value" onchange="rsRenderAr();rsRenderLiveOnly()" style="width:52px;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 2px"></td>';
+    rsRows.forEach(function(r,i){
+      var v = a.byInv[i]||'';
+      if(v) tot += rsNum(v);
+      h += '<td style="text-align:center"><input value="'+v+'" placeholder="·" oninput="rsAr['+ai+'].byInv['+i+']=this.value" onchange="rsRenderAr();rsRenderLiveOnly()" style="width:42px;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 2px"></td>';
+    });
+    var totCtn = 0; rsRows.forEach(function(r,i){ totCtn += rsCtnOf(a.byInv[i], a.qty, au); });
+    var totPcs = 0; rsRows.forEach(function(r,i){ totPcs += rsToPcs(a.byInv[i], a.qty, au); });
+    h += '<td style="text-align:center;font-weight:600">'+totPcs+'p = '+totCtn+'c</td>';
+    h += '<td><button class="btn btn-ghost btn-sm" onclick="rsAr.splice('+ai+',1);rsRenderAr();rsRenderLiveOnly()">✕</button></td></tr>';
+  });
+  h += '</tbody></table>';
+  w.innerHTML = h;
+}
+function rsAutoFillArForRow(i){
+  var r = rsRows[i];
+  rsAr.forEach(function(a){
+    (r.items||[]).forEach(function(it){
+      if(it.item===a.name){ a.byInv[i]=(a.byInv[i]||0)+it.pcs; if(it.per>1&&(!a.qty||a.qty<=1)) a.qty=it.per; }
+    });
+  });
+}
+
+function rsToggleArUnit(ai){
+  var a = rsAr[ai];
+  var from = a.unit||'pcs', to = from==='pcs' ? 'ctn' : 'pcs';
+  Object.keys(a.byInv).forEach(function(k){
+    var v = rsUnitVal(a.byInv[k]); if(!v) return;
+    a.byInv[k] = to==='ctn' ? +((v/(rsNum(a.qty)>1?rsNum(a.qty):1)).toFixed(1))
+                            : Math.round(v*(rsNum(a.qty)||1));
+  });
+  a.unit = to;
+  rsRenderAr(); rsRenderLiveOnly();
+}
+
+/* ---- template (last used setup) ---- */
+async function rsLoadTemplate(){
+  var tpl = null;
+  try{ tpl = await fetch('/api/runsheet/template').then(function(r){return r.json();}); }catch(e){}
+  if(!tpl || !tpl.saved_at) return alert('No saved setup yet — it saves automatically each time you Build & Print.');
+  ['area','del_man','veh_no'].forEach(function(k){
+    var el = document.getElementById({area:'rs-area',del_man:'rs-delman',veh_no:'rs-veh'}[k]);
+    if(el && !el.value) el.value = (tpl.meta||{})[k]||'';
+  });
+  (tpl.all_round||[]).forEach(function(p){
+    if(rsAr.some(function(a){return a.name===p.name;})) return;
+    var a = {name:p.name, qty:p.qty||1, unit:p.unit||'pcs', byInv:{}};
+    rsRows.forEach(function(r,i){
+      (r.items||[]).forEach(function(it){
+        if(it.item===a.name){
+          var pcs=(a.byInv[i]?rsToPcs(a.byInv[i],a.qty,a.unit):0)+it.pcs;
+          a.byInv[i] = a.unit==='ctn' ? +((pcs/(a.qty>1?a.qty:1)).toFixed(1)) : pcs;
+          if(it.per>1&&a.qty<=1) a.qty=it.per;
+        }
+      });
+    });
+    rsAr.push(a);
+  });
+  rsRenderAr(); rsRenderLiveOnly();
+}
+
+/* ---- columns config + history (unchanged behaviour) ---- */
+async function rsToggleCols(){
+  var p = document.getElementById('rs-cols-panel');
+  if(p.style.display==='none'){
+    p.style.display='block';
+    rsCols = await fetch('/api/runsheet/columns').then(function(r){return r.json();});
+    rsColsLoaded = true;
+    rsRenderCols();
+    try{
+      var res = await fetch('/api/sales/masters/items?limit=4000&offset=0&q=&brand=&category=');
+      var d = await res.json();
+      document.getElementById('rs-items-dl').innerHTML = (d.rows||[]).map(function(r){
+        return '<option value="'+(r.name||'').replace(/"/g,'&quot;')+'">';
+      }).join('');
+    }catch(e){}
+  } else p.style.display='none';
+}
+function rsRenderCols(){
+  document.getElementById('rs-cols-body').innerHTML = rsCols.map(function(cc,i){
+    function inp(f,w,extra){ return '<input value="'+String(cc[f]==null?'':cc[f]).replace(/"/g,'&quot;')+'" oninput="rsCols['+i+'].'+f+'=this.value" '+(extra||'')+' style="width:'+w+';background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:4px 7px;font-size:12px">'; }
+    var u = cc.unit||'pcs';
+    return '<tr><td>'+inp('code','95px')+'</td><td>'+inp('pack','95px')+'</td>'+
+      '<td>'+inp('item_name','100%','list="rs-items-dl"')+'</td>'+
+      '<td>'+inp('qty','60px','type="number" min="1"')+'</td>'+
+      '<td><select onchange="rsCols['+i+'].unit=this.value" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:4px">'+
+        '<option value="pcs"'+(u==='pcs'?' selected':'')+'>pcs</option>'+
+        '<option value="ctn"'+(u==='ctn'?' selected':'')+'>ctn</option></select></td>'+
+      '<td><button class="btn btn-ghost btn-sm" onclick="rsCols.splice('+i+',1);rsRenderCols()">✕</button></td></tr>';
+  }).join('');
+}
+function rsAddCol(){
+  if(rsCols.length>=10) return alert('Max 10 columns fit on the sheet');
+  rsCols.push({code:'',pack:'',item_name:'',qty:1}); rsRenderCols();
+}
+async function rsSaveCols(){
+  var res = await fetch('/api/runsheet/columns',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({cols: rsCols})});
+  var d = await res.json();
+  if(!res.ok) return alert('❌ '+(d.detail||'Save failed'));
+  alert('✅ '+d.count+' columns saved. Re-add invoices to pick up new mappings.');
+  rsRenderGrid();
+}
+async function rsToggleHistory(){
+  var p = document.getElementById('rs-history');
+  if(p.style.display==='none'){
+    p.style.display='block';
+    var rows = await fetch('/api/runsheet/history').then(function(r){return r.json();});
+    document.getElementById('rs-history-body').innerHTML = rows.length ? rows.map(function(r){
+      return '<div style="display:flex;gap:14px;padding:5px 0;border-bottom:1px solid var(--border)">'+
+        '<b>'+r.sheet_no+'</b><span>'+r.run_date+'</span><span>'+(r.area||'')+'</span><span>'+(r.del_man||'')+'</span>'+
+        '<a href="/api/runsheet/print/'+r.id+'" target="_blank" style="margin-left:auto">🖨 Reprint</a></div>';
+    }).join('') : '<span style="color:var(--muted)">No runsheets yet.</span>';
+  } else p.style.display='none';
+}
+
+/* ---- build ---- */
+async function rsBuild(){
+  if(!rsRows.length) return alert('Add at least one invoice');
+  if(rsRows.length>20) return alert('Max 20 invoices per sheet — split the run');
+  var sheet = document.getElementById('rs-sheet').value.trim();
+  if(!sheet) return alert('Enter the Sheet No');
+  var dmy = function(v){ return (v||'').split('-').reverse().join('/'); };
+  var body = {
+    rows: rsRows.map(function(r){ return {inv:r.inv, so:r.so, cust:r.cust, by:r.by,
+      pcs:r.pcs.map(function(v,j){ var cc=rsCols[j]||{}; return rsToPcs(v, cc.qty, cc.unit||'pcs'); }),
+      other:rsNum(r.other)}; }),
+    all_round: rsAr.map(function(a){ var b={}; Object.keys(a.byInv).forEach(function(k){ var v=rsToPcs(a.byInv[k], a.qty, a.unit||'pcs'); if(v) b[k]=v; });
+      return {name:a.name, qty:rsNum(a.qty)||1, unit:a.unit||'pcs', byInv:b}; }),
+    meta: {
+      sheet_no: sheet,
+      area: document.getElementById('rs-area').value.trim(),
+      del_man: document.getElementById('rs-delman').value.trim(),
+      veh_no: document.getElementById('rs-veh').value.trim(),
+      run_date: dmy(document.getElementById('rs-date').value),
+      del_date: dmy(document.getElementById('rs-deldate').value)
+    }
+  };
+  var res = await fetch('/api/runsheet/build',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  var d = await res.json();
+  if(!res.ok) return alert('❌ '+(d.detail||'Build failed'));
+  var w = window.open('', '_blank');
+  if(!w) return alert('Popup blocked — allow popups for this site to print runsheets.');
+  w.document.open(); w.document.write(d.html); w.document.close();
 }
 
 /* ── Master Data sub-tabs ── */

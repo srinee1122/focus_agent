@@ -845,6 +845,16 @@ try:
 except Exception as _sync_err:
     print(f"[Dashboard] Data Sync agent NOT loaded: {_sync_err}")
 
+# ── Runsheet agent (self-contained in runsheet_agent/) ───────────────
+# Same isolation: any problem here only removes /api/runsheet/* routes.
+try:
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from runsheet_agent.runsheet_api import router as _runsheet_router
+    app.include_router(_runsheet_router)
+    print("[Dashboard] Runsheet agent loaded.")
+except Exception as _runsheet_err:
+    print(f"[Dashboard] Runsheet agent NOT loaded: {_runsheet_err}")
+
 
 @app.get("/")
 def serve():

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Runsheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#101318;
+    --ink-soft:#3d434d;
+    --rule:#8a8f98;
+    --rule-strong:#101318;
+    --band:#eef0f2;
+    --round-band:#e7ecef;
+    --chrome-bg:#14171c;
+    --chrome-panel:#1d2128;
+    --chrome-text:#c9cfd8;
+    --accent:#e8a13a;
+    --sans:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,sans-serif;
+    --cond:"IBM Plex Sans Condensed","Arial Narrow",var(--sans);
+    --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--chrome-bg);font-family:var(--sans);color:var(--chrome-text);min-height:100vh}
+
+  /* ---------- preview chrome (not printed) ---------- */
+  .toolbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 18px;
+    background:var(--chrome-panel);border-bottom:1px solid #2a2f38;position:sticky;top:0;z-index:5}
+  .toolbar .tag{font:600 10px/1 var(--mono);letter-spacing:.14em;color:var(--accent);
+    border:1px solid var(--accent);padding:5px 8px;border-radius:3px}
+  .toolbar h1{font:600 14px/1.2 var(--sans);color:#eef1f5}
+  .toolbar .note{font:400 11.5px/1.4 var(--sans);color:#8b93a1}
+  .toolbar button{margin-left:auto;font:600 12px var(--sans);color:#14171c;background:var(--accent);
+    border:none;border-radius:4px;padding:8px 14px;cursor:pointer}
+  .toolbar button:hover{filter:brightness(1.08)}
+  .toolbar button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  .stage{padding:22px 12px 48px;display:flex;justify-content:center}
+  .scaler{transform-origin:top center}
+
+  /* ---------- the sheet: A4 landscape @96dpi = 1123 x 794 ---------- */
+  .sheet{width:1123px;min-height:794px;background:#fff;color:var(--ink);
+    padding:16px 18px 12px;box-shadow:0 18px 50px rgba(0,0,0,.55);
+    display:flex;flex-direction:column;gap:6px}
+
+  /* header band */
+  .head{display:grid;grid-template-columns:300px 1fr 210px;gap:10px;align-items:stretch;
+    border:1.5px solid var(--rule-strong);padding:7px 10px}
+  .co .name{font:700 15px/1.1 var(--cond);letter-spacing:.02em}
+  .co .addr{font:400 8.5px/1.35 var(--sans);color:var(--ink-soft);margin-top:3px}
+  .mid{display:flex;flex-direction:column;justify-content:center;gap:4px}
+  .mid .title-row{display:flex;align-items:baseline;gap:10px;justify-content:center}
+  .mid .doc{font:700 16px/1 var(--cond);letter-spacing:.22em}
+  .mid .doc-no{font:600 15px/1 var(--mono)}
+  .kv-row{display:flex;justify-content:center;gap:18px;flex-wrap:wrap}
+  .kv{font:500 9px/1 var(--cond);letter-spacing:.06em;color:var(--ink-soft);display:flex;gap:5px;align-items:baseline}
+  .kv b{font:600 10.5px var(--mono);color:var(--ink)}
+  .veh{display:flex;flex-direction:column;border-left:1.5px solid var(--rule-strong);padding-left:10px;justify-content:center;gap:3px}
+  .veh .row{display:flex;justify-content:space-between;align-items:center;font:500 9px/1 var(--cond);letter-spacing:.06em;color:var(--ink-soft)}
+  .veh .cell{width:110px;border-bottom:1px solid var(--rule);font:600 10.5px var(--mono);color:var(--ink);text-align:center;padding:2px 0}
+
+  /* main table */
+  table{border-collapse:collapse;width:100%}
+  .main th,.main td{border:.75px solid var(--rule);padding:1.5px 4px;font-size:9px;line-height:1.25}
+  .main thead th{background:var(--band);font:600 8px/1.15 var(--cond);letter-spacing:.04em;text-transform:uppercase;vertical-align:bottom;padding:3px 3px}
+  .main thead .group th{background:var(--round-band);border-bottom:none;font-size:8.5px;letter-spacing:.12em}
+  .main thead .pack{font:500 7px/1 var(--mono);color:var(--ink-soft);letter-spacing:0;display:block;margin-top:1px;text-transform:none}
+  .main td{font-family:var(--mono);text-align:center}
+  .main td.txt{font-family:var(--cond);font-size:9.5px;font-weight:500;text-align:left;letter-spacing:.01em}
+  .main td.by{font-family:var(--cond);font-size:8.5px;text-align:left;color:var(--ink-soft)}
+  .main td.num{font-weight:500}
+  .main td.zero{color:#c2c6cc}
+  .main .tot-col{background:#f5f6f7;font-weight:600}
+  .main tbody tr:nth-child(even) td{background:#fbfbfc}
+  .main tbody tr:nth-child(even) td.tot-col{background:#f1f2f4}
+  .main tfoot td{background:var(--band);font-weight:600;border-top:1.5px solid var(--rule-strong)}
+  .main tfoot .lbl{font-family:var(--cond);text-align:right;letter-spacing:.08em;font-size:8.5px}
+  .main tfoot .ctn-row td{background:#fff;border-top:none;font-weight:600}
+  .main tfoot .ctn-row .lbl{color:var(--ink-soft)}
+  .spare td{height:14px;color:#fff}
+
+  /* bottom zone */
+  .bottom{display:grid;grid-template-columns:1fr 262px 208px;gap:8px;align-items:start;margin-top:2px}
+  .panel-title{background:var(--band);border:.75px solid var(--rule);border-bottom:1.5px solid var(--rule-strong);
+    font:600 8.5px/1 var(--cond);letter-spacing:.12em;text-transform:uppercase;padding:4px 6px;text-align:center}
+
+  /* --- All Round Items distribution matrix --- */
+  .allround th,.allround td{border:.75px solid var(--rule);font-size:8.5px;padding:1.5px 3px}
+  .allround thead th{background:var(--band);font:600 7.5px var(--cond);letter-spacing:.04em;text-transform:uppercase;vertical-align:bottom}
+  .allround thead th.inv{writing-mode:vertical-rl;transform:rotate(180deg);
+    font:500 8px var(--mono);letter-spacing:.03em;text-transform:none;
+    padding:4px 1px;height:56px;width:21px;text-align:left;background:var(--round-band)}
+  .allround thead th.inv .sn{font:600 7px var(--cond);color:var(--ink-soft)}
+  .allround td{font-family:var(--mono);text-align:center}
+  .allround td.txt{font-family:var(--cond);font-size:9px;font-weight:500;text-align:left;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;max-width:168px}
+  .allround td.zero{color:#c9ccd1}
+  .allround td.rt{background:#f5f6f7;font-weight:600}
+  .allround tbody tr:nth-child(even) td{background:#fbfbfc}
+  .allround tbody tr:nth-child(even) td.rt{background:#f1f2f4}
+  .allround tfoot td{background:var(--band);font-weight:600;border-top:1.5px solid var(--rule-strong)}
+  .allround tfoot .lbl{font-family:var(--cond);text-align:right;letter-spacing:.06em;font-size:7.5px;text-transform:uppercase}
+
+  .cashline{display:flex;gap:14px;margin-top:5px;font:500 8.5px var(--cond);letter-spacing:.05em;color:var(--ink-soft)}
+  .cashline b{font:600 10px var(--mono);color:var(--ink)}
+
+  .signs td{border:.75px solid var(--rule);font-size:9px;padding:2px 5px}
+  .signs td.role{font:500 8.5px/1.15 var(--cond);letter-spacing:.03em;text-transform:uppercase;color:var(--ink-soft);width:52%}
+  .signs td.blank{height:19.5px}
+
+  .grand td{border:.75px solid var(--rule);font-size:9px;padding:2.5px 5px}
+  .grand .lbl{font:500 9px var(--cond);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft)}
+  .grand td.val{font:600 11px var(--mono);text-align:right}
+  .grand tr.final td{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .grand tr.final .lbl{color:#fff;font-weight:600}
+  .grand tr.final td.val{font-size:14px}
+
+  .foot{display:flex;justify-content:space-between;margin-top:auto;padding-top:5px;
+    font:400 7.5px/1 var(--mono);color:var(--ink-soft);letter-spacing:.04em}
+
+  .legend{max-width:1123px;margin:14px auto 0;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .legend span{font:400 11px/1.5 var(--sans);color:#98a0ad;background:var(--chrome-panel);
+    border:1px solid #2a2f38;border-radius:4px;padding:6px 10px}
+  .legend b{color:var(--accent);font-weight:600}
+
+  @media print{
+    body{background:#fff}
+    .toolbar,.legend{display:none}
+    .stage{padding:0;display:block}
+    .scaler{transform:none !important}
+    .sheet{box-shadow:none;width:100%;min-height:auto;padding:0}
+    @page{size:A4 landscape;margin:8mm}
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tag">RUNSHEET</span>
+  <div>
+    <h1 id="tb-title">Runsheet</h1>
+    <div class="note">Review, then Print / Save PDF. One page, A4 landscape.</div>
+  </div>
+  <button onclick="window.print()">Print / Save PDF</button>
+</div>
+
+<div class="stage"><div class="scaler" id="scaler">
+<div class="sheet" id="sheet">
+
+  <!-- HEADER -->
+  <div class="head">
+    <div class="co">
+      <div class="name">SRI AMBIKAS PTE&nbsp;LTD</div>
+      <div class="addr">30 Boon Lay Way, #01-02 Mapletree Logistics Trust, Singapore 609957<br>
+      Tel: 6262 1234 &nbsp;·&nbsp; Fax: 6588 8251 &nbsp;·&nbsp; admin@sriambikas.com</div>
+    </div>
+    <div class="mid">
+      <div class="title-row"><span class="doc">RUNSHEET</span><span class="doc-no" id="m-sheet"></span></div>
+      <div class="kv-row">
+        <span class="kv">DATE <b id="m-date"></b></span>
+        <span class="kv">AREA <b id="m-area"></b></span>
+        <span class="kv">DEL DATE <b id="m-deldate"></b></span>
+        <span class="kv">DEL MAN <b id="m-delman"></b></span>
+      </div>
+    </div>
+    <div class="veh">
+      <div class="row"><span>VEH NO</span><span class="cell" id="m-veh">&nbsp;</span></div>
+      <div class="row"><span>TIME OUT</span><span class="cell">&nbsp;</span></div>
+      <div class="row"><span>TIME IN</span><span class="cell">&nbsp;</span></div>
+    </div>
+  </div>
+
+  <!-- MAIN TABLE -->
+  <table class="main" id="mainTable"></table>
+
+  <!-- BOTTOM ZONE -->
+  <div class="bottom">
+    <div>
+      <div class="panel-title">All Round Items — distribution by invoice (pieces)</div>
+      <table class="allround" id="allRound"></table>
+      <div class="cashline">
+        <span>CASH COLLECTED <b id="cashTot"></b></span>
+        <span>CHEQUE COLLECTED <b id="chqTot"></b></span>
+      </div>
+    </div>
+    <div>
+      <div class="panel-title">Checked &amp; Handover</div>
+      <table class="signs" style="width:100%">
+        <tbody id="signRows"></tbody>
+      </table>
+    </div>
+    <div>
+      <div class="panel-title">Load Summary</div>
+      <table class="grand" style="width:100%" id="grandBox"></table>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>SRI AMBIKAS PTE LTD · UEN 201310706R</span>
+    <span>Generated by Focus Agent · Runsheet Module</span>
+    <span>Page 1 of 1</span>
+  </div>
+
+</div>
+</div></div>
+
+
+
+<script>
+/* Injected by the Runsheet agent */
+const DATA = /*__DATA__*/null;
+const COLS = DATA.cols;
+const ROWS = DATA.rows;
+const ALL_ROUND = DATA.all_round;
+const SIGN_ROLES = ["Prepared By","Arranged By","Bill Counter Checked By","Puller",
+  "Round Item Checked By","Loaded By","Taken Over From Driver","Hand Over By Admin","Taken Over By Admin"];
+
+/* ============ RENDER ============ */
+const ctnOf = (pcs,qty)=> qty<=1 ? pcs : Math.ceil(pcs/qty);
+const fmt$ = () => "";   // cash/cheque are written by the driver
+const cell = (v,cls="") => `<td class="num ${v===0?'zero':''} ${cls}">${v===0?'·':v}</td>`;
+
+/* per-invoice all-round cartons (feeds the main table TOTAL PKGS column) */
+const arCtnByInv = ROWS.map((_,i)=>
+  ALL_ROUND.reduce((s,p)=> s + ctnOf(p.byInv[i]||0, p.qty), 0));
+const arPcsByInv = ROWS.map((_,i)=>
+  ALL_ROUND.reduce((s,p)=> s + (p.byInv[i]||0), 0));
+
+function render(){
+  document.title = "Runsheet " + DATA.meta.sheet_no;
+  document.getElementById("m-sheet").textContent = DATA.meta.sheet_no;
+  document.getElementById("m-date").textContent = DATA.meta.run_date;
+  document.getElementById("m-area").textContent = DATA.meta.area;
+  document.getElementById("m-deldate").textContent = DATA.meta.del_date;
+  document.getElementById("m-delman").textContent = DATA.meta.del_man;
+  document.getElementById("m-veh").textContent = DATA.meta.veh_no || "\u00a0";
+  /* ---- main table ---- */
+  let h = `<thead>
+    <tr class="group">
+      <th colspan="7" style="background:var(--band)"></th>
+      <th colspan="${COLS.length}">ROUND ITEMS — QUANTITY IN PIECES</th>
+      <th colspan="3" style="background:var(--band)"></th>
+    </tr>
+    <tr>
+      <th style="width:22px">S.N</th><th style="width:56px">Invoice</th><th style="width:48px">S.Order</th>
+      <th>Customer Name</th><th style="width:60px">Taken By</th>
+      <th style="width:50px">Cash $</th><th style="width:54px">Cheque $</th>`;
+  COLS.forEach(c=> h += `<th style="width:38px">${c.code}<span class="pack">${c.pack}</span></th>`);
+  h += `<th style="width:40px">Other<span class="pack">CTN</span></th>
+        <th style="width:40px">A.R.<span class="pack">CTN</span></th>
+        <th style="width:44px">TOTAL<span class="pack">PKGS</span></th></tr></thead><tbody>`;
+
+  const colPcs = COLS.map(()=>0);
+  let cashT=0, chqT=0, grandRoundCtn=0, sheetTotal=0;
+
+  ROWS.forEach((r,i)=>{
+    const roundCtn = r.pcs.reduce((s,p,j)=> s+ctnOf(p,COLS[j].qty), 0);
+    const total = roundCtn + r.other + arCtnByInv[i];
+    sheetTotal += total; cashT += r.cash; chqT += r.chq; grandRoundCtn += roundCtn;
+    r.pcs.forEach((p,j)=> colPcs[j]+=p);
+    h += `<tr><td>${i+1}</td><td>${r.inv}</td><td>${r.so}</td>
+      <td class="txt">${r.cust}</td><td class="by">${r.by}</td>
+      <td class="num"></td><td class="num"></td>`;
+    r.pcs.forEach(p=> h += cell(p));
+    h += cell(r.other) + cell(arCtnByInv[i]) + `<td class="tot-col">${total}</td></tr>`;
+  });
+
+
+  const otherT = ROWS.reduce((s,r)=>s+r.other,0);
+  const arCtnT = arCtnByInv.reduce((a,b)=>a+b,0);
+  h += `<tfoot>
+    <tr><td colspan="5" class="lbl">TOTAL ROUND — PIECES</td>
+        <td></td><td></td>
+        ${colPcs.map(p=>`<td>${p}</td>`).join("")}
+        <td>${otherT}</td><td>${arCtnT}</td><td class="tot-col">${sheetTotal}</td></tr>
+    <tr class="ctn-row"><td colspan="7" class="lbl">CONVERTED — CARTONS / BAGS &nbsp;(pcs ÷ qty/ctn)</td>
+        ${colPcs.map((p,j)=>`<td>${ctnOf(p,COLS[j].qty)}</td>`).join("")}
+        <td>${otherT}</td><td>${arCtnT}</td><td class="tot-col">${grandRoundCtn+otherT+arCtnT}</td></tr>
+  </tfoot>`;
+  document.getElementById("mainTable").innerHTML = h;
+  // driver writes collected amounts on the printed line
+  document.getElementById("cashTot").innerHTML = "$ ____________";
+  document.getElementById("chqTot").innerHTML  = "$ ____________";
+
+  /* ---- All Round Items distribution matrix ---- */
+  let a = `<thead><tr><th style="text-align:left">Product · pcs by invoice →</th>`;
+  ROWS.forEach((r,i)=> a += `<th class="inv"><span class="sn">${i+1}·</span>${r.inv}</th>`);
+  a += `<th style="width:32px">PCS</th><th style="width:34px">Q/C</th><th style="width:32px">CTN</th></tr></thead><tbody>`;
+
+  let arPcsT=0, arCtnRowT=0;
+  ALL_ROUND.forEach(p=>{
+    const rowPcs = ROWS.reduce((s,_,i)=> s+(p.byInv[i]||0), 0);
+    const rowCtn = ctnOf(rowPcs, p.qty);
+    arPcsT += rowPcs; arCtnRowT += rowCtn;
+    a += `<tr><td class="txt">${p.name}</td>`;
+    ROWS.forEach((_,i)=>{ const v=p.byInv[i]||0; a += `<td class="${v===0?'zero':''}">${v===0?'·':v}</td>`; });
+    a += `<td class="rt">${rowPcs}</td><td>${p.qty}</td><td class="rt">${rowCtn}</td></tr>`;
+  });
+  a += `</tbody><tfoot><tr><td class="lbl">Pieces per shop (driver drops)</td>`;
+  ROWS.forEach((_,i)=> a += `<td>${arPcsByInv[i]||"·"}</td>`);
+  a += `<td>${arPcsT}</td><td></td><td>${arCtnRowT}</td></tr></tfoot>`;
+  document.getElementById("allRound").innerHTML = a;
+
+  /* ---- signatures ---- */
+  document.getElementById("signRows").innerHTML =
+    SIGN_ROLES.map(r=>`<tr><td class="role">${r}</td><td class="blank"></td></tr>`).join("");
+
+  /* ---- load summary ---- */
+  const grand = grandRoundCtn + otherT + arCtnRowT;
+  document.getElementById("grandBox").innerHTML = `
+    <tr><td class="lbl">Round items (columns)</td><td class="val">${grandRoundCtn}</td></tr>
+    <tr><td class="lbl">Other cartons</td><td class="val">${otherT}</td></tr>
+    <tr><td class="lbl">All round items (matrix)</td><td class="val">${arCtnRowT}</td></tr>
+    <tr><td class="lbl">Invoices on run</td><td class="val">${ROWS.length}</td></tr>
+    <tr class="final"><td class="lbl">TOTAL PACKAGES LOADED</td><td class="val">${grand}</td></tr>`;
+}
+render();
+
+/* scale sheet to fit narrow screens */
+function fit(){
+  const s = Math.min(1,(window.innerWidth-24)/1123);
+  document.getElementById("scaler").style.transform = `scale(${s})`;
+  document.getElementById("scaler").style.height = s<1 ? (document.getElementById("sheet").offsetHeight*s)+"px" : "auto";
+}
+window.addEventListener("resize",fit); fit();
+</script>
+</body>
+</html>

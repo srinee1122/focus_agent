@@ -1,5 +1,7 @@
+C:\Users\srini\AppData\Roaming\Python\Python313\site-packages\openpyxl\styles\stylesheet.py:237: UserWarning: Workbook contains no default style, apply openpyxl's default
+  warn("Workbook contains no default style, apply openpyxl's default")
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-▶  DATA SYNC — accounts  —  14 Aug 2026 06:31:03 PM
+▶  DATA SYNC — daybook  —  15 Aug 2026 04:44:32 PM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    Focus agent dir: C:\Users\srini\OneDrive\Desktop\focus_agent\focus_agent
    Dashboard DB:    C:\Users\srini\OneDrive\Desktop\focus_agent\erp_dashboard\dashboard.db
@@ -9,22 +11,23 @@
 🔐 Logging in...
    Logged in successfully.
 
-═══ ACCOUNTS ═══
-🔎 Opening Master Info via menu search...
+═══ DAYBOOK ═══
+📅 Window: 16/06/2026 → 15/08/2026 (60 days)
+📂 Navigating to Sales day book...
       Page ready: Focus home
-   ▸ Master Info
-      Page ready: Master Info view
-✅ Master Info view opened.
-🗂  Selecting master type: Account
-      Page ready: Account master
-☑️  Selecting all masters...
-   All masters selected.
+   ▸ Financials
+   ▸ Reports
+   ▸ Sales Register
+      Page ready: Sales Register page
+   ▸ Sales day book
+      Page ready: Sales day book
+🗓  Setting date range...
+   Start 16/06/2026 · End 15/08/2026
+🧾 Selecting Default Layout...
 ⬇  Exporting to Excel...
-   SignalR hub state: 1 (1 = connected; export needs this push channel)
    ☑ Export confirmed (playwright click: Yes)
-   ☑ Export confirmed (playwright click: Yes)
-   ⬇ Download started — waiting for it to finish...
-   ✅ Download complete: accounts_20260814.xlsx (289 KB)
-📥 Updating the Customers master (same path as manual upload)...
-   ✅ Customers: 1448 · Segments: 12 · Areas: 87 (non-customer accounts skipped: 1219)
-✅ Customers master sync complete.
+   Downloaded: daybook_20260616_20260815.xlsx (3415 KB)
+   ✖ Dismissed popup: Export Report Data
+📥 Imported: 59383 rows (2026-06-16 → 2026-08-15, 2359 items, 17 salesmen)
+   DB: 59383 rows written · 59234 prior rows replaced
+✅ Day book sync complete.
