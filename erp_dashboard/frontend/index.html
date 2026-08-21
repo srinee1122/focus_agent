@@ -65,7 +65,7 @@ header{padding:14px 28px;border-bottom:1px solid var(--border);display:flex;alig
   box-shadow:0 1px 0 rgba(255,255,255,.03)}
 header h2{font-size:16px;font-weight:700;letter-spacing:-.01em}
 header .sub{font-size:12px;color:var(--muted)}
-.content{flex:1;overflow-y:auto;padding:28px}
+.content{flex:1;min-height:0;overflow-y:auto;padding:28px}
 
 /* ── Pages ── */
 .page{display:none;flex-direction:column;gap:22px}
@@ -797,9 +797,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
     </div>
 
     <!-- ── Price Book ── -->
-    
-
-  </div>
 
     <div id="page-runsheet" class="page">
       <div class="section-header">
@@ -838,6 +835,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
         <label class="rs-lbl">VEHICLE NO<input id="rs-veh"></label>
         <label class="rs-lbl">RUN DATE<input type="date" id="rs-date"></label>
         <label class="rs-lbl">DELIVERY DATE<input type="date" id="rs-deldate"></label>
+        <label class="rs-lbl" style="grid-column:1/-1">NOTES (printed under the sheet header when filled)<input id="rs-notes" placeholder="e.g. PA-2 · Please call salesperson before delivery"></label>
       </div>
 
       <!-- invoice adder -->
@@ -846,7 +844,18 @@ tr:hover td{background:rgba(255,255,255,.02)}
           onkeydown="if(event.key==='Enter'){rsAddInvoice();return false;}"
           style="flex:1;min-width:260px;background:var(--surface);border:2px solid var(--accent2);color:var(--text);border-radius:8px;padding:10px 14px;font-size:14px">
         <button class="btn btn-primary" onclick="rsAddInvoice()">＋ Add invoice</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('rs-photo-file').click()" title="Photograph the annotated Sales Order — AI extracts the row for review">📷 From photo</button>
+        <input type="file" id="rs-photo-file" accept="image/*" multiple style="display:none" onchange="rsPhotoFiles(this)">
         <span id="rs-add-status" style="font-size:12px;color:var(--muted)"></span>
+      </div>
+
+      <!-- photo extraction review (mandatory before anything lands in the grid) -->
+      <div id="rs-photo-panel" style="display:none;background:var(--surface);border:1px solid var(--accent2);border-radius:8px;padding:14px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <b style="font-size:13px">📷 Photo extraction — review before adding</b>
+          <button class="btn btn-ghost btn-sm" onclick="rsPhotoClose()">✕ Close</button>
+        </div>
+        <div id="rs-photo-body"></div>
       </div>
 
       <!-- the grid -->
@@ -877,6 +886,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
         <button class="btn btn-primary" onclick="rsBuild()" style="padding:10px 22px">🖨 Build &amp; Print</button>
       </div>
     </div>
+  </div>
 </main>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -1902,7 +1912,7 @@ function rsRenderGrid(){
   var head = '<tr><th style="width:30px"></th><th style="width:80px">Invoice</th><th style="width:70px">S.Order</th>'+
     '<th style="min-width:180px">Customer</th><th style="width:90px">Taken by</th>';
   rsCols.forEach(function(cc,j){ var u=(cc.unit||'pcs'); head += '<th style="width:56px;text-align:center;cursor:pointer" title="'+(cc.item_name||'not mapped')+' — click badge to switch unit" onclick="rsToggleColUnit('+j+')">'+cc.code+'<div style="font-weight:400;font-size:9px;color:var(--muted)">'+(cc.pack||('x'+cc.qty))+'</div><span style="display:inline-block;font-size:8px;font-weight:700;padding:0 4px;border-radius:3px;margin-top:2px;'+(u==='ctn'?'background:var(--text);color:var(--bg)':'border:1px solid var(--border);color:var(--muted)')+'">'+u.toUpperCase()+'</span></th>'; });
-  head += '<th style="width:56px;text-align:center">Other<div style="font-weight:400;font-size:9px;color:var(--muted)">ctn</div></th>'+
+  head += '<th style="width:56px;text-align:center">Ctns<div style="font-weight:400;font-size:9px;color:var(--muted)">box total</div></th>'+
     '<th style="width:56px;text-align:center">Total<div style="font-weight:400;font-size:9px;color:var(--muted)">pkgs</div></th><th style="width:86px"></th></tr>';
   document.getElementById('rs-grid-head').innerHTML = head;
 
@@ -1966,7 +1976,10 @@ function rsRemove(i){
 }
 function rsClear(){
   if(rsRows.length && !confirm('Clear the whole runsheet?')) return;
-  rsRows=[]; rsAr=[]; rsRenderGrid(); rsRenderAr();
+  rsRows=[]; rsAr=[]; rsPhotoOrders=[];
+  document.getElementById('rs-notes').value='';
+  document.getElementById('rs-photo-panel').style.display='none';
+  rsRenderGrid(); rsRenderAr();
 }
 function rsLive(){
   var pkgs=0, book=0, man=0;
@@ -2046,6 +2059,159 @@ function rsToggleArUnit(ai){
   rsRenderAr(); rsRenderLiveOnly();
 }
 
+/* ---- photo extraction (AI reads the annotated Sales Order) ----
+   Flow: pick photo(s) → downscale in the browser → POST base64 to
+   /api/runsheet/from-photo → review panel → Confirm adds the row.
+   Nothing lands in the grid without the Confirm click. */
+var rsPhotoOrders = [];
+
+function rsEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function rsPhotoPrep(file){
+  // Downscale to max 2400px long edge → JPEG base64 (keeps uploads
+  // small and within the vision API's per-image limit).
+  return new Promise(function(resolve, reject){
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function(){
+      URL.revokeObjectURL(url);
+      var MAX = 2400, w = img.naturalWidth, h = img.naturalHeight;
+      var s = Math.min(1, MAX/Math.max(w,h));
+      var c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(w*s)); c.height = Math.max(1, Math.round(h*s));
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      resolve({data: c.toDataURL('image/jpeg', 0.85).split(',')[1], media_type: 'image/jpeg'});
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error(file.name+': cannot read this image — use a JPG or PNG photo')); };
+    img.src = url;
+  });
+}
+
+async function rsPhotoFiles(input){
+  var files = Array.prototype.slice.call(input.files||[]);
+  input.value = '';
+  if(!files.length) return;
+  if(files.length > 6) return alert('Max 6 photos per upload');
+  var st = document.getElementById('rs-add-status');
+  st.textContent = 'Reading '+files.length+' photo(s)…';
+  var images = [];
+  try{ for(var i=0;i<files.length;i++) images.push(await rsPhotoPrep(files[i])); }
+  catch(e){ st.textContent=''; return alert('❌ '+e.message); }
+  st.textContent = 'Extracting with AI — roughly 15–30s per page…';
+  var d = null;
+  try{
+    var res = await fetch('/api/runsheet/from-photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({images:images})});
+    d = await res.json();
+    if(!res.ok) throw new Error(d.detail||'Extraction failed');
+  }catch(e){ st.textContent=''; return alert('❌ '+e.message); }
+  st.textContent = '';
+  if(d.cols && d.cols.length){ rsCols = d.cols; rsColsLoaded = true; rsRenderGrid(); }
+  (d.orders||[]).forEach(function(o){ o._done = false; rsPhotoOrders.push(o); });
+  if(d.errors && d.errors.length) alert('⚠ Some photos failed:\n'+d.errors.join('\n'));
+  rsRenderPhotoReview();
+}
+
+function rsPhotoClose(){
+  if(rsPhotoOrders.some(function(o){return !o._done;}) &&
+     !confirm('Discard the unconfirmed photo extractions?')) return;
+  rsPhotoOrders = [];
+  document.getElementById('rs-photo-panel').style.display = 'none';
+}
+function rsPhotoDismiss(k){ rsPhotoOrders.splice(k,1); rsRenderPhotoReview(); }
+
+function rsRenderPhotoReview(){
+  var p = document.getElementById('rs-photo-panel');
+  if(!rsPhotoOrders.length){ p.style.display='none'; return; }
+  p.style.display = 'block';
+  document.getElementById('rs-photo-body').innerHTML = rsPhotoOrders.map(function(o,k){
+    var m = o.match||{};
+    var matchHtml = m.found
+      ? '<span style="color:#7fd7a4">✓ Day book match — invoice <b>'+rsEsc(m.inv)+'</b> · '+rsEsc(m.cust||'')+' · '+rsEsc(m.date||'')+'</span>'
+      : '<span style="color:#e8a13a">✎ SO not found in day book — row will be added as manual (photo data stands alone)</span>';
+    var b = o.box;
+    var boxHtml = b
+      ? 'TAKEN BY <b>'+rsEsc(b.reader_name||'—')+'</b> · '+rsEsc(b.date||'')+' '+rsEsc(b.time_from||'')+'–'+rsEsc(b.time_to||'')+
+        ' · carton <b>'+(b.carton==null?'?':b.carton)+'</b> + loose <b>'+(b.loose==null?'?':b.loose)+'</b> → Other ctn <b>'+(((parseInt(b.carton,10)||0)+(parseInt(b.loose,10)||0)))+'</b>'+
+        ' · total '+(b.total==null?'?':b.total)+' · palleted by '+rsEsc(b.palleted_by||'—')
+      : '<span style="color:#e8a13a">No stamped box on these pages — TAKEN BY and Other ctn stay empty</span>';
+    var items = (o.round_items||[]).map(function(ri){
+      var dest = ri.struck ? '<span style="color:#d64545">excluded</span>'
+        : (ri.col!=null && rsCols[ri.col] ? 'column <b>'+rsEsc(rsCols[ri.col].code)+'</b>' : 'all-round matrix');
+      return '<tr'+(ri.struck?' style="color:#d64545"':'')+'>'+
+        '<td style="text-align:center">'+(ri.serial==null?'':ri.serial)+'</td>'+
+        '<td><span'+(ri.struck?' style="text-decoration:line-through"':'')+'>'+rsEsc(ri.item)+'</span>'+
+          (ri.struck?' <b style="font-size:10px"> marked round but NOT supplied</b>':'')+'</td>'+
+        '<td style="text-align:center">'+(ri.qty==null?'':ri.qty)+' '+rsEsc(ri.uom||'')+'</td>'+
+        '<td style="text-align:center">'+(ri.pcs||0)+' pcs <span style="color:var(--muted)">(×'+(ri.per||1)+'/ctn)</span></td>'+
+        '<td>'+dest+'</td></tr>';
+    }).join('') || '<tr><td colspan="5" style="color:var(--muted)">No circled round items on these pages.</td></tr>';
+    var unc = (o.uncertain||[]).length
+      ? '<div style="margin-top:6px;background:rgba(232,161,58,.14);border:1px solid #e8a13a;border-radius:6px;padding:6px 10px;font-size:12px"><b style="color:#e8a13a">⚠ Could not read with confidence — check by hand:</b><ul style="margin:4px 0 0 18px">'+
+        o.uncertain.map(function(u){ return '<li>'+rsEsc(u)+'</li>'; }).join('')+'</ul></div>' : '';
+    var bits = [];
+    if(o.pallet_no) bits.push('Pallet '+o.pallet_no);
+    (o.notes||[]).forEach(function(n){ if(n) bits.push(n); });
+    var notesHtml = bits.length ? '<div style="margin-top:6px;font-size:12px">📝 '+bits.map(rsEsc).join(' · ')+'</div>' : '';
+    return '<div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;'+(o._done?'opacity:.45':'')+'">'+
+      '<div style="display:flex;gap:14px;align-items:baseline;flex-wrap:wrap">'+
+        '<b style="font-size:13.5px">SO '+rsEsc(o.so_no||'?')+'</b>'+
+        '<span style="font-size:12px">'+rsEsc(o.customer||'')+'</span>'+
+        '<span style="font-size:11.5px;color:var(--muted)">'+rsEsc(o.so_date||'')+' · '+rsEsc(o.area||'')+' · salesman '+rsEsc(o.salesman||'—')+' · page '+rsEsc((o.pages||[]).filter(Boolean).join(', ')||'?')+'</span>'+
+      '</div>'+
+      '<div style="font-size:12px;margin-top:4px">'+matchHtml+'</div>'+
+      '<div style="font-size:12px;margin-top:4px">'+boxHtml+'</div>'+
+      '<div class="table-wrap" style="margin-top:8px"><table style="font-size:12px"><thead><tr><th style="width:40px">S/No</th><th>Round item (circled on the SO)</th><th style="width:90px">Printed qty</th><th style="width:120px">Pieces</th><th style="width:130px">Goes to</th></tr></thead><tbody>'+items+'</tbody></table></div>'+
+      unc + notesHtml +
+      '<div style="display:flex;gap:8px;margin-top:10px;align-items:center">'+
+        (o._done ? '<span style="color:#7fd7a4;font-size:12.5px">✓ Added to the grid — edit any cell there</span>'
+          : '<button class="btn btn-primary btn-sm" onclick="rsPhotoConfirm('+k+')">✔ Confirm — add row to grid</button>'+
+            '<button class="btn btn-ghost btn-sm" onclick="rsPhotoDismiss('+k+')">Discard</button>')+
+      '</div></div>';
+  }).join('');
+}
+
+function rsPhotoConfirm(k){
+  var o = rsPhotoOrders[k];
+  if(!o || o._done) return;
+  if(rsRows.length >= 20) return alert('Max 20 invoices per sheet — split the run.');
+  var m = o.match||{}, b = o.box||{};
+  var other = (parseInt(b.carton,10)||0) + (parseInt(b.loose,10)||0);
+  var row = {src: m.found ? 'book' : 'manual',
+    inv: m.found ? (m.inv||'') : '',
+    so: o.so_no||'',
+    cust: (m.found && m.cust) ? m.cust : (o.customer||''),
+    by: b.reader_name||'',
+    pcs: rsCols.map(function(){ return 0; }),
+    other: other || '',
+    items: m.found ? (m.items||[]) : []};
+  rsRows.push(row);
+  var i = rsRows.length - 1;
+  (o.round_items||[]).forEach(function(ri){
+    if(ri.struck || !ri.pcs) return;          // struck circled lines are excluded
+    if(ri.col!=null && ri.col>=0 && ri.col<rsCols.length){
+      var cc = rsCols[ri.col];
+      var disp = (cc.unit==='ctn') ? +((ri.pcs/(cc.qty>1?cc.qty:1)).toFixed(1)) : ri.pcs;
+      row.pcs[ri.col] = (rsUnitVal(row.pcs[ri.col])||0) + disp;
+    } else {
+      var a = null;
+      rsAr.forEach(function(x){ if(x.name===ri.item) a = x; });
+      if(!a){ a = {name:ri.item, qty:(ri.per>1?ri.per:1), unit:'pcs', byInv:{}}; rsAr.push(a); }
+      var v = (a.unit==='ctn') ? +((ri.pcs/(rsNum(a.qty)>1?rsNum(a.qty):1)).toFixed(1)) : ri.pcs;
+      a.byInv[i] = (rsUnitVal(a.byInv[i])||0) + v;
+    }
+  });
+  var bits = [];
+  if(o.pallet_no) bits.push('Pallet '+o.pallet_no);
+  (o.notes||[]).forEach(function(n){ if(n) bits.push(n); });
+  if(bits.length){
+    var ne = document.getElementById('rs-notes');
+    var add = 'SO '+(o.so_no||'?')+': '+bits.join(' · ');
+    ne.value = ne.value ? ne.value+'  |  '+add : add;
+  }
+  o._done = true;
+  rsRenderGrid(); rsRenderAr(); rsRenderPhotoReview();
+}
+
 /* ---- template (last used setup) ---- */
 async function rsLoadTemplate(){
   var tpl = null;
@@ -2080,13 +2246,6 @@ async function rsToggleCols(){
     rsCols = await fetch('/api/runsheet/columns').then(function(r){return r.json();});
     rsColsLoaded = true;
     rsRenderCols();
-    try{
-      var res = await fetch('/api/sales/masters/items?limit=4000&offset=0&q=&brand=&category=');
-      var d = await res.json();
-      document.getElementById('rs-items-dl').innerHTML = (d.rows||[]).map(function(r){
-        return '<option value="'+(r.name||'').replace(/"/g,'&quot;')+'">';
-      }).join('');
-    }catch(e){}
   } else p.style.display='none';
 }
 function rsRenderCols(){
@@ -2094,13 +2253,55 @@ function rsRenderCols(){
     function inp(f,w,extra){ return '<input value="'+String(cc[f]==null?'':cc[f]).replace(/"/g,'&quot;')+'" oninput="rsCols['+i+'].'+f+'=this.value" '+(extra||'')+' style="width:'+w+';background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:4px 7px;font-size:12px">'; }
     var u = cc.unit||'pcs';
     return '<tr><td>'+inp('code','95px')+'</td><td>'+inp('pack','95px')+'</td>'+
-      '<td>'+inp('item_name','100%','list="rs-items-dl"')+'</td>'+
+      '<td style="position:relative">'+
+        '<input value="'+String(cc.item_name==null?'':cc.item_name).replace(/"/g,'&quot;')+'" '+
+          'placeholder="Type 2+ letters to search the items master…" '+
+          'oninput="rsCols['+i+'].item_name=this.value;rsItemSearch('+i+',this)" '+
+          'onfocus="rsItemSearch('+i+',this)" '+
+          'onblur="rsItemBlur('+i+')" '+
+          'style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:4px 7px;font-size:12px">'+
+        '<div id="rs-item-sug-'+i+'" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:60;background:var(--surface);border:1px solid var(--border);border-radius:6px;max-height:220px;overflow:auto;box-shadow:0 8px 20px rgba(0,0,0,0.35)"></div>'+
+      '</td>'+
       '<td>'+inp('qty','60px','type="number" min="1"')+'</td>'+
       '<td><select onchange="rsCols['+i+'].unit=this.value" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:4px">'+
         '<option value="pcs"'+(u==='pcs'?' selected':'')+'>pcs</option>'+
         '<option value="ctn"'+(u==='ctn'?' selected':'')+'>ctn</option></select></td>'+
       '<td><button class="btn btn-ghost btn-sm" onclick="rsCols.splice('+i+',1);rsRenderCols()">✕</button></td></tr>';
   }).join('');
+}
+var _rsItemTimer = null;
+function rsItemSearch(i, inp){
+  clearTimeout(_rsItemTimer);
+  var q = inp.value.trim();
+  var box = document.getElementById('rs-item-sug-'+i);
+  if(q.length < 2){ if(box) box.style.display='none'; return; }
+  _rsItemTimer = setTimeout(async function(){
+    try{
+      var d = await fetch('/api/sales/masters/items?q='+encodeURIComponent(q)+'&limit=30&offset=0&brand=&category=').then(function(r){return r.json();});
+      var rows = d.rows || [];   // rows are ARRAYS: [name, code, brand, category, base_unit, qty_per_ctn, ...]
+      if(!rows.length){ box.innerHTML='<div style="padding:8px 10px;color:var(--muted);font-size:11.5px">No items match "'+q+'"</div>'; box.style.display='block'; return; }
+      box.innerHTML = rows.map(function(r){
+        var name = String(r[0]||''); var per = r[5]||'';
+        return '<div onmousedown="rsItemPick('+i+',this.dataset.n,this.dataset.q)" data-n="'+name.replace(/"/g,'&quot;')+'" data-q="'+per+'" '+
+          'style="padding:6px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border)" '+
+          'onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'transparent\'">'+
+          name+(per?' <span style="color:var(--muted);font-size:10.5px">· '+per+'/ctn</span>':'')+
+          (r[2]?' <span style="color:var(--muted);font-size:10.5px">'+r[2]+'</span>':'')+'</div>';
+      }).join('');
+      box.style.display='block';
+    }catch(e){ box.style.display='none'; }
+  }, 250);
+}
+function rsItemPick(i, name, per){
+  rsCols[i].item_name = name;
+  if(per && parseInt(per) > 0) rsCols[i].qty = parseInt(per);
+  rsRenderCols();
+}
+function rsItemBlur(i){
+  setTimeout(function(){
+    var box = document.getElementById('rs-item-sug-'+i);
+    if(box) box.style.display='none';
+  }, 200);
 }
 function rsAddCol(){
   if(rsCols.length>=10) return alert('Max 10 columns fit on the sheet');
@@ -2145,7 +2346,8 @@ async function rsBuild(){
       del_man: document.getElementById('rs-delman').value.trim(),
       veh_no: document.getElementById('rs-veh').value.trim(),
       run_date: dmy(document.getElementById('rs-date').value),
-      del_date: dmy(document.getElementById('rs-deldate').value)
+      del_date: dmy(document.getElementById('rs-deldate').value),
+      notes: document.getElementById('rs-notes').value.trim()
     }
   };
   var res = await fetch('/api/runsheet/build',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});

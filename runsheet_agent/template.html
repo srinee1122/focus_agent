@@ -60,6 +60,11 @@
   .veh .row{display:flex;justify-content:space-between;align-items:center;font:500 9px/1 var(--cond);letter-spacing:.06em;color:var(--ink-soft)}
   .veh .cell{width:110px;border-bottom:1px solid var(--rule);font:600 10.5px var(--mono);color:var(--ink);text-align:center;padding:2px 0}
 
+  /* notes line (only rendered when the run carries notes) */
+  .notesline{border:1.5px solid var(--rule-strong);border-top:none;margin-top:-6px;
+    padding:3px 10px;font:500 9.5px/1.35 var(--cond);letter-spacing:.03em;color:var(--ink)}
+  .notesline b{font:600 8px var(--cond);letter-spacing:.12em;color:var(--ink-soft);margin-right:6px}
+
   /* main table */
   table{border-collapse:collapse;width:100%}
   .main th,.main td{border:.75px solid var(--rule);padding:1.5px 4px;font-size:9px;line-height:1.25}
@@ -171,6 +176,9 @@
     </div>
   </div>
 
+  <!-- NOTES (hidden unless the run carries notes) -->
+  <div class="notesline" id="m-notes" style="display:none"></div>
+
   <!-- MAIN TABLE -->
   <table class="main" id="mainTable"></table>
 
@@ -235,6 +243,12 @@ function render(){
   document.getElementById("m-deldate").textContent = DATA.meta.del_date;
   document.getElementById("m-delman").textContent = DATA.meta.del_man;
   document.getElementById("m-veh").textContent = DATA.meta.veh_no || "\u00a0";
+  if (DATA.meta.notes) {           // old saved payloads have no notes field
+    const n = document.getElementById("m-notes");
+    n.style.display = "block";
+    n.innerHTML = "<b>NOTES</b>";
+    n.appendChild(document.createTextNode(DATA.meta.notes));
+  }
   /* ---- main table ---- */
   let h = `<thead>
     <tr class="group">
@@ -247,36 +261,39 @@ function render(){
       <th>Customer Name</th><th style="width:60px">Taken By</th>
       <th style="width:50px">Cash $</th><th style="width:54px">Cheque $</th>`;
   COLS.forEach(c=> h += `<th style="width:38px">${c.code}<span class="pack">${c.pack}</span></th>`);
-  h += `<th style="width:40px">Other<span class="pack">CTN</span></th>
-        <th style="width:40px">A.R.<span class="pack">CTN</span></th>
+  h += `<th style="width:40px">CTNS<span class="pack">box total</span></th>
+        <th style="width:40px">RI<span class="pack">CTN</span></th>
         <th style="width:44px">TOTAL<span class="pack">PKGS</span></th></tr></thead><tbody>`;
 
   const colPcs = COLS.map(()=>0);
   let cashT=0, chqT=0, grandRoundCtn=0, sheetTotal=0;
 
   ROWS.forEach((r,i)=>{
+    const otherC = Number(r.ctn != null ? r.ctn : r.other) || 0;   // box total (carton+loose); legacy payloads used "other"
     const roundCtn = r.pcs.reduce((s,p,j)=> s+ctnOf(p,COLS[j].qty), 0);
-    const total = roundCtn + r.other + arCtnByInv[i];
-    sheetTotal += total; cashT += r.cash; chqT += r.chq; grandRoundCtn += roundCtn;
+    const riC = roundCtn + arCtnByInv[i];                          // RI = round columns + matrix, in cartons
+    const total = otherC + riC;
+    sheetTotal += total; cashT += Number(r.cash)||0; chqT += Number(r.chq)||0; grandRoundCtn += roundCtn;
     r.pcs.forEach((p,j)=> colPcs[j]+=p);
     h += `<tr><td>${i+1}</td><td>${r.inv}</td><td>${r.so}</td>
       <td class="txt">${r.cust}</td><td class="by">${r.by}</td>
       <td class="num"></td><td class="num"></td>`;
     r.pcs.forEach(p=> h += cell(p));
-    h += cell(r.other) + cell(arCtnByInv[i]) + `<td class="tot-col">${total}</td></tr>`;
+    h += cell(otherC) + cell(riC) + `<td class="tot-col">${total}</td></tr>`;
   });
 
 
-  const otherT = ROWS.reduce((s,r)=>s+r.other,0);
+  const otherT = ROWS.reduce((s,r)=>s+(Number(r.ctn != null ? r.ctn : r.other)||0),0);
   const arCtnT = arCtnByInv.reduce((a,b)=>a+b,0);
+  const riT = grandRoundCtn + arCtnT;
   h += `<tfoot>
     <tr><td colspan="5" class="lbl">TOTAL ROUND — PIECES</td>
         <td></td><td></td>
         ${colPcs.map(p=>`<td>${p}</td>`).join("")}
-        <td>${otherT}</td><td>${arCtnT}</td><td class="tot-col">${sheetTotal}</td></tr>
+        <td>${otherT}</td><td>${riT}</td><td class="tot-col">${sheetTotal}</td></tr>
     <tr class="ctn-row"><td colspan="7" class="lbl">CONVERTED — CARTONS / BAGS &nbsp;(pcs ÷ qty/ctn)</td>
         ${colPcs.map((p,j)=>`<td>${ctnOf(p,COLS[j].qty)}</td>`).join("")}
-        <td>${otherT}</td><td>${arCtnT}</td><td class="tot-col">${grandRoundCtn+otherT+arCtnT}</td></tr>
+        <td>${otherT}</td><td>${riT}</td><td class="tot-col">${sheetTotal}</td></tr>
   </tfoot>`;
   document.getElementById("mainTable").innerHTML = h;
   // driver writes collected amounts on the printed line
@@ -307,11 +324,11 @@ function render(){
     SIGN_ROLES.map(r=>`<tr><td class="role">${r}</td><td class="blank"></td></tr>`).join("");
 
   /* ---- load summary ---- */
-  const grand = grandRoundCtn + otherT + arCtnRowT;
+  const grand = otherT + grandRoundCtn + arCtnRowT;
   document.getElementById("grandBox").innerHTML = `
-    <tr><td class="lbl">Round items (columns)</td><td class="val">${grandRoundCtn}</td></tr>
-    <tr><td class="lbl">Other cartons</td><td class="val">${otherT}</td></tr>
-    <tr><td class="lbl">All round items (matrix)</td><td class="val">${arCtnRowT}</td></tr>
+    <tr><td class="lbl">Cartons (box totals)</td><td class="val">${otherT}</td></tr>
+    <tr><td class="lbl">Round items — columns</td><td class="val">${grandRoundCtn}</td></tr>
+    <tr><td class="lbl">Round items — matrix</td><td class="val">${arCtnRowT}</td></tr>
     <tr><td class="lbl">Invoices on run</td><td class="val">${ROWS.length}</td></tr>
     <tr class="final"><td class="lbl">TOTAL PACKAGES LOADED</td><td class="val">${grand}</td></tr>`;
 }
