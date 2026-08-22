@@ -2075,12 +2075,12 @@ function rsPhotoPrep(file){
     var img = new Image();
     img.onload = function(){
       URL.revokeObjectURL(url);
-      var MAX = 2400, w = img.naturalWidth, h = img.naturalHeight;
+      var MAX = 1600, w = img.naturalWidth, h = img.naturalHeight;
       var s = Math.min(1, MAX/Math.max(w,h));
       var c = document.createElement('canvas');
       c.width = Math.max(1, Math.round(w*s)); c.height = Math.max(1, Math.round(h*s));
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      resolve({data: c.toDataURL('image/jpeg', 0.85).split(',')[1], media_type: 'image/jpeg'});
+      resolve({data: c.toDataURL('image/jpeg', 0.8).split(',')[1], media_type: 'image/jpeg'});
     };
     img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error(file.name+': cannot read this image — use a JPG or PNG photo')); };
     img.src = url;
@@ -2093,21 +2093,62 @@ async function rsPhotoFiles(input){
   if(!files.length) return;
   if(files.length > 6) return alert('Max 6 photos per upload');
   var st = document.getElementById('rs-add-status');
-  st.textContent = 'Reading '+files.length+' photo(s)…';
+  st.textContent = 'Preparing '+files.length+' photo(s)…';
   var images = [];
   try{ for(var i=0;i<files.length;i++) images.push(await rsPhotoPrep(files[i])); }
   catch(e){ st.textContent=''; return alert('❌ '+e.message); }
-  st.textContent = 'Extracting with AI — roughly 15–30s per page…';
-  var d = null;
-  try{
-    var res = await fetch('/api/runsheet/from-photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({images:images})});
-    d = await res.json();
-    if(!res.ok) throw new Error(d.detail||'Extraction failed');
-  }catch(e){ st.textContent=''; return alert('❌ '+e.message); }
+
+  // ── parallel extraction: 3 photos in flight, live progress ──
+  var done = 0, results = [], errors = [];
+  function progress(){
+    st.innerHTML = '📷 Extracting… <b>'+done+'</b> / '+images.length+' photos done'+
+      (errors.length ? ' · <span style="color:#d64545">'+errors.length+' failed</span>' : '');
+  }
+  progress();
+  var next = 0;
+  async function worker(){
+    while(next < images.length){
+      var mine = next++;
+      try{
+        var res = await fetch('/api/runsheet/from-photo',
+          {method:'POST',headers:{'Content-Type':'application/json'},
+           body:JSON.stringify({images:[images[mine]]})});
+        var d = await res.json();
+        if(!res.ok) throw new Error(d.detail||'extraction failed');
+        results.push(d);
+      }catch(e){ errors.push('Photo '+(mine+1)+': '+e.message); }
+      done++; progress();
+    }
+  }
+  var pool = []; for(var w=0; w<Math.min(3, images.length); w++) pool.push(worker());
+  await Promise.all(pool);
   st.textContent = '';
-  if(d.cols && d.cols.length){ rsCols = d.cols; rsColsLoaded = true; rsRenderGrid(); }
-  (d.orders||[]).forEach(function(o){ o._done = false; rsPhotoOrders.push(o); });
-  if(d.errors && d.errors.length) alert('⚠ Some photos failed:\n'+d.errors.join('\n'));
+
+  // ── merge across responses: pages of the same SO arrive separately ──
+  var lastCols = null, incoming = [];
+  results.forEach(function(d){
+    if(d.cols && d.cols.length) lastCols = d.cols;
+    (d.orders||[]).forEach(function(o){ incoming.push(o); });
+    (d.errors||[]).forEach(function(e){ errors.push(e); });
+  });
+  if(lastCols){ rsCols = lastCols; rsColsLoaded = true; rsRenderGrid(); }
+  incoming.forEach(function(o){
+    var ex = null;
+    rsPhotoOrders.forEach(function(x){ if(!x._done && x.so_no && x.so_no === o.so_no) ex = x; });
+    if(!ex){ o._done = false; rsPhotoOrders.push(o); return; }
+    // merge o into ex
+    (o.round_items||[]).forEach(function(ri){
+      var dup = (ex.round_items||[]).some(function(r){ return r.serial===ri.serial && r.item===ri.item; });
+      if(!dup){ ex.round_items = ex.round_items||[]; ex.round_items.push(ri); }
+    });
+    if(o.box && !ex.box) ex.box = o.box;
+    if(o.pallet_no && !ex.pallet_no) ex.pallet_no = o.pallet_no;
+    (o.notes||[]).forEach(function(n){ ex.notes = ex.notes||[]; if(ex.notes.indexOf(n)===-1) ex.notes.push(n); });
+    (o.uncertain||[]).forEach(function(u){ ex.uncertain = ex.uncertain||[]; ex.uncertain.push(u); });
+    if(o.match && o.match.found && !(ex.match && ex.match.found)) ex.match = o.match;
+    if(o.customer && !ex.customer) ex.customer = o.customer;
+  });
+  if(errors.length) alert('⚠ Some photos failed:\n'+errors.join('\n'));
   rsRenderPhotoReview();
 }
 
